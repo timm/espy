@@ -29,10 +29,11 @@ alias vi="vim -u $Espy/opt/vimrc "
 alias vims="vim +PluginInstall +qall"         
 
 html() {
-  pdoc3 --config sort_identifiers=False       \
-        --config show_inherited_members=False  \
-        --force --template-dir $Espy/docs --html -o $Espy/docs $1
-  mv $Espy/docs/${1%.*}.html $Espy/docs/index.html
+  pdoc3 --config sort_identifiers=False        \
+        --config show_inherited_members=False   \
+        --force --template-dir $Espy/docs --html \
+        -o $Espy/docs $Espy/es.py
+  mv $Espy/docs/es.html $Espy/docs/index.html
   git add $Espy/docs/index.html
 }
 

@@ -63,18 +63,22 @@ processing takes log linear time.
 &#34;&#34;&#34;
 import math,sys,re
 
-HELP = dict(   
-         k=(1,      &#34;k Bayes low frequency control&#34;),
-         m=(2,      &#34;m Bayes low frequency control&#34;),
-         best=(.5,  &#34;size of best set&#34;), 
-         size=(.5,  &#34;min size of breaks&#34;),
-         cohen=(.2, &#34;var min&#34;))
+HELP   = dict(   
+           k     = (1,  &#34;k Bayes low frequency control&#34;),
+           m     = (2,  &#34;m Bayes low frequency control&#34;),
+           best  = (.5, &#34;size of best set&#34;), 
+           size  = (.5, &#34;min size of breaks&#34;),
+           cohen = (.2, &#34;var min&#34;),
+           dir   = &#34;opt/data/&#34;,
+           data  = &#34;auto93.csv&#34;
+           )
 
-LO   = -math.inf
-HI   =  math.inf
-TINY = 1E-32
-NO   = &#34;?&#34;
-
+LO     = -math.inf
+HI     =  math.inf
+TINY   = 1E-32
+NO     = &#34;?&#34;
+BAD    = &#34;bad&#34;
+BETTER = &#34;better&#34;
 class A:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
@@ -130,7 +134,11 @@ class Sym(A):
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
   def discretize(i,j,_): 
-    return [Bin(k,k) for k in (i.seen | j.seen)]
+    out = [Bin(k,k) for k in (i.seen | j.seen)]
+    for b in out: 
+      b.also[BETTER] = i.n
+      b.also[BAD] = j.n
+    return out
   def simplified(i,j):
     k     = i.merge(j)
     e1,n1 = i.ent(), i.n
@@ -464,7 +472,11 @@ def csv(file):
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
   def discretize(i,j,_): 
-    return [Bin(k,k) for k in (i.seen | j.seen)]
+    out = [Bin(k,k) for k in (i.seen | j.seen)]
+    for b in out: 
+      b.also[BETTER] = i.n
+      b.also[BAD] = j.n
+    return out
   def simplified(i,j):
     k     = i.merge(j)
     e1,n1 = i.ent(), i.n
@@ -524,7 +536,11 @@ def csv(file):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def discretize(i,j,_): 
-  return [Bin(k,k) for k in (i.seen | j.seen)]</code></pre>
+  out = [Bin(k,k) for k in (i.seen | j.seen)]
+  for b in out: 
+    b.also[BETTER] = i.n
+    b.also[BAD] = j.n
+  return out</code></pre>
 </details>
 </dd>
 <dt id="es.Sym.simplified"><code class="name flex">

@@ -20,14 +20,14 @@ processing takes log linear time.
 import math,sys,re
 
 HELP   = dict(   
-           k     = (1,  "k Bayes low frequency control"),
-           m     = (2,  "m Bayes low frequency control"),
-           best  = (.5, "size of best set"), 
-           size  = (.5, "min size of breaks"),
-           cohen = (.2, "var min"),
-           dir   = "opt/data/",
-           data  = "auto93.csv"
-           )
+           k     = (1,            "k Bayes low frequency control"),
+           m     = (2,            "m Bayes low frequency control"),
+           best  = (.2,           "size of best set"), 
+           size  = (.5,           "min size of breaks"),
+           cohen = (.2,           "var min"),
+           dir   = ("opt/data/",  "dir to data"),
+           data  = ("auto93.csv", "data file"),
+           seed  = (1,            "random number seed"))
 
 LO     = -math.inf
 HI     =  math.inf
@@ -35,6 +35,7 @@ TINY   = 1E-32
 NO     = "?"
 BAD    = "bad"
 BETTER = "better"
+
 class A:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
@@ -90,10 +91,12 @@ class Sym(A):
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
   def discretize(i,j,_): 
-    out = [Bin(k,k) for k in (i.seen | j.seen)]
-    for b in out: 
-      b.also[BETTER] = i.n
-      b.also[BAD] = j.n
+    out = []
+    for k in (i.seen | j.seen):  #a 23 b 50
+      b = Bin(k,k)
+      b.also.add(BETTER, i.seen.get(k,0))
+      b.also.add(BAD,    j.seen.get(k,0))
+      out += [b]
     return out
   def simplified(i,j):
     k     = i.merge(j)
