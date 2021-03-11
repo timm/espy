@@ -1,4 +1,4 @@
-<img align=left width=250 
+<img align=right width=250 
      src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png">
 
 # ES.py :  optimizer, written as a data miner.  
