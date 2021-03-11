@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>es API documentation</title>
+<meta name="description" content="hello" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>es</code></h1>
+</header>
+<section id="section-intro">
+<p>hello</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#!/usr/bin/env python3
+# vim: filetype=python ts=2 sw=2 sts=2 et :
+&#34;&#34;&#34;hello
+&#34;&#34;&#34;
+import math,sys,re
+HELP = dict(k=(1,&#34;asdsaa&#34;),m=(2,&#34;&#34;),best=(.5,&#34;&#34;), size=(.5,&#34;&#34;),cohen=(.2,&#34;&#34;))
+LO= -math.inf
+HI=  math.inf
+TINY=1E-32
+NO= &#34;?&#34;
+
+class A:
+  def __init__(i, **d): i.__dict__.update(d)
+  def __repr__(i): 
+    lst=sorted(i.__dict__.items())
+    return &#34;{&#34;+ &#39;, &#39;.join( [f&#34;:{k} {v}&#34; for k,v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;
+
+class Tab(A):
+  def __init__(i,src):
+    i.rows,i.cols,i.xs,i.ys = [],[],[],[]
+    for row in src:
+      row = row.cells if type(row)==Row else row
+      if    i.cols: i.rows += [Row([col.add(x) for col,x in zip(i.cols,row)],i)]
+      else: 
+         i.cols = [(Num(pos,txt) if txt[0].isupper() else Sym(pos,txt)) 
+                    for pos,txt in enumerate(row)]
+         i.ys   = [col for col in i.cols if     col.goalp]
+         i.xs   = [col for col in i.cols if not col.goalp]
+  def clone(i,inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
+  def goals(i):          return [col.mid() for col in i.ys]
+ 
+class Row(A):
+  def __init__(i,cells,tab): i.cells, i.tab= cells,tab
+  def __lt__(i,j):
+    s1,s2,n = 0,0,len(i.tab.ys)
+    for col in i.tab.ys:
+      pos,w = col.pos, col.w
+      a,b   = i.cells[pos], j.cells[pos]
+      a,b   = col.norm(a), col.norm(b)
+      s1   -= math.e**(w*(a-b)/n)
+      s2   -= math.e**(w*(b-a)/n)
+    return s1/n &lt; s2/n
+
+class Sym(A):
+  def __init__(i,pos=0,txt=&#34;&#34;): 
+    i.pos,i.txt,i.n,i.goalp = pos,txt,0,False
+    i.seen, i.mode, i.most = {},None,0
+  def add(i,x,n=1):
+    if x != NO:
+      i.n += n
+      tmp = i.seen[x] = n + i.seen.get(x,0)
+      if tmp &gt; i.most:
+        i.most, i.mode = tmp, x
+    return x
+  def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
+  def discretize(i,j,_): 
+    return [Bin(k,k) for k in (i.seen | j.seen)]
+  def simplified(i,j):
+    k     = i.merge(j)
+    e1,n1 = i.ent(), i.n
+    e2,n2 = j.ent(), j.n
+    e,n   = k.ent(), k.n
+    if e1+e2&lt;0.01 or e*.95 &lt; n1/n*e1 + n2/n*e2:
+      return k
+  def merge(i, j):
+    k = Sym(pos=i.pos, txt=i.txt)
+    for seen in [i.seen, j.seen]:
+      for x,n in seen.items(): k.add(x,n)
+    return k
+
+class Num(A):
+  def __init__(i,pos=0,txt=&#34;&#34;): 
+    i.pos,i.txt,i.n = pos,txt,0
+    i.w     = -1 if &#34;-&#34;==txt[-1] else 1
+    i.goalp = &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1] 
+    i._all, i.ok = [],False
+  def add(i,x,**_):
+    if x == NO: return x
+    i.n += 1
+    x    = float(x)
+    i._all += [x]
+    i.ok    = False
+    return x
+  def _alls(i):
+    i._all = i._all if i.ok else sorted(i._all)
+    i.ok = True
+    return i._all
+  def sd(i):     return (i._per(.9) - i._per(.1))/2.56
+  def mid(i)   : return i._per(.5) if i._all else None 
+  def _per(i,p): a= i._alls(); return a[int(p*len(a))]
+  def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)
+  def discretize(i,j,THE):
+    yes,no=&#34;better&#34;,&#34;bad&#34;
+    xy  = [(better,yes) for better in i._all] + [
+           (bad,no)     for bad    in j._all]
+    tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
+    return merge(tmp)
+
+class Bin(A):
+  def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
+  def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down &lt;= x &lt; i.up)
+  def __repr__(i):  return (
+    f&#34;={i.up}&#34;    if  i.down == i.up           else (
+    f&#34;anything&#34;   if i.down == LO and i.up==HI else (
+    f&#34;&lt;{i.up}&#34;    if i.down == LO              else (
+    f&#34;&gt;={i.down}&#34; if i.up == HI                else (
+    f&#34;[{i.down}..{i.up})&#34;)))))
+
+def div(xy, tooSmall=0.01, width=20):
+  while width &lt; 4 and width &lt; len(xy) / 2: width *= 1.2
+  xy = sorted(xy)
+  now = Bin(down=xy[0][0], up=xy[0][0])
+  out = [now]
+  for j,(x,y) in enumerate(xy):
+    if j &lt; len(xy) - width:
+      if now.also.n &gt;= width:
+        if x != xy[j+1][0]:
+          if now.up - now.down &gt; tooSmall:
+            now  = Bin(down=now.up, up=x)
+            out += [now]
+    now.up = x
+    now.also.add(y)
+  out[ 0].down = LO
+  out[-1].up   = HI
+  return out
+ 
+def merge(b4):
+  j, tmp, n = 0, [], len(b4)
+  while j &lt; n:
+    a = b4[j]
+    if j &lt; n - 1:
+      b  = b4[j+1]
+      if c := a.also.simplified(b.also):
+        a = Bin(a.down, b.up)
+        a.also = c
+        j += 1
+    tmp += [a]
+    j   += 1
+  return merge(tmp) if len(tmp) &lt; len(b4) else b4
+ 
+def csv(file):
+  with open(file) as fp:
+    for line in fp: 
+      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;,&#39;&#39;,line)
+      if line:
+        yield  line.split(&#34;,&#34;)
+
+def cli(xpect):
+  &#34;nake it work raw on 2 plced control&#34;
+  want = {k:v for k,(v,_) in xpect.items()}
+  help = {k:v for k,(_,v) in xpect.items()}
+  got, args, out = {}, sys.argv, {k:want[k] for k in want}
+  while args:
+    arg,*args = args
+    mark = arg[0]
+    if mark in &#34;+-&#34;:
+       flag = arg[1:]
+       if flag==&#34;h&#34;: 
+         print(__doc__)
+         for k,v in want.items():
+           m =(&#34;  &#34; if v==False else (
+               &#34; I&#34; if type(v)==int else (
+               &#34; F&#34; if type(v)==float else (
+               &#34; S&#34;))))
+           h =help[k]
+           print(f&#34; +{k:12} {h}&#34; if v==False else f&#34; -{k+m:12} {h}&#34;)
+       elif flag not in want: print(f&#34;W: ignoring {flag} (not defined)&#34;)
+       elif not args: print(f&#34;W: missing argument for {flag}&#34;)
+       else:
+          old,new   = want[flag],args[0]
+          try: out[flag] = (float(new) if type(old) == float else (
+                            int(new)   if type(old) == int   else (
+                            new)))
+          except Exception: print(f&#34;W: {new} not of type {type(old).__name__}&#34;)
+  return out</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="es.cli"><code class="name flex">
+<span>def <span class="ident">cli</span></span>(<span>xpect)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>nake it work raw on 2 plced control</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cli(xpect):
+  &#34;nake it work raw on 2 plced control&#34;
+  want = {k:v for k,(v,_) in xpect.items()}
+  help = {k:v for k,(_,v) in xpect.items()}
+  got, args, out = {}, sys.argv, {k:want[k] for k in want}
+  while args:
+    arg,*args = args
+    mark = arg[0]
+    if mark in &#34;+-&#34;:
+       flag = arg[1:]
+       if flag==&#34;h&#34;: 
+         print(__doc__)
+         for k,v in want.items():
+           m =(&#34;  &#34; if v==False else (
+               &#34; I&#34; if type(v)==int else (
+               &#34; F&#34; if type(v)==float else (
+               &#34; S&#34;))))
+           h =help[k]
+           print(f&#34; +{k:12} {h}&#34; if v==False else f&#34; -{k+m:12} {h}&#34;)
+       elif flag not in want: print(f&#34;W: ignoring {flag} (not defined)&#34;)
+       elif not args: print(f&#34;W: missing argument for {flag}&#34;)
+       else:
+          old,new   = want[flag],args[0]
+          try: out[flag] = (float(new) if type(old) == float else (
+                            int(new)   if type(old) == int   else (
+                            new)))
+          except Exception: print(f&#34;W: {new} not of type {type(old).__name__}&#34;)
+  return out</code></pre>
+</details>
+</dd>
+<dt id="es.csv"><code class="name flex">
+<span>def <span class="ident">csv</span></span>(<span>file)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def csv(file):
+  with open(file) as fp:
+    for line in fp: 
+      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;,&#39;&#39;,line)
+      if line:
+        yield  line.split(&#34;,&#34;)</code></pre>
+</details>
+</dd>
+<dt id="es.div"><code class="name flex">
+<span>def <span class="ident">div</span></span>(<span>xy, tooSmall=0.01, width=20)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def div(xy, tooSmall=0.01, width=20):
+  while width &lt; 4 and width &lt; len(xy) / 2: width *= 1.2
+  xy = sorted(xy)
+  now = Bin(down=xy[0][0], up=xy[0][0])
+  out = [now]
+  for j,(x,y) in enumerate(xy):
+    if j &lt; len(xy) - width:
+      if now.also.n &gt;= width:
+        if x != xy[j+1][0]:
+          if now.up - now.down &gt; tooSmall:
+            now  = Bin(down=now.up, up=x)
+            out += [now]
+    now.up = x
+    now.also.add(y)
+  out[ 0].down = LO
+  out[-1].up   = HI
+  return out</code></pre>
+</details>
+</dd>
+<dt id="es.merge"><code class="name flex">
+<span>def <span class="ident">merge</span></span>(<span>b4)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def merge(b4):
+  j, tmp, n = 0, [], len(b4)
+  while j &lt; n:
+    a = b4[j]
+    if j &lt; n - 1:
+      b  = b4[j+1]
+      if c := a.also.simplified(b.also):
+        a = Bin(a.down, b.up)
+        a.also = c
+        j += 1
+    tmp += [a]
+    j   += 1
+  return merge(tmp) if len(tmp) &lt; len(b4) else b4</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="es.A"><code class="flex name class">
+<span>class <span class="ident">A</span></span>
+<span>(</span><span>**d)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class A:
+  def __init__(i, **d): i.__dict__.update(d)
+  def __repr__(i): 
+    lst=sorted(i.__dict__.items())
+    return &#34;{&#34;+ &#39;, &#39;.join( [f&#34;:{k} {v}&#34; for k,v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="es.Bin" href="#es.Bin">Bin</a></li>
+<li><a title="es.Num" href="#es.Num">Num</a></li>
+<li><a title="es.Row" href="#es.Row">Row</a></li>
+<li><a title="es.Sym" href="#es.Sym">Sym</a></li>
+<li><a title="es.Tab" href="#es.Tab">Tab</a></li>
+</ul>
+</dd>
+<dt id="es.Bin"><code class="flex name class">
+<span>class <span class="ident">Bin</span></span>
+<span>(</span><span>down=-inf, up=inf)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Bin(A):
+  def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
+  def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down &lt;= x &lt; i.up)
+  def __repr__(i):  return (
+    f&#34;={i.up}&#34;    if  i.down == i.up           else (
+    f&#34;anything&#34;   if i.down == LO and i.up==HI else (
+    f&#34;&lt;{i.up}&#34;    if i.down == LO              else (
+    f&#34;&gt;={i.down}&#34; if i.up == HI                else (
+    f&#34;[{i.down}..{i.up})&#34;)))))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="es.A" href="#es.A">A</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="es.Bin.has"><code class="name flex">
+<span>def <span class="ident">has</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down &lt;= x &lt; i.up)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="es.Num"><code class="flex name class">
+<span>class <span class="ident">Num</span></span>
+<span>(</span><span>pos=0, txt='')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Num(A):
+  def __init__(i,pos=0,txt=&#34;&#34;): 
+    i.pos,i.txt,i.n = pos,txt,0
+    i.w     = -1 if &#34;-&#34;==txt[-1] else 1
+    i.goalp = &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1] 
+    i._all, i.ok = [],False
+  def add(i,x,**_):
+    if x == NO: return x
+    i.n += 1
+    x    = float(x)
+    i._all += [x]
+    i.ok    = False
+    return x
+  def _alls(i):
+    i._all = i._all if i.ok else sorted(i._all)
+    i.ok = True
+    return i._all
+  def sd(i):     return (i._per(.9) - i._per(.1))/2.56
+  def mid(i)   : return i._per(.5) if i._all else None 
+  def _per(i,p): a= i._alls(); return a[int(p*len(a))]
+  def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)
+  def discretize(i,j,THE):
+    yes,no=&#34;better&#34;,&#34;bad&#34;
+    xy  = [(better,yes) for better in i._all] + [
+           (bad,no)     for bad    in j._all]
+    tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
+    return merge(tmp)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="es.A" href="#es.A">A</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="es.Num.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>i, x, **_)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add(i,x,**_):
+  if x == NO: return x
+  i.n += 1
+  x    = float(x)
+  i._all += [x]
+  i.ok    = False
+  return x</code></pre>
+</details>
+</dd>
+<dt id="es.Num.discretize"><code class="name flex">
+<span>def <span class="ident">discretize</span></span>(<span>i, j, THE)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def discretize(i,j,THE):
+  yes,no=&#34;better&#34;,&#34;bad&#34;
+  xy  = [(better,yes) for better in i._all] + [
+         (bad,no)     for bad    in j._all]
+  tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
+  return merge(tmp)</code></pre>
+</details>
+</dd>
+<dt id="es.Num.mid"><code class="name flex">
+<span>def <span class="ident">mid</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mid(i)   : return i._per(.5) if i._all else None </code></pre>
+</details>
+</dd>
+<dt id="es.Num.norm"><code class="name flex">
+<span>def <span class="ident">norm</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)</code></pre>
+</details>
+</dd>
+<dt id="es.Num.sd"><code class="name flex">
+<span>def <span class="ident">sd</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sd(i):     return (i._per(.9) - i._per(.1))/2.56</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="es.Row"><code class="flex name class">
+<span>class <span class="ident">Row</span></span>
+<span>(</span><span>cells, tab)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Row(A):
+  def __init__(i,cells,tab): i.cells, i.tab= cells,tab
+  def __lt__(i,j):
+    s1,s2,n = 0,0,len(i.tab.ys)
+    for col in i.tab.ys:
+      pos,w = col.pos, col.w
+      a,b   = i.cells[pos], j.cells[pos]
+      a,b   = col.norm(a), col.norm(b)
+      s1   -= math.e**(w*(a-b)/n)
+      s2   -= math.e**(w*(b-a)/n)
+    return s1/n &lt; s2/n</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="es.A" href="#es.A">A</a></li>
+</ul>
+</dd>
+<dt id="es.Sym"><code class="flex name class">
+<span>class <span class="ident">Sym</span></span>
+<span>(</span><span>pos=0, txt='')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Sym(A):
+  def __init__(i,pos=0,txt=&#34;&#34;): 
+    i.pos,i.txt,i.n,i.goalp = pos,txt,0,False
+    i.seen, i.mode, i.most = {},None,0
+  def add(i,x,n=1):
+    if x != NO:
+      i.n += n
+      tmp = i.seen[x] = n + i.seen.get(x,0)
+      if tmp &gt; i.most:
+        i.most, i.mode = tmp, x
+    return x
+  def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
+  def discretize(i,j,_): 
+    return [Bin(k,k) for k in (i.seen | j.seen)]
+  def simplified(i,j):
+    k     = i.merge(j)
+    e1,n1 = i.ent(), i.n
+    e2,n2 = j.ent(), j.n
+    e,n   = k.ent(), k.n
+    if e1+e2&lt;0.01 or e*.95 &lt; n1/n*e1 + n2/n*e2:
+      return k
+  def merge(i, j):
+    k = Sym(pos=i.pos, txt=i.txt)
+    for seen in [i.seen, j.seen]:
+      for x,n in seen.items(): k.add(x,n)
+    return k</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="es.A" href="#es.A">A</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="es.Sym.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>i, x, n=1)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add(i,x,n=1):
+  if x != NO:
+    i.n += n
+    tmp = i.seen[x] = n + i.seen.get(x,0)
+    if tmp &gt; i.most:
+      i.most, i.mode = tmp, x
+  return x</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.discretize"><code class="name flex">
+<span>def <span class="ident">discretize</span></span>(<span>i, j, _)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def discretize(i,j,_): 
+  return [Bin(k,k) for k in (i.seen | j.seen)]</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.ent"><code class="name flex">
+<span>def <span class="ident">ent</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.merge"><code class="name flex">
+<span>def <span class="ident">merge</span></span>(<span>i, j)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def merge(i, j):
+  k = Sym(pos=i.pos, txt=i.txt)
+  for seen in [i.seen, j.seen]:
+    for x,n in seen.items(): k.add(x,n)
+  return k</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.simplified"><code class="name flex">
+<span>def <span class="ident">simplified</span></span>(<span>i, j)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def simplified(i,j):
+  k     = i.merge(j)
+  e1,n1 = i.ent(), i.n
+  e2,n2 = j.ent(), j.n
+  e,n   = k.ent(), k.n
+  if e1+e2&lt;0.01 or e*.95 &lt; n1/n*e1 + n2/n*e2:
+    return k</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="es.Tab"><code class="flex name class">
+<span>class <span class="ident">Tab</span></span>
+<span>(</span><span>src)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Tab(A):
+  def __init__(i,src):
+    i.rows,i.cols,i.xs,i.ys = [],[],[],[]
+    for row in src:
+      row = row.cells if type(row)==Row else row
+      if    i.cols: i.rows += [Row([col.add(x) for col,x in zip(i.cols,row)],i)]
+      else: 
+         i.cols = [(Num(pos,txt) if txt[0].isupper() else Sym(pos,txt)) 
+                    for pos,txt in enumerate(row)]
+         i.ys   = [col for col in i.cols if     col.goalp]
+         i.xs   = [col for col in i.cols if not col.goalp]
+  def clone(i,inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
+  def goals(i):          return [col.mid() for col in i.ys]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="es.A" href="#es.A">A</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="es.Tab.clone"><code class="name flex">
+<span>def <span class="ident">clone</span></span>(<span>i, inits=[])</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clone(i,inits=[]): return Tab([[col.txt for col in i.cols]] + inits)</code></pre>
+</details>
+</dd>
+<dt id="es.Tab.goals"><code class="name flex">
+<span>def <span class="ident">goals</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def goals(i):          return [col.mid() for col in i.ys]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="es.cli" href="#es.cli">cli</a></code></li>
+<li><code><a title="es.csv" href="#es.csv">csv</a></code></li>
+<li><code><a title="es.div" href="#es.div">div</a></code></li>
+<li><code><a title="es.merge" href="#es.merge">merge</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="es.A" href="#es.A">A</a></code></h4>
+</li>
+<li>
+<h4><code><a title="es.Bin" href="#es.Bin">Bin</a></code></h4>
+<ul class="">
+<li><code><a title="es.Bin.has" href="#es.Bin.has">has</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="es.Num" href="#es.Num">Num</a></code></h4>
+<ul class="">
+<li><code><a title="es.Num.add" href="#es.Num.add">add</a></code></li>
+<li><code><a title="es.Num.discretize" href="#es.Num.discretize">discretize</a></code></li>
+<li><code><a title="es.Num.mid" href="#es.Num.mid">mid</a></code></li>
+<li><code><a title="es.Num.norm" href="#es.Num.norm">norm</a></code></li>
+<li><code><a title="es.Num.sd" href="#es.Num.sd">sd</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="es.Row" href="#es.Row">Row</a></code></h4>
+</li>
+<li>
+<h4><code><a title="es.Sym" href="#es.Sym">Sym</a></code></h4>
+<ul class="">
+<li><code><a title="es.Sym.add" href="#es.Sym.add">add</a></code></li>
+<li><code><a title="es.Sym.discretize" href="#es.Sym.discretize">discretize</a></code></li>
+<li><code><a title="es.Sym.ent" href="#es.Sym.ent">ent</a></code></li>
+<li><code><a title="es.Sym.merge" href="#es.Sym.merge">merge</a></code></li>
+<li><code><a title="es.Sym.simplified" href="#es.Sym.simplified">simplified</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="es.Tab" href="#es.Tab">Tab</a></code></h4>
+<ul class="">
+<li><code><a title="es.Tab.clone" href="#es.Tab.clone">clone</a></code></li>
+<li><code><a title="es.Tab.goals" href="#es.Tab.goals">goals</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
