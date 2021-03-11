@@ -29,7 +29,9 @@ alias vi="vim -u $Espy/opt/vimrc "
 alias vims="vim +PluginInstall +qall"         
 
 html() {
-  pdoc3 --force --template-dir $Espy/docs --html -o $Espy/docs $1
+  pdoc3 --config sort_identifiers=False       \
+        --config show_inherited_members=False  \
+        --force --template-dir $Espy/docs --html -o $Espy/docs $1
   mv $Espy/docs/${1%.*}.html $Espy/docs/index.html
   git add $Espy/docs/index.html
 }
@@ -81,7 +83,7 @@ startup() {
   [ -z "$TMUX" ] && mytmux
 }
 ############### prompt
-PROMPT_COMMAND='echo -ne "🎯 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
+PROMPT_COMMAND='echo -ne "🧩 $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
 
 [[ $1 == "-s" ]] && startup
 

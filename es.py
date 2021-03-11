@@ -18,17 +18,38 @@ processing takes log linear time.
              :------:
 """
 import math,sys,re
-HELP = dict(k=(1,"asdsaa"),m=(2,""),best=(.5,""), size=(.5,""),cohen=(.2,""))
-LO= -math.inf
-HI=  math.inf
-TINY=1E-32
-NO= "?"
 
+HELP   = dict(   
+           k     = (1,  "k Bayes low frequency control"),
+           m     = (2,  "m Bayes low frequency control"),
+           best  = (.5, "size of best set"), 
+           size  = (.5, "min size of breaks"),
+           cohen = (.2, "var min"),
+           dir   = "opt/data/",
+           data  = "auto93.csv"
+           )
+
+LO     = -math.inf
+HI     =  math.inf
+TINY   = 1E-32
+NO     = "?"
+BAD    = "bad"
+BETTER = "better"
 class A:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
     lst=sorted(i.__dict__.items())
     return "{"+ ', '.join( [f":{k} {v}" for k,v in lst if k[0] != "_"])+"}"
+
+class Bin(A):
+  def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
+  def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down <= x < i.up)
+  def __repr__(i):  return (
+    f"={i.up}"    if  i.down == i.up           else (
+    f"anything"   if i.down == LO and i.up==HI else (
+    f"<{i.up}"    if i.down == LO              else (
+    f">={i.down}" if i.up == HI                else (
+    f"[{i.down}..{i.up})")))))
 
 class Tab(A):
   def __init__(i,src):
@@ -69,7 +90,11 @@ class Sym(A):
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
   def discretize(i,j,_): 
-    return [Bin(k,k) for k in (i.seen | j.seen)]
+    out = [Bin(k,k) for k in (i.seen | j.seen)]
+    for b in out: 
+      b.also[BETTER] = i.n
+      b.also[BAD] = j.n
+    return out
   def simplified(i,j):
     k     = i.merge(j)
     e1,n1 = i.ent(), i.n
@@ -111,16 +136,6 @@ class Num(A):
     tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
     return merge(tmp)
 
-class Bin(A):
-  def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
-  def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down <= x < i.up)
-  def __repr__(i):  return (
-    f"={i.up}"    if  i.down == i.up           else (
-    f"anything"   if i.down == LO and i.up==HI else (
-    f"<{i.up}"    if i.down == LO              else (
-    f">={i.down}" if i.up == HI                else (
-    f"[{i.down}..{i.up})")))))
-
 def div(xy, tooSmall=0.01, width=20):
   while width < 4 and width < len(xy) / 2: width *= 1.2
   xy = sorted(xy)
@@ -159,31 +174,3 @@ def csv(file):
       line = re.sub(r'([\n\t\r ]|#.*)','',line)
       if line:
         yield  line.split(",")
-
-def cli(xpect):
-  """Takes a dictionary (k1:(default1,help1))+, valid cli keys are one of the 
-  `default` symbols and `-h` shows the `help` text. Also, new arguments to
-  those flags need to be same type as `default1`."""
-  want = {k:v for k,(v,_) in xpect.items()} # all the key, defaults
-  help = {k:v for k,(_,v) in xpect.items()} # all the key, help text
-  got, args, out = {}, sys.argv, {k:want[k] for k in want}
-  while args:
-    arg,*args = args
-    mark = arg[0]
-    if mark in "+-":
-      flag = arg[1:]
-      if flag=="h": 
-        print(__doc__)
-        for k,v in want.items():
-          m =("  " if v==False else (" I" if type(v)==int else (
-              " F" if type(v)==float else (" S"))))
-          print(f" +{k:12} {help[k]}" if v==False else f" -{k+m:12} {help[k]}")
-      elif flag not in want: print(f"W: ignoring {flag} (not defined)")
-      elif not args: print(f"W: missing argument for {flag}")
-      else:
-         old,new   = want[flag],args[0]
-         try: out[flag] = (float(new) if type(old) == float else (
-                           int(new)   if type(old) == int   else (
-                           new)))
-         except Exception: print(f"W: {new} not of type {type(old).__name__}")
-  return out

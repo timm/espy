@@ -1,11 +1,79 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
+# Support code, test suites, command line interface for es.py
+import sys, es
+from types import FunctionType as fun
 from es import *
 
-def main():
-  the = A(**cli(HELP))
+def eg_one():
+  "one example"
+  print(1)
+
+def eg(k,f):
+  print(flair(HEADER= ("# " + k + " : " + (f.__doc__ or ""))))
+  try: f()
+  except Exception: ok(False, "function ran?")
+  return f
+
+def ok(x, txt=""):
+  if x: print("\t" + txt + flair(OKGREEN=" PASS"))
+  else: print("\t" + txt + flair(FAIL   =" FAIL"))
+
+def flair(**d):
+  c = dict(
+    HEADER  = '\033[95m', OKBLUE  = '\033[94m', OKCYAN    = '\033[96m',
+    OKGREEN = '\033[92m', WARNING = '\033[93m', FAIL      = '\033[91m',
+    ENDC    = '\033[0m',  BOLD    = '\033[1m',  UNDERLINE = '\033[4m')
+  for k,v in d.items():
+    return c[k] + c["BOLD"] + str(v) + c["ENDC"]
+
+def help_txt(doc,xpect):
+  print(flair(OKCYAN=doc))
+  print(f"-{'h':12} show help   ")
+  print(f"-{'egs':12} run all examples   ")
+  print(f"-{'eg S':12} run examples matching 'S'  ")
+  print(f"-{'ls':12} list all examples   ")
+  for k,(v,help) in xpect.items():
+    m = ("  " if v==False       else (
+         " I" if type(v)==int   else (
+         " F" if type(v)==float else (
+         " S"))))
+    print(f"+{k:12} {help}   " if v==False else f"-{k+m:12} {help}  ")
+
+def cli(doc,xpect,funs=[]):
+  """Takes a dictionary (k1:(default1,help1))+, valid cli keys are one of the 
+  `default` symbols and `-h` shows the `help` text. Also, new arguments to
+  those flags need to be same type as `default1`."""
+  print(xpect)
+  want = {k:v for k,(v,_) in xpect.items()} # all the key, defaults
+  def elp(k,v): print(f"{k[3:]:>15} :",v.__doc__) 
+  got, args, out = {}, sys.argv, {k:want[k] for k in want}
+  while args:
+    arg,*args = args
+    mark = arg[0]
+    if mark in "+-":
+      flag = arg[1:]
+      if   flag=="h"        : help_txt(doc, xpect)
+      elif flag=="ls"       : [elp(k,funs[k]) for k in funs    if k[:3]=="eg_"]
+      elif flag=="egs"      : [eg(k,v) for k,v in funs.items() if k[:3]=="eg_"]
+      elif not args         : print(f"W: missing argument for {flag}")
+      elif flag=="eg"       : [eg(k,v) for k,v in funs.items() if args[0] in k]
+      elif flag not in want : print(f"W: ignoring {flag} (not defined)")
+      else:                 
+          old,new = want[flag],args[0]
+          try: out[flag] = (float(new) if type(old) == float else (
+                            int(new)   if type(old) == int   else (
+                            new)))
+          except Exception: print(f"W: {new} not of type {type(old).__name__}")
+  return out
+
+def main(funs):
+  tmp = cli(es.__doc__, 
+            es.HELP,
+            funs={k:v for k,v in funs.items() if type(v) == fun})
+  the = A(**tmp)
+  t=Tab(csv(the.dir + the.data))
   return True
-  t=Tab(csv("auto93.csv"))
   rows = sorted(t.rows)
   u=t.clone(rows[:100])
   v=t.clone(rows[100:])
@@ -15,4 +83,4 @@ def main():
     for b in col1.discretize(col2,the):
       print(b)
 
-main()
+main(vars())
