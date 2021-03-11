@@ -1,3 +1,7 @@
+<img align=left width=250 
+     src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
+>
+
 # ES.py :  optimizer, written as a data miner.  
 
 es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
