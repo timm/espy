@@ -22,7 +22,9 @@ import itertools, math, sys, re
 HELP   = dict(   
            k     = (1,            "k Bayes low frequency control"),
            m     = (2,            "m Bayes low frequency control"),
-           best  = (.2,           "size of best set"), 
+           best  = (.2,           "desired size of best set"), 
+           top   = (10,           "how many max to try"),
+           min   = (20,           "if rows less than 'min, then 'best'=.5"),
            size  = (.5,           "min size of breaks"),
            cohen = (.2,           "var min"),
            dir   = ("opt/data/",  "dir to data"),
@@ -36,13 +38,13 @@ NO     = "?"
 BAD    = "bad"
 BETTER = "better"
 
-class A:
+class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
     lst=sorted(i.__dict__.items())
     return "{"+ ', '.join( [f":{k} {v}" for k,v in lst if k[0] != "_"])+"}"
 
-class Bin(A):
+class Bin(obj):
   def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
   def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down <= x < i.up)
   def __repr__(i):  return (
@@ -52,7 +54,7 @@ class Bin(A):
     f">={i.down}" if i.up == HI                else (
     f"[{i.down}..{i.up})")))))
 
-class Tab(A):
+class Tab(obj):
   def __init__(i,src):
     i.rows,i.cols,i.xs,i.ys = [],[],[],[]
     for row in src:
@@ -66,7 +68,7 @@ class Tab(A):
   def clone(i,inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
   def goals(i):          return [col.mid() for col in i.ys]
  
-class Row(A):
+class Row(obj):
   def __init__(i,cells,tab): i.cells, i.tab= cells,tab
   def __lt__(i,j):
     s1,s2,n = 0,0,len(i.tab.ys)
@@ -78,7 +80,7 @@ class Row(A):
       s2   -= math.e**(w*(b-a)/n)
     return s1/n < s2/n
 
-class Sym(A):
+class Sym(obj):
   def __init__(i,pos=0,txt=""): 
     i.pos,i.txt,i.n,i.goalp = pos,txt,0,False
     i.seen, i.mode, i.most = {},None,0
@@ -111,7 +113,7 @@ class Sym(A):
       for x,n in seen.items(): k.add(x,n)
     return k
 
-class Num(A):
+class Num(obj):
   def __init__(i,pos=0,txt=""): 
     i.pos,i.txt,i.n = pos,txt,0
     i.w     = -1 if "-"==txt[-1] else 1
@@ -133,9 +135,8 @@ class Num(A):
   def _per(i,p): a= i._alls(); return a[int(p*len(a))]
   def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)
   def discretize(i,j,THE):
-    yes,no="better","bad"
-    xy  = [(better,yes) for better in i._all] + [
-           (bad,no)     for bad    in j._all]
+    xy  = [(better,BETTER) for better in i._all] + [
+           (bad,   BAD)     for bad    in j._all]
     tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
     return merge(tmp)
 
@@ -178,41 +179,42 @@ def csv(file):
       if line:
         yield  line.split(",")
 
-def powerset(l):
-  for sl in itertools.product(*[[[], [i]] for i in l]):
-    yield {j for i in sl for j in i}
+def subset(l):
+    for sl in itertools.product(*[[[], [i]] for i in l]):
+      yield {j for i in sl for j in i}
 
-# rows=sorted(row)
-# better, bad=t.clone(rows[:best]), t.clone(rows[best:])
-# couts=it(h={},n = len(rows))
-# counts.h[BETTER] = len(better.rows)
-# counts.h[BAD]    = len(bad.rows)
-#
-# bins=[]
-# for col1,col2, in zip(better.cols.x, bad.cols.x):
-#   for bin in col1.discretize(col2, THE):
-#     bin.col = col
-#     bins += [bin]
-# return bins
-#
-# #how do i do this way and that
-#  here, there = BETTER,BAD
-#  sorted([(score(s), one)for one in powerset(bins)],reverse=True)[:10]
-#   def value(rule, here, there):
-#     b = like(rule, here, 2)
-#     r = like(rule, there, 2)
-#     return b**2 / (b + r) if b > r else 0
-#
-#   def like(rule, h, hs=None):
-#     hs   = hs if hs else len(counts.h)
-#     like = prior = (counts.h[h] + THE.k) / (counts.n + THE.k * hs)
-#     like = math.log(like)
-#     for bins in rule.values():
-#       f = sum(b.also.seen.get(h,0) for b in bins)
-#       inc = (f + THE.m * prior) / (counts.h[h] + THE.m)
-#       like += math.log(inc)
-#     return math.e**like
-#
-#
-# def combos(l):
-#   [(score(x),x) for x in powerset(l)]
+class Learn():
+  def __init__(i,tab,THE):
+    border = len(tab.row)*THE.best
+    if border < THE.min: border = len(t.rows)*.5
+    better = tab.clone(rows[:int(border)])
+    bad    = tab.clone(rows[int(border):])
+    i.n    = len(tab.rows)
+    i.hs   = {BETTER: len(better.rows),  
+              BAD   : len(bad.rows) }
+    tmp    = [(0, {bin.pos:[bin]}) 
+                  for col1,col2 in zip(better.cols.x, bad.cols.x)
+                   for  bin       in col1.discretize(col2, THE)]
+    i.rules= elite(combine(tmp) for rule in subsets(elite(tmp)))
+
+  def elite(i,rules):
+    return sorted([value(rule) for r in rules],reverse=True)[:THE.top]
+
+  def value(i,rule):
+      b = like(rule, BETTER,hs.n)
+      r = like(rule, BAD,   hs,n)
+      return b**2 / (b + r) if b > r else 0
+
+  def like(i,rule,h):
+      like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
+      like = math.log(like)
+      for bins in rule.values():
+        f = sum(b.also.seen.get(h,0) for b in bins)
+        inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
+        like += math.log(inc)
+      return math.e**like  
+
+  def combine(i,rule):
+    d={}
+    for _,(k,v) in rule.items(): d[k] = d.get(k,[]).append(v)
+    return 0,d

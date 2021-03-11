@@ -66,7 +66,9 @@ import itertools, math, sys, re
 HELP   = dict(   
            k     = (1,            &#34;k Bayes low frequency control&#34;),
            m     = (2,            &#34;m Bayes low frequency control&#34;),
-           best  = (.2,           &#34;size of best set&#34;), 
+           best  = (.2,           &#34;desired size of best set&#34;), 
+           top   = (10,           &#34;how many max to try&#34;),
+           min   = (20,           &#34;if rows less than &#39;min, then &#39;best&#39;=.5&#34;),
            size  = (.5,           &#34;min size of breaks&#34;),
            cohen = (.2,           &#34;var min&#34;),
            dir   = (&#34;opt/data/&#34;,  &#34;dir to data&#34;),
@@ -80,13 +82,13 @@ NO     = &#34;?&#34;
 BAD    = &#34;bad&#34;
 BETTER = &#34;better&#34;
 
-class A:
+class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
     lst=sorted(i.__dict__.items())
     return &#34;{&#34;+ &#39;, &#39;.join( [f&#34;:{k} {v}&#34; for k,v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;
 
-class Bin(A):
+class Bin(obj):
   def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
   def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down &lt;= x &lt; i.up)
   def __repr__(i):  return (
@@ -96,7 +98,7 @@ class Bin(A):
     f&#34;&gt;={i.down}&#34; if i.up == HI                else (
     f&#34;[{i.down}..{i.up})&#34;)))))
 
-class Tab(A):
+class Tab(obj):
   def __init__(i,src):
     i.rows,i.cols,i.xs,i.ys = [],[],[],[]
     for row in src:
@@ -110,7 +112,7 @@ class Tab(A):
   def clone(i,inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
   def goals(i):          return [col.mid() for col in i.ys]
  
-class Row(A):
+class Row(obj):
   def __init__(i,cells,tab): i.cells, i.tab= cells,tab
   def __lt__(i,j):
     s1,s2,n = 0,0,len(i.tab.ys)
@@ -122,7 +124,7 @@ class Row(A):
       s2   -= math.e**(w*(b-a)/n)
     return s1/n &lt; s2/n
 
-class Sym(A):
+class Sym(obj):
   def __init__(i,pos=0,txt=&#34;&#34;): 
     i.pos,i.txt,i.n,i.goalp = pos,txt,0,False
     i.seen, i.mode, i.most = {},None,0
@@ -155,7 +157,7 @@ class Sym(A):
       for x,n in seen.items(): k.add(x,n)
     return k
 
-class Num(A):
+class Num(obj):
   def __init__(i,pos=0,txt=&#34;&#34;): 
     i.pos,i.txt,i.n = pos,txt,0
     i.w     = -1 if &#34;-&#34;==txt[-1] else 1
@@ -177,9 +179,8 @@ class Num(A):
   def _per(i,p): a= i._alls(); return a[int(p*len(a))]
   def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)
   def discretize(i,j,THE):
-    yes,no=&#34;better&#34;,&#34;bad&#34;
-    xy  = [(better,yes) for better in i._all] + [
-           (bad,no)     for bad    in j._all]
+    xy  = [(better,BETTER) for better in i._all] + [
+           (bad,   BAD)     for bad    in j._all]
     tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
     return merge(tmp)
 
@@ -222,44 +223,45 @@ def csv(file):
       if line:
         yield  line.split(&#34;,&#34;)
 
-def powerset(l):
-  for sl in itertools.product(*[[[], [i]] for i in l]):
-    yield {j for i in sl for j in i}
+def subset(l):
+    for sl in itertools.product(*[[[], [i]] for i in l]):
+      yield {j for i in sl for j in i}
 
-# rows=sorted(row)
-# better, bad=t.clone(rows[:best]), t.clone(rows[best:])
-# couts=it(h={},n = len(rows))
-# counts.h[BETTER] = len(better.rows)
-# counts.h[BAD]    = len(bad.rows)
-#
-# bins=[]
-# for col1,col2, in zip(better.cols.x, bad.cols.x):
-#   for bin in col1.discretize(col2, THE):
-#     bin.col = col
-#     bins += [bin]
-# return bins
-#
-# #how do i do this way and that
-#  here, there = BETTER,BAD
-#  sorted([(score(s), one)for one in powerset(bins)],reverse=True)[:10]
-#   def value(rule, here, there):
-#     b = like(rule, here, 2)
-#     r = like(rule, there, 2)
-#     return b**2 / (b + r) if b &gt; r else 0
-#
-#   def like(rule, h, hs=None):
-#     hs   = hs if hs else len(counts.h)
-#     like = prior = (counts.h[h] + THE.k) / (counts.n + THE.k * hs)
-#     like = math.log(like)
-#     for bins in rule.values():
-#       f = sum(b.also.seen.get(h,0) for b in bins)
-#       inc = (f + THE.m * prior) / (counts.h[h] + THE.m)
-#       like += math.log(inc)
-#     return math.e**like
-#
-#
-# def combos(l):
-#   [(score(x),x) for x in powerset(l)]</code></pre>
+class Learn():
+  def __init__(i,tab,THE):
+    border = len(tab.row)*THE.best
+    if border &lt; THE.min: border = len(t.rows)*.5
+    better = tab.clone(rows[:int(border)])
+    bad    = tab.clone(rows[int(border):])
+    i.n    = len(tab.rows)
+    i.hs   = {BETTER: len(better.rows),  
+              BAD   : len(bad.rows) }
+    tmp    = [(0, {bin.pos:[bin]}) 
+                  for col1,col2 in zip(better.cols.x, bad.cols.x)
+                   for  bin       in col1.discretize(col2, THE)]
+    i.rules= elite(combine(tmp) for rule in subsets(elite(tmp)))
+
+  def elite(i,rules):
+    return sorted([value(rule) for r in rules],reverse=True)[:THE.top]
+
+  def value(i,rule):
+      b = like(rule, BETTER,hs.n)
+      r = like(rule, BAD,   hs,n)
+      return b**2 / (b + r) if b &gt; r else 0
+
+  def like(i,rule,h):
+      like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
+      like = math.log(like)
+      for bins in rule.values():
+        f = sum(b.also.seen.get(h,0) for b in bins)
+        inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
+        like += math.log(inc)
+      return math.e**like  
+
+  def combine(i,rule):
+    d={}
+    for _,(k,v) in rule.items(): d[k] = d.get(k,[]).append(v)
+    return 0,d</code></pre>
 </details>
 </section>
 <section>
@@ -338,8 +340,8 @@ def powerset(l):
         yield  line.split(&#34;,&#34;)</code></pre>
 </details>
 </dd>
-<dt id="es.powerset"><code class="name flex">
-<span>def <span class="ident">powerset</span></span>(<span>l)</span>
+<dt id="es.subset"><code class="name flex">
+<span>def <span class="ident">subset</span></span>(<span>l)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -347,9 +349,9 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def powerset(l):
-  for sl in itertools.product(*[[[], [i]] for i in l]):
-    yield {j for i in sl for j in i}</code></pre>
+<pre><code class="python">def subset(l):
+    for sl in itertools.product(*[[[], [i]] for i in l]):
+      yield {j for i in sl for j in i}</code></pre>
 </details>
 </dd>
 </dl>
@@ -357,8 +359,8 @@ def powerset(l):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="es.A"><code class="flex name class">
-<span>class <span class="ident">A</span></span>
+<dt id="es.obj"><code class="flex name class">
+<span>class <span class="ident">obj</span></span>
 <span>(</span><span>**d)</span>
 </code></dt>
 <dd>
@@ -367,7 +369,7 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class A:
+<pre><code class="python">class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
     lst=sorted(i.__dict__.items())
@@ -392,7 +394,7 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Bin(A):
+<pre><code class="python">class Bin(obj):
   def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
   def has(i,x): return (x==i.down) if (i.down==i.up) else (i.down &lt;= x &lt; i.up)
   def __repr__(i):  return (
@@ -404,7 +406,7 @@ def powerset(l):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="es.A" href="#es.A">A</a></li>
+<li><a title="es.obj" href="#es.obj">obj</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -432,7 +434,7 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Tab(A):
+<pre><code class="python">class Tab(obj):
   def __init__(i,src):
     i.rows,i.cols,i.xs,i.ys = [],[],[],[]
     for row in src:
@@ -448,7 +450,7 @@ def powerset(l):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="es.A" href="#es.A">A</a></li>
+<li><a title="es.obj" href="#es.obj">obj</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -488,7 +490,7 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Row(A):
+<pre><code class="python">class Row(obj):
   def __init__(i,cells,tab): i.cells, i.tab= cells,tab
   def __lt__(i,j):
     s1,s2,n = 0,0,len(i.tab.ys)
@@ -502,7 +504,7 @@ def powerset(l):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="es.A" href="#es.A">A</a></li>
+<li><a title="es.obj" href="#es.obj">obj</a></li>
 </ul>
 </dd>
 <dt id="es.Sym"><code class="flex name class">
@@ -515,7 +517,7 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Sym(A):
+<pre><code class="python">class Sym(obj):
   def __init__(i,pos=0,txt=&#34;&#34;): 
     i.pos,i.txt,i.n,i.goalp = pos,txt,0,False
     i.seen, i.mode, i.most = {},None,0
@@ -550,7 +552,7 @@ def powerset(l):
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="es.A" href="#es.A">A</a></li>
+<li><a title="es.obj" href="#es.obj">obj</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -649,7 +651,7 @@ def powerset(l):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Num(A):
+<pre><code class="python">class Num(obj):
   def __init__(i,pos=0,txt=&#34;&#34;): 
     i.pos,i.txt,i.n = pos,txt,0
     i.w     = -1 if &#34;-&#34;==txt[-1] else 1
@@ -671,15 +673,14 @@ def powerset(l):
   def _per(i,p): a= i._alls(); return a[int(p*len(a))]
   def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)
   def discretize(i,j,THE):
-    yes,no=&#34;better&#34;,&#34;bad&#34;
-    xy  = [(better,yes) for better in i._all] + [
-           (bad,no)     for bad    in j._all]
+    xy  = [(better,BETTER) for better in i._all] + [
+           (bad,   BAD)     for bad    in j._all]
     tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
     return merge(tmp)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="es.A" href="#es.A">A</a></li>
+<li><a title="es.obj" href="#es.obj">obj</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -747,11 +748,122 @@ def powerset(l):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def discretize(i,j,THE):
-  yes,no=&#34;better&#34;,&#34;bad&#34;
-  xy  = [(better,yes) for better in i._all] + [
-         (bad,no)     for bad    in j._all]
+  xy  = [(better,BETTER) for better in i._all] + [
+         (bad,   BAD)     for bad    in j._all]
   tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
   return merge(tmp)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="es.Learn"><code class="flex name class">
+<span>class <span class="ident">Learn</span></span>
+<span>(</span><span>tab, THE)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Learn():
+  def __init__(i,tab,THE):
+    border = len(tab.row)*THE.best
+    if border &lt; THE.min: border = len(t.rows)*.5
+    better = tab.clone(rows[:int(border)])
+    bad    = tab.clone(rows[int(border):])
+    i.n    = len(tab.rows)
+    i.hs   = {BETTER: len(better.rows),  
+              BAD   : len(bad.rows) }
+    tmp    = [(0, {bin.pos:[bin]}) 
+                  for col1,col2 in zip(better.cols.x, bad.cols.x)
+                   for  bin       in col1.discretize(col2, THE)]
+    i.rules= elite(combine(tmp) for rule in subsets(elite(tmp)))
+
+  def elite(i,rules):
+    return sorted([value(rule) for r in rules],reverse=True)[:THE.top]
+
+  def value(i,rule):
+      b = like(rule, BETTER,hs.n)
+      r = like(rule, BAD,   hs,n)
+      return b**2 / (b + r) if b &gt; r else 0
+
+  def like(i,rule,h):
+      like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
+      like = math.log(like)
+      for bins in rule.values():
+        f = sum(b.also.seen.get(h,0) for b in bins)
+        inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
+        like += math.log(inc)
+      return math.e**like  
+
+  def combine(i,rule):
+    d={}
+    for _,(k,v) in rule.items(): d[k] = d.get(k,[]).append(v)
+    return 0,d</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="es.Learn.elite"><code class="name flex">
+<span>def <span class="ident">elite</span></span>(<span>i, rules)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def elite(i,rules):
+  return sorted([value(rule) for r in rules],reverse=True)[:THE.top]</code></pre>
+</details>
+</dd>
+<dt id="es.Learn.value"><code class="name flex">
+<span>def <span class="ident">value</span></span>(<span>i, rule)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def value(i,rule):
+    b = like(rule, BETTER,hs.n)
+    r = like(rule, BAD,   hs,n)
+    return b**2 / (b + r) if b &gt; r else 0</code></pre>
+</details>
+</dd>
+<dt id="es.Learn.like"><code class="name flex">
+<span>def <span class="ident">like</span></span>(<span>i, rule, h)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def like(i,rule,h):
+    like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
+    like = math.log(like)
+    for bins in rule.values():
+      f = sum(b.also.seen.get(h,0) for b in bins)
+      inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
+      like += math.log(inc)
+    return math.e**like  </code></pre>
+</details>
+</dd>
+<dt id="es.Learn.combine"><code class="name flex">
+<span>def <span class="ident">combine</span></span>(<span>i, rule)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def combine(i,rule):
+  d={}
+  for _,(k,v) in rule.items(): d[k] = d.get(k,[]).append(v)
+  return 0,d</code></pre>
 </details>
 </dd>
 </dl>
@@ -789,13 +901,13 @@ zip
 <li><code><a title="es.div" href="#es.div">div</a></code></li>
 <li><code><a title="es.merge" href="#es.merge">merge</a></code></li>
 <li><code><a title="es.csv" href="#es.csv">csv</a></code></li>
-<li><code><a title="es.powerset" href="#es.powerset">powerset</a></code></li>
+<li><code><a title="es.subset" href="#es.subset">subset</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="es.A" href="#es.A">A</a></code></h4>
+<h4><code><a title="es.obj" href="#es.obj">obj</a></code></h4>
 </li>
 <li>
 <h4><code><a title="es.Bin" href="#es.Bin">Bin</a></code></h4>
@@ -831,6 +943,15 @@ zip
 <li><code><a title="es.Num.mid" href="#es.Num.mid">mid</a></code></li>
 <li><code><a title="es.Num.norm" href="#es.Num.norm">norm</a></code></li>
 <li><code><a title="es.Num.discretize" href="#es.Num.discretize">discretize</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="es.Learn" href="#es.Learn">Learn</a></code></h4>
+<ul class="">
+<li><code><a title="es.Learn.elite" href="#es.Learn.elite">elite</a></code></li>
+<li><code><a title="es.Learn.value" href="#es.Learn.value">value</a></code></li>
+<li><code><a title="es.Learn.like" href="#es.Learn.like">like</a></code></li>
+<li><code><a title="es.Learn.combine" href="#es.Learn.combine">combine</a></code></li>
 </ul>
 </li>
 </ul>

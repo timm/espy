@@ -81,7 +81,7 @@ def cli(doc,xpect,funs=[]):
 
 def main(funs):
   funs ={k:v for k,v in funs.items() if type(v) == fun}
-  the  = A(**cli(es.__doc__, es.HELP, funs))
+  the  = obj(**cli(es.__doc__, es.HELP, funs))
   eg_one(the)
   #[eg(k,v,the) for k,v in the._do]
 

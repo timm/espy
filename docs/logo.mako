@@ -1,5 +1,5 @@
 <center>
-<img width=180 src="http://menzies.us/duo/keys.jpg">
+<img width=180 src="http://menzies.us/espy/docs/espy.png">
 <h3>ESPY: data miners<br>using/used-by optimizers</h3>
 <p>
 <a href="#license">&copy; 2021</a>, Tim Menzies<br>
