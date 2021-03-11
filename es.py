@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 """
-es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
+es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.  
 Optimizer, written as a data miner.  
   
 Break the data up into regions of 'bad' and 'better'. 'Interesting'
@@ -182,37 +182,37 @@ def powerset(l):
   for sl in itertools.product(*[[[], [i]] for i in l]):
     yield {j for i in sl for j in i}
 
-rows=sorted(row)
-better, bad=t.clone(rows[:best]), t.clone(rows[best:])
-couts=it(h={},n = len(rows))
-counts.h[BETTER] = len(better.rows)
-counts.h[BAD]    = len(bad.rows)
-
-bins=[]
-for col1,col2, in zip(better.cols.x, bad.cols.x):
-  for bin in col1.discretize(col2, THE):
-    bin.col = col
-    bins += [bin]
-return bins
-
-#how do i do this way and that
- here, there = BETTER,BAD
- sorted([(score(s), one)for one in powerset(bins)],reverse=True)[:10]
-  def value(rule, here, there):
-    b = like(rule, here, 2)
-    r = like(rule, there, 2)
-    return b**2 / (b + r) if b > r else 0
-
-  def like(rule, h, hs=None):
-    hs   = hs if hs else len(counts.h)
-    like = prior = (counts.h[h] + THE.k) / (counts.n + THE.k * hs)
-    like = math.log(like)
-    for bins in rule.values():
-      f = sum(b.also.seen.get(h,0) for b in bins)
-      inc = (f + THE.m * prior) / (counts.h[h] + THE.m)
-      like += math.log(inc)
-    return math.e**like
-
-
-def combos(l):
-  [(score(x),x) for x in powerset(l)]
+# rows=sorted(row)
+# better, bad=t.clone(rows[:best]), t.clone(rows[best:])
+# couts=it(h={},n = len(rows))
+# counts.h[BETTER] = len(better.rows)
+# counts.h[BAD]    = len(bad.rows)
+#
+# bins=[]
+# for col1,col2, in zip(better.cols.x, bad.cols.x):
+#   for bin in col1.discretize(col2, THE):
+#     bin.col = col
+#     bins += [bin]
+# return bins
+#
+# #how do i do this way and that
+#  here, there = BETTER,BAD
+#  sorted([(score(s), one)for one in powerset(bins)],reverse=True)[:10]
+#   def value(rule, here, there):
+#     b = like(rule, here, 2)
+#     r = like(rule, there, 2)
+#     return b**2 / (b + r) if b > r else 0
+#
+#   def like(rule, h, hs=None):
+#     hs   = hs if hs else len(counts.h)
+#     like = prior = (counts.h[h] + THE.k) / (counts.n + THE.k * hs)
+#     like = math.log(like)
+#     for bins in rule.values():
+#       f = sum(b.also.seen.get(h,0) for b in bins)
+#       inc = (f + THE.m * prior) / (counts.h[h] + THE.m)
+#       like += math.log(inc)
+#     return math.e**like
+#
+#
+# def combos(l):
+#   [(score(x),x) for x in powerset(l)]

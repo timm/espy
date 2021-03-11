@@ -23,7 +23,7 @@ Optimizer, written as a data miner …" />
 <h1 class="title">Module <code>es</code></h1>
 </header>
 <section id="section-intro">
-<p>es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
+<p>es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.<br>
 Optimizer, written as a data miner.
 </p>
 <p>Break the data up into regions of 'bad' and 'better'. 'Interesting'
@@ -45,7 +45,7 @@ processing takes log linear time.</p>
 <pre><code class="python">#!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 &#34;&#34;&#34;
-es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
+es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.  
 Optimizer, written as a data miner.  
   
 Break the data up into regions of &#39;bad&#39; and &#39;better&#39;. &#39;Interesting&#39;
@@ -61,17 +61,17 @@ processing takes log linear time.
              |    5 | Better
              :------:
 &#34;&#34;&#34;
-import math,sys,re
+import itertools, math, sys, re
 
 HELP   = dict(   
-           k     = (1,  &#34;k Bayes low frequency control&#34;),
-           m     = (2,  &#34;m Bayes low frequency control&#34;),
-           best  = (.5, &#34;size of best set&#34;), 
-           size  = (.5, &#34;min size of breaks&#34;),
-           cohen = (.2, &#34;var min&#34;),
-           dir   = &#34;opt/data/&#34;,
-           data  = &#34;auto93.csv&#34;
-           )
+           k     = (1,            &#34;k Bayes low frequency control&#34;),
+           m     = (2,            &#34;m Bayes low frequency control&#34;),
+           best  = (.2,           &#34;size of best set&#34;), 
+           size  = (.5,           &#34;min size of breaks&#34;),
+           cohen = (.2,           &#34;var min&#34;),
+           dir   = (&#34;opt/data/&#34;,  &#34;dir to data&#34;),
+           data  = (&#34;auto93.csv&#34;, &#34;data file&#34;),
+           seed  = (1,            &#34;random number seed&#34;))
 
 LO     = -math.inf
 HI     =  math.inf
@@ -79,6 +79,7 @@ TINY   = 1E-32
 NO     = &#34;?&#34;
 BAD    = &#34;bad&#34;
 BETTER = &#34;better&#34;
+
 class A:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i): 
@@ -134,10 +135,12 @@ class Sym(A):
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
   def discretize(i,j,_): 
-    out = [Bin(k,k) for k in (i.seen | j.seen)]
-    for b in out: 
-      b.also[BETTER] = i.n
-      b.also[BAD] = j.n
+    out = []
+    for k in (i.seen | j.seen):  #a 23 b 50
+      b = Bin(k,k)
+      b.also.add(BETTER, i.seen.get(k,0))
+      b.also.add(BAD,    j.seen.get(k,0))
+      out += [b]
     return out
   def simplified(i,j):
     k     = i.merge(j)
@@ -217,7 +220,46 @@ def csv(file):
     for line in fp: 
       line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;,&#39;&#39;,line)
       if line:
-        yield  line.split(&#34;,&#34;)</code></pre>
+        yield  line.split(&#34;,&#34;)
+
+def powerset(l):
+  for sl in itertools.product(*[[[], [i]] for i in l]):
+    yield {j for i in sl for j in i}
+
+# rows=sorted(row)
+# better, bad=t.clone(rows[:best]), t.clone(rows[best:])
+# couts=it(h={},n = len(rows))
+# counts.h[BETTER] = len(better.rows)
+# counts.h[BAD]    = len(bad.rows)
+#
+# bins=[]
+# for col1,col2, in zip(better.cols.x, bad.cols.x):
+#   for bin in col1.discretize(col2, THE):
+#     bin.col = col
+#     bins += [bin]
+# return bins
+#
+# #how do i do this way and that
+#  here, there = BETTER,BAD
+#  sorted([(score(s), one)for one in powerset(bins)],reverse=True)[:10]
+#   def value(rule, here, there):
+#     b = like(rule, here, 2)
+#     r = like(rule, there, 2)
+#     return b**2 / (b + r) if b &gt; r else 0
+#
+#   def like(rule, h, hs=None):
+#     hs   = hs if hs else len(counts.h)
+#     like = prior = (counts.h[h] + THE.k) / (counts.n + THE.k * hs)
+#     like = math.log(like)
+#     for bins in rule.values():
+#       f = sum(b.also.seen.get(h,0) for b in bins)
+#       inc = (f + THE.m * prior) / (counts.h[h] + THE.m)
+#       like += math.log(inc)
+#     return math.e**like
+#
+#
+# def combos(l):
+#   [(score(x),x) for x in powerset(l)]</code></pre>
 </details>
 </section>
 <section>
@@ -294,6 +336,20 @@ def csv(file):
       line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;,&#39;&#39;,line)
       if line:
         yield  line.split(&#34;,&#34;)</code></pre>
+</details>
+</dd>
+<dt id="es.powerset"><code class="name flex">
+<span>def <span class="ident">powerset</span></span>(<span>l)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def powerset(l):
+  for sl in itertools.product(*[[[], [i]] for i in l]):
+    yield {j for i in sl for j in i}</code></pre>
 </details>
 </dd>
 </dl>
@@ -472,10 +528,12 @@ def csv(file):
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
   def discretize(i,j,_): 
-    out = [Bin(k,k) for k in (i.seen | j.seen)]
-    for b in out: 
-      b.also[BETTER] = i.n
-      b.also[BAD] = j.n
+    out = []
+    for k in (i.seen | j.seen):  #a 23 b 50
+      b = Bin(k,k)
+      b.also.add(BETTER, i.seen.get(k,0))
+      b.also.add(BAD,    j.seen.get(k,0))
+      out += [b]
     return out
   def simplified(i,j):
     k     = i.merge(j)
@@ -536,10 +594,12 @@ def csv(file):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def discretize(i,j,_): 
-  out = [Bin(k,k) for k in (i.seen | j.seen)]
-  for b in out: 
-    b.also[BETTER] = i.n
-    b.also[BAD] = j.n
+  out = []
+  for k in (i.seen | j.seen):  #a 23 b 50
+    b = Bin(k,k)
+    b.also.add(BETTER, i.seen.get(k,0))
+    b.also.add(BAD,    j.seen.get(k,0))
+    out += [b]
   return out</code></pre>
 </details>
 </dd>
@@ -700,6 +760,25 @@ def csv(file):
 </section>
 </article>
 <nav id="sidebar">
+<center>
+<img width=180 src="http://menzies.us/duo/keys.jpg">
+<h3>ESPY: data miners<br>using/used-by optimizers</h3>
+<p>
+<a href="#license">&copy; 2021</a>, Tim Menzies<br>
+<a href="mailto:timm@ieee.org">timm@ieee.org</a><br>
+<a href="http://menzies.us">http://menzies.us</a>
+</p>
+<p>
+<img src="https://img.shields.io/badge/license-mit-lightgrey">
+<img src="https://img.shields.io/badge/purpose-ai%20,%20se-blueviolet">
+<br><img src="https://img.shields.io/badge/language-python3,bash-blue">
+<hr>
+<a href="https://github.com/timm/espy/blob/master/README.md"> github </a> ::
+<a href="https://github.com/timm/espy/archive/master.zip">
+zip
+</a>
+<hr>
+</center>
 <h1>Index</h1>
 <div class="toc">
 <ul></ul>
@@ -710,6 +789,7 @@ def csv(file):
 <li><code><a title="es.div" href="#es.div">div</a></code></li>
 <li><code><a title="es.merge" href="#es.merge">merge</a></code></li>
 <li><code><a title="es.csv" href="#es.csv">csv</a></code></li>
+<li><code><a title="es.powerset" href="#es.powerset">powerset</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
