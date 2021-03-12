@@ -64,11 +64,11 @@ def cli(doc,xpect,funs=[]):
     mark = arg[0]
     if mark in "+-":
       flag = arg[1:]
-      if   flag=="h"       : help_txt(doc, xpect)
-      elif flag=="ls"      : [elp(k,funs[k]) for k in funs      if k[:3]=="eg_"]
-      elif flag=="egs"     : do= [(k,v) for k,v in funs.items() if k[:3]=="eg_"]
-      elif not args        : print(f"W: missing argument for {flag}")
-      elif flag=="eg"      : do= [(k,v) for k,v in funs.items() if args[0] in k]
+      if   flag=="h"  : help_txt(doc, xpect)
+      elif flag=="ls" : [elp(k,funs[k]) for k in funs      if k[:3]=="eg_"]
+      elif flag=="egs": do= [(k,v) for k,v in funs.items() if k[:3]=="eg_"]
+      elif not args   : print(f"W: missing argument for {flag}")
+      elif flag=="eg" : do= [(k,funs[v]) for k in funs     if k[:3]=="eg_" and args[0] in k]
       elif flag not in want: print(f"W: ignoring {flag} (not defined)")
       else:                 
         old,new = want[flag],args[0]
