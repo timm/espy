@@ -19,6 +19,11 @@ def eg_one(THE):
     for b in col1.discretize(col2,THE):
       print(b, b.also.seen)
 
+def eg_two(THE):
+  "one example"
+  t=Tab(csv(THE.dir + THE.data))
+  rules(t,THE)
+
 def eg(k,f,THE):
   random.seed(THE.seed)
   print(flair(HEADER= ("# " + k + " : " + (f.__doc__ or ""))))
@@ -68,7 +73,7 @@ def cli(doc,xpect,funs=[]):
       elif flag=="ls" : [elp(k,funs[k]) for k in funs      if k[:3]=="eg_"]
       elif flag=="egs": do= [(k,v) for k,v in funs.items() if k[:3]=="eg_"]
       elif not args   : print(f"W: missing argument for {flag}")
-      elif flag=="eg" : do= [(k,funs[v]) for k in funs     if k[:3]=="eg_" and args[0] in k]
+      elif flag=="eg" : do= [(k,funs[k]) for k in funs     if k[:3]=="eg_" and args[0] in k]
       elif flag not in want: print(f"W: ignoring {flag} (not defined)")
       else:                 
         old,new = want[flag],args[0]
@@ -82,7 +87,7 @@ def cli(doc,xpect,funs=[]):
 def main(funs):
   funs ={k:v for k,v in funs.items() if type(v) == fun}
   the  = obj(**cli(es.__doc__, es.HELP, funs))
-  eg_one(the)
   #[eg(k,v,the) for k,v in the._do]
+  eg_two(the)
 
 main(vars())

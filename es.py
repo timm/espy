@@ -193,27 +193,31 @@ def rules(tab,THE):
     return b**2 / (b + r) if b > r else 0
 
   def like(rule,h):
-    like = prior = (hs[h] + THE.k) / (n + THE.k * len(hs))
+    like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
     like = math.log(like)
     for bins in rule.values():
       f = sum(b.also.seen.get(h,0) for b in bins)
-      inc = (f + THE.m * prior) / (hs[h] + THE.m)
+      inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
       like += math.log(inc)
     return math.e**like  
 
   def combine(bins):
     d={}
     for _,bin in bins:
-      for _,(k,v) in bin.items(): d[k] = d.get(k,[]).append(v)
+      k = bin.col.pos
+      d[k] = d.get(k,[]).append(v)
     return 0,d
   #---------------------------
-  border = len(tab.row)*THE.best
+  border = len(tab.rows)*THE.best
   if border < THE.min: border = len(t.rows)*.5
-  better = tab.clone(rows[:int(border)])
-  bad    = tab.clone(rows[int(border):])
-  i      = it(n  = len(tab.rows), 
-              hs = {BETTER: len(better.rows),BAD: len(bad.rows)})
-  tmp = [(0, {bin.pos:[bin]}) for col1,col2 in zip(better.cols.x, bad.cols.x)
-                              for bin       in col1.discretize(col2, THE)]
-  return elite(combine(bins) for bins in subsets(elite(tmp)))
+  better = tab.clone(tab.rows[:int(border)])
+  bad    = tab.clone(tab.rows[int(border):])
+  i      = obj(n  = len(tab.rows), 
+               hs = {BETTER: len(better.rows),
+                     BAD   : len(bad.rows)})
+  tmp = [(0, {col1.pos:[bin]}) 
+          for col1,col2 in zip(better.xs, bad.xs)
+          for bin       in col1.discretize(col2, THE)]
+  [print(val(x),[y.also for y in list(x.values())])  for _,x in tmp]
+  #return elite(combine(bins) for bins in subsets(elite(tmp)))
 
