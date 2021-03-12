@@ -180,41 +180,40 @@ def csv(file):
         yield  line.split(",")
 
 def subset(l):
-    for sl in itertools.product(*[[[], [i]] for i in l]):
-      yield {j for i in sl for j in i}
+  for sl in itertools.product(*[[[], [i]] for i in l]):
+     yield {j for i in sl for j in i}
 
-class Learn():
-  def __init__(i,tab,THE):
-    border = len(tab.row)*THE.best
-    if border < THE.min: border = len(t.rows)*.5
-    better = tab.clone(rows[:int(border)])
-    bad    = tab.clone(rows[int(border):])
-    i.n    = len(tab.rows)
-    i.hs   = {BETTER: len(better.rows),  
-              BAD   : len(bad.rows) }
-    tmp    = [(0, {bin.pos:[bin]}) 
-                  for col1,col2 in zip(better.cols.x, bad.cols.x)
-                   for  bin       in col1.discretize(col2, THE)]
-    i.rules= elite(combine(tmp) for rule in subsets(elite(tmp)))
+def rules(tab,THE):
+  def elite(rules): return [(s,r) for s,r in 
+    sorted([(val(r),r) for (_,r) in rules],reverse=True)[:THE.top] if s > 0.01]
 
-  def elite(i,rules):
-    return sorted([value(rule) for r in rules],reverse=True)[:THE.top]
+  def val(rule):
+    b = like(rule, BETTER)
+    r = like(rule, BAD   )
+    return b**2 / (b + r) if b > r else 0
 
-  def value(i,rule):
-      b = like(rule, BETTER,hs.n)
-      r = like(rule, BAD,   hs,n)
-      return b**2 / (b + r) if b > r else 0
+  def like(rule,h):
+    like = prior = (hs[h] + THE.k) / (n + THE.k * len(hs))
+    like = math.log(like)
+    for bins in rule.values():
+      f = sum(b.also.seen.get(h,0) for b in bins)
+      inc = (f + THE.m * prior) / (hs[h] + THE.m)
+      like += math.log(inc)
+    return math.e**like  
 
-  def like(i,rule,h):
-      like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
-      like = math.log(like)
-      for bins in rule.values():
-        f = sum(b.also.seen.get(h,0) for b in bins)
-        inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
-        like += math.log(inc)
-      return math.e**like  
-
-  def combine(i,rule):
+  def combine(bins):
     d={}
-    for _,(k,v) in rule.items(): d[k] = d.get(k,[]).append(v)
+    for _,bin in bins:
+      for _,(k,v) in bin.items(): d[k] = d.get(k,[]).append(v)
     return 0,d
+  #---------------------------
+  border = len(tab.row)*THE.best
+  if border < THE.min: border = len(t.rows)*.5
+  better = tab.clone(rows[:int(border)])
+  bad    = tab.clone(rows[int(border):])
+  i      = it(n  = len(tab.rows), 
+              hs = {BETTER: len(better.rows),BAD: len(bad.rows)})
+  tmp = [(0, {bin.pos:[bin]}) for col1,col2 in zip(better.cols.x, bad.cols.x)
+                              for bin       in col1.discretize(col2, THE)]
+  return elite(combine(bins) for bins in subsets(elite(tmp)))
+
