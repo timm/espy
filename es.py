@@ -211,11 +211,13 @@ def rules(tab,THE):
       like += math.log(inc)
     return math.e**like  
 
-  def combine(bins):
+  def combine(lst):
     d={}
-    for _,bin in bins:
-      k = bin.pos
-      d[k] = d.get(k,[]).append(v)
+    for _,ands in lst:
+      for k,one in ands.items():
+        d[k] = d.get(k,[]).append(one)
+    print("D",d)
+    sys.exit()
     return 0,d
   #---------------------------
   border = len(tab.rows)*THE.best
