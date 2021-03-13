@@ -7,7 +7,7 @@ Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )/..
 mkdir -p $Espy/opt
 mkdir -p $Espy/docs
 
-chmod +x $Espy/opt/ish
+chmod +x $Espy/opt/ional
 chmod +x $Espy/eg.py
 chmod +x $Espy/es.py
 
@@ -51,7 +51,7 @@ hi() {
 EOF
   tput sgr0
   tput bold; tput setaf 0
-  awk '/^alias/ {print $0}'   $Espy/opt/ish
+  awk '/^alias/ {print $0}'   $Espy/opt/ional
   echo ""
   tput sgr0
 }
@@ -62,15 +62,15 @@ mytmux() {
   $Tmux start-server
   sleep 1
   $Tmux new-session -d -s $session  
-  $Tmux send-keys ". $Espy/opt/ish"  C-m  "sleep 0.5; clear; vi keys.lisp" C-m
+  $Tmux send-keys ". $Espy/opt/ional"  C-m  "sleep 0.5; clear; vi keys.lisp" C-m
 
   $Tmux splitw -h -p 20
   $Tmux selectp -t 1
-  $Tmux send-keys ".  $Espy/opt/ish"  C-m  "clear; hi" C-m
+  $Tmux send-keys ".  $Espy/opt/ional"  C-m  "clear; hi" C-m
 
   $Tmux splitw -v  -p 5
   $Tmux selectp -t 2
-  $Tmux send-keys ".  $Espy/opt/ish"  C-m  "htop"  C-m
+  $Tmux send-keys ".  $Espy/opt/ional"  C-m  "htop"  C-m
 
   $Tmux attach-session -t $session
 }
