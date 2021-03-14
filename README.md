@@ -1,6 +1,5 @@
 <img align=right width=250 src="/docs/espy.png">
-
-# ES.py :  optimizer, written as a data miner.  
+<h1> ES.py :  optimizer, written as a data miner</h1>
 
 es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
   
@@ -19,8 +18,8 @@ processing takes log linear time.
 
 ## Usage
 
-cd src  
-./eg.py -h
+cd src    
+./eg.py -h  
 
  -h            show help   
  -egs          run all examples   
