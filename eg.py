@@ -5,27 +5,29 @@ from etc import *
 from es import *
 import es
 
+
 def eg_one(THE):
   "one example"
-  t=Tab(csv(THE.dir + THE.data))
+  t = Tab(csv(THE.dir + THE.data))
   rows = sorted(t.rows)
-  u=t.clone(rows[:100])
-  v=t.clone(rows[100:])
+  u = t.clone(rows[:100])
+  v = t.clone(rows[100:])
   print(u.goals())
   print(v.goals())
-  for col1,col2 in zip(u.xs,v.xs):
+  for col1, col2 in zip(u.xs, v.xs):
     print("")
     print(col1.txt)
-    for b in col1.discretize(col2,THE):
+    for b in col1.discretize(col2, THE):
       print(b, b.also.seen)
+
 
 def eg_two(THE):
   "one example"
   t = Tab(csv(THE.dir + THE.data))
-  best,rest = betterBad(t,THE)
-  for rule in Contrast(best,rest,THE).rules: print(rule)
-  print("")
-  for rule in Contrast(rest,best,THE).rules: print(rule)
+  best, rest = betterBad(t, THE)
+  for s, rule in Contrast(best, rest, THE).rules:
+    print(f"{s:>6.2f}", canonical(rule))
+
 
 main(es.__doc__, es.HELP, eg_s(vars()),
      also=eg_two)

@@ -235,3 +235,57 @@ class Contrast:
     # ----------------------------------
     all = [i.like(rule, kl, THE) for rule in subsets(top())]
     return sorted(all, reverse=True)[:THE.top]
+
+
+def canonical(rule):
+  def merge(b4):
+    if len(b4) == 1 and b4 == [(LO, HI)]:
+      return None
+    j, tmp = 0, []
+    while j < len(b4):
+      a = b4[j]
+      if j < len(b4)-1:
+        b = b4[j+1]
+        if a[1] == b[0]:
+          a = (a[0], b[1])
+          j += 1
+      tmp += [a]
+      j += 1
+    return tmp if len(tmp) == len(b4) else merge(tmp)
+  cols = {}
+  for col, _, span in rule:
+    cols[col] = cols.get(col, []) + [span]
+  out = {}
+  for k, v in cols.items():
+    if v1 := merge(sorted(v)):
+      out[k] = v1
+  return out
+
+
+def showRulest(tab, rules):
+
+  def selects(tab, rule):
+    def selectors(val, ors):
+      for (lo, hi) in ors:
+        if lo <= val < hi:
+          return True
+      return False
+
+    def selects1(row, ands):
+      for (txt, ors) in ands:
+        val = row[tab.cols.named[txt].pos]
+        if val != NO:
+          if not selectors(val, ors):
+            return False
+      return True
+    s, rule = rule
+    return tab.clone([row for row in tab.rows if selects1(row, rule)])
+
+  def showRule(r):
+    def showRange(x): return Bin(x[0], x[1]).show()
+
+    def show1(k, v):
+      return k + " " + ' or '.join(map(showRange, v))
+    s, rule = r
+    out = ""
+    return ' and '.join([show1(k, v) for k, v in rule])
