@@ -101,7 +101,7 @@ Plugin 'vim-syntastic/syntastic'
 Plugin 'nequo/vim-allomancer'
 Plugin 'julialang/julia-vim'
 Plugin 'nanotech/jellybeans.vim'
-"Plugin 'tell-k/vim-autopep8'
+Plugin 'tell-k/vim-autopep8'
 Plugin 'morhetz/gruvbox'
 Plugin 'tomasr/molokai'
 Plugin 'vimwiki/vimwiki'
@@ -115,12 +115,12 @@ call vundle#end()            " required
 filetype plugin indent on    " required
 " To ignore plugin indent changes, instead use:
 filetype plugin on
-"let g:autopep8_indent_size=2
-"let g:autopep8_max_line_length=70
-"let g:autopep8_on_save = 1
-"let g:autopep8_disable_show_diff=1
-"let g:autopep8_ignore="E261,E302,E301"
-"autocmd FileType python noremap <buffer> <F8> :call Autopep8()<CR>
+let g:autopep8_indent_size=2
+let g:autopep8_max_line_length=80
+let g:autopep8_on_save = 1
+let g:autopep8_disable_show_diff=1
+let g:autopep8_ignore="E261,E302,E301"
+autocmd FileType python noremap <buffer> <F8> :call Autopep8()<CR>
 colorscheme harlequin
 nmap <F9> :!../../gold -t %<C-M>p
 nnoremap <Leader><space> :noh<cr>

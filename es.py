@@ -18,6 +18,7 @@ processing takes log linear time.
              :------:
 """
 import itertools, math, sys, re
+from etc import obj, csv, subsets
 
 HELP   = dict(   
            k     = (1,            "k Bayes low frequency control"),
@@ -35,12 +36,6 @@ LO     = -math.inf
 HI     =  math.inf
 TINY   = 1E-32
 NO     = "?"
-
-class obj:
-  def __init__(i, **d): i.__dict__.update(d)
-  def __repr__(i): 
-    lst=sorted(i.__dict__.items())
-    return "{"+ ', '.join( [f":{k} {v}" for k,v in lst if k[0] != "_"])+"}"
 
 class Bin(obj):
   def __init__(i,down=LO, up=HI): i.down, i.up, i.also= down,up,Sym()
@@ -170,19 +165,6 @@ def merge(b4):
     j   += 1
   return merge(tmp) if len(tmp) < len(b4) else b4
  
-def csv(file):
-  with open(file) as fp:
-    for line in fp: 
-      line = re.sub(r'([\n\t\r ]|#.*)','',line)
-      if line:
-        yield  line.split(",")
-
-def subsets(l):
-  out  = [[]]
-  for x in l:
-    out  += [sub + [x] for sub in out]
-  return out[1:]
-
 def betterBad(tab,THE):
   border = len(tab.rows)*THE.best
   if border < THE.min: 
@@ -230,72 +212,3 @@ class Contrast:
     #----------------------------------
     all = [i.like(rule,kl,THE) for rule in subsets(top())]
     return sorted(all, reverse=True)[:THE.top]
-  
-
-# def rules(tab,THE):
-#   def elite(rules): 
-#    tmp = [(val(r),r) for _,r in rules]
-#    tmp = [(s,r)      for s,r in tmp if s >0.001]
-#    tmp = sorted(tmp,reverse=True)
-#    return tmp[:THE.top]
-#
-#   def val(rule):
-#     b = like(rule, BETTER)
-#     r = like(rule, BAD   )
-#     tmp = b**2 / (b + r) if b > r else 0
-#     x = list(rule.values())[0][0]
-#     if tmp > 0: print("::", x.pos,x.down,x.up,"\t",b,r,tmp)
-#     return tmp
-#
-#   def like(rule,h):
-#     like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
-#     like = math.log(like)
-#     for x,bins in rule.items():
-#       f = sum(b.also.seen.get(h,0) for b in bins)
-#       inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
-#       like += math.log(inc)
-#     return math.e**like  
-#
-#   def combine(lst):
-#     d={}
-#     for _,ands in lst:
-#       for k,one in ands.items():
-#         d[k] = d.get(k,[]).append(one)
-#     print("D",d)
-#     sys.exit()
-#     return 0,d
-#   #---------------------------
-#   border = len(tab.rows)*THE.best
-#   if border < THE.min: border = len(t.rows)*.5
-#   better = tab.clone(tab.rows[:int(border)])
-#   bad    = tab.clone(tab.rows[int(border):])
-#   i      = obj(n  = len(tab.rows), 
-#                hs = {BETTER: len(better.rows),
-#                      BAD   : len(bad.rows)})
-#   tmp = [(0, {col1.pos:[bin]}) 
-#           for col1,col2 in zip(better.xs, bad.xs)
-#           for bin       in col1.discretize(col2, THE)]
-#   for _,j in tmp:
-#      s0 = val(j)
-#      for k,v in j.items():
-#        for bin in v:
-#           d= {k1 : n/i.hs[k1] for k1,n in bin.also.seen.items()}
-#           ba = d.get(BETTER,0)
-#           re = d.get(BAD,0)
-#           s  = ba**2/(ba+re)
-#           if ba > re:
-#             print("==",k, bin.down, "\t",bin.up,"\t",f"nest {ba:5.4f} rest {re:5.4f}, {s:5.4f}\t",s0)
-#   for x in subsets(elite(tmp)):
-#      print(combine(x))
-#      #print(j[1][0][0].also.seen)
-#   #return elite(combine(bins) for bins in subsets(elite(tmp)))
-#
-# 0 92 9
-# 1 8 4
-# 1 50 5
-# 1 34 0
-# 2 8 4
-# 2 81 4
-# 5 69 21
-# 6 100 53
-#
