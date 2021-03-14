@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 """
-es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.  
-Optimizer, written as a data miner.  
-  
+es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
+Optimizer, written as a data miner.
+
 Break the data up into regions of 'bad' and 'better'. 'Interesting'
 things occur at very different frequencies in 'bad' and 'better'.
 Find interesting bits. Combine them. Repeat. Nearly all this
 processing takes log linear time.
-   
+
      :-------:                 explore  = better==bad
      | Ba    | Bad <----.      planning = max(better - bad)
      |    56 |          |      monitor  = max(bad - better)
@@ -120,10 +120,10 @@ class Num(obj):
     i.goalp = "+" == txt[-1] or "-" == txt[-1]
     i._all, i.ok = [], False
 
-  def discretize(i, j, THE):
+  def discretize(i, j, MY):
     xy = [(better, True) for better in i._all] + [
         (bad, False) for bad in j._all]
-    tmp = div(xy, tooSmall=i.sd() * THE.cohen, width=len(xy)**THE.size)
+    tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
@@ -183,58 +183,47 @@ def merge(b4):
   return merge(tmp) if len(tmp) < len(b4) else b4
 
 
-def betterBad(tab, THE):
-  border = len(tab.rows) * THE.best
-  if border < THE.min:
+def betterBad(tab, MY):
+  border = len(tab.rows) * MY.best
+  if border < MY.min:
     border = .5 * len(t.rows)
   border = int(border)
   return tab.clone(tab.rows[:int(border)]), tab.clone(tab.rows[int(border):])
 
 
-class Contrast:
-  def __init__(i, here, there, THE):
-    i.evidences = {}
-    i.f = {}
-    i.n = len(here.rows) + len(there.rows)
-    i.hs = {True: len(here.rows),
-            False: len(there.rows)}
-    i.prior = {True: (len(here.rows) + THE.k) / (i.n + THE.k * 2),
-               False: (len(there.rows) + THE.k) / (i.n + THE.k * 2)}
-    for col1, col2 in zip(here.xs, there.xs):
-      for f, klass, span in col1.discretize(col2, THE):
-        tri = (col1.txt, col1.pos, span)
-        key = (klass, tri)
-        i.f[key] = f
-        i.evidences[key] = i.eh(f, klass, THE)
-    i.rules = i.learn(True, THE)
+def contrast(here, there, MY):
+  def seen():
+    return {(kl, (col1.txt, col1.pos, span)): f
+            for col1, col2 in zip(here.xs, there.xs)
+            for f, kl, span in col1.discretize(col2, MY)}
 
-  def eh(i, f, kl, THE):
-    return (f + THE.m * i.prior[kl]) / (i.hs[kl] + THE.m)
-
-  def like(i, rule, kl, THE):
+  def like(rule, kl):
+    prior = (hs[kl] + MY.k) / (n + MY.k * 2)
     fs = {}
-    for tri in rule:
-      col = tri[0]
-      fs[col] = fs.get(col, 0) + i.f.get((kl, tri), 0)
-    parts = [i.prior[kl]] + [i.eh(f, kl, THE) for f in fs.values()]
+    for txt, pos, span in rule:
+      fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
+    parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
     like = math.e**sum(map(math.log, parts))
-    return like, rule
+    return like
 
-  def learn(i, kl, THE):
-    def b2(tri):
-      b = i.evidences.get((True, tri), 0)
-      r = i.evidences.get((False, tri), 0)
-      b2 = b**2 / (b + r) if r > 0.001 and b > r else 0
-      return b if b > 0.001 and b > r else 0
+  def value(rule):
+    b = like(rule, True)
+    r = like(rule, False)
+    return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
 
-    def top():
-      ones = [(b2(tri), kl, tri) for kl, tri in i.evidences.keys()]
-      ordered = sorted(ones, reverse=True)
-      useful = [tri for s, kl, tri in ordered if kl and s > 0]
-      return useful[:THE.top]
-    # ----------------------------------
-    all = [i.like(rule, kl, THE) for rule in subsets(top())]
-    return sorted(all, reverse=True)[:THE.top]
+  def solos(lst):
+    for kl, x in f:
+      if kl == True:
+        if s := value([x]):  # if zero, then skip x
+          lst += [(s, x)]
+    return lst
+
+  def top(lst): return [x for _, x in sorted(lst, reverse=True)[:MY.top]]
+
+  f = seen()
+  n = len(here.rows) + len(there.rows)
+  hs = {True: len(here.rows), False: len(there.rows)}
+  return top([(value(rule), rule) for rule in subsets(top(solos([])))])
 
 
 def canonical(rule):

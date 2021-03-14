@@ -6,9 +6,9 @@ from es import *
 import es
 
 
-def eg_one(THE):
+def eg_one(MY):
   "one example"
-  t = Tab(csv(THE.dir + THE.data))
+  t = Tab(csv(MY.dir + MY.data))
   rows = sorted(t.rows)
   u = t.clone(rows[:100])
   v = t.clone(rows[100:])
@@ -17,16 +17,18 @@ def eg_one(THE):
   for col1, col2 in zip(u.xs, v.xs):
     print("")
     print(col1.txt)
-    for b in col1.discretize(col2, THE):
+    for b in col1.discretize(col2, MY):
       print(b, b.also.seen)
 
 
-def eg_two(THE):
+def eg_two(MY):
   "one example"
-  t = Tab(csv(THE.dir + THE.data))
-  best, rest = betterBad(t, THE)
-  for s, rule in Contrast(best, rest, THE).rules:
-    print(f"{s:>6.2f}", canonical(rule))
+  t = Tab(csv(MY.dir + MY.data))
+  best, rest = betterBad(t, MY)
+  # or s, rule in Contrast(best, rest, MY).rules:
+  # print(f"{s:>6.2f}", canonical(rule))
+  for rule in contrast(best, rest, MY):
+    print(canonical(rule))
 
 
 main(es.__doc__, es.HELP, eg_s(vars()),
