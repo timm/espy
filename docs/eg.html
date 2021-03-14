@@ -33,27 +33,31 @@ from etc import *
 from es import *
 import es
 
-def eg_one(THE):
+
+def eg_one(MY):
   &#34;one example&#34;
-  t=Tab(csv(THE.dir + THE.data))
+  t = Tab(csv(MY.dir + MY.data))
   rows = sorted(t.rows)
-  u=t.clone(rows[:100])
-  v=t.clone(rows[100:])
+  u = t.clone(rows[:100])
+  v = t.clone(rows[100:])
   print(u.goals())
   print(v.goals())
-  for col1,col2 in zip(u.xs,v.xs):
+  for col1, col2 in zip(u.xs, v.xs):
     print(&#34;&#34;)
     print(col1.txt)
-    for b in col1.discretize(col2,THE):
+    for b in col1.discretize(col2, MY):
       print(b, b.also.seen)
 
-def eg_two(THE):
+
+def eg_two(MY):
   &#34;one example&#34;
-  t = Tab(csv(THE.dir + THE.data))
-  best,rest = betterBad(t,THE)
-  for rule in Contrast(best,rest,THE).rules: print(rule)
-  print(&#34;&#34;)
-  for rule in Contrast(rest,best,THE).rules: print(rule)
+  t = Tab(csv(MY.dir + MY.data))
+  best, rest = betterBad(t, MY)
+  # or s, rule in Contrast(best, rest, MY).rules:
+  # print(f&#34;{s:&gt;6.2f}&#34;, canonical(rule))
+  for rule in contrast(best, rest, MY):
+    print(canonical(rule))
+
 
 main(es.__doc__, es.HELP, eg_s(vars()),
      also=eg_two)</code></pre>
@@ -67,7 +71,7 @@ main(es.__doc__, es.HELP, eg_s(vars()),
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="eg.eg_one"><code class="name flex">
-<span>def <span class="ident">eg_one</span></span>(<span>THE)</span>
+<span>def <span class="ident">eg_one</span></span>(<span>MY)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>one example</p></div>
@@ -75,23 +79,23 @@ main(es.__doc__, es.HELP, eg_s(vars()),
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def eg_one(THE):
+<pre><code class="python">def eg_one(MY):
   &#34;one example&#34;
-  t=Tab(csv(THE.dir + THE.data))
+  t = Tab(csv(MY.dir + MY.data))
   rows = sorted(t.rows)
-  u=t.clone(rows[:100])
-  v=t.clone(rows[100:])
+  u = t.clone(rows[:100])
+  v = t.clone(rows[100:])
   print(u.goals())
   print(v.goals())
-  for col1,col2 in zip(u.xs,v.xs):
+  for col1, col2 in zip(u.xs, v.xs):
     print(&#34;&#34;)
     print(col1.txt)
-    for b in col1.discretize(col2,THE):
+    for b in col1.discretize(col2, MY):
       print(b, b.also.seen)</code></pre>
 </details>
 </dd>
 <dt id="eg.eg_two"><code class="name flex">
-<span>def <span class="ident">eg_two</span></span>(<span>THE)</span>
+<span>def <span class="ident">eg_two</span></span>(<span>MY)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>one example</p></div>
@@ -99,13 +103,14 @@ main(es.__doc__, es.HELP, eg_s(vars()),
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def eg_two(THE):
+<pre><code class="python">def eg_two(MY):
   &#34;one example&#34;
-  t = Tab(csv(THE.dir + THE.data))
-  best,rest = betterBad(t,THE)
-  for rule in Contrast(best,rest,THE).rules: print(rule)
-  print(&#34;&#34;)
-  for rule in Contrast(rest,best,THE).rules: print(rule)</code></pre>
+  t = Tab(csv(MY.dir + MY.data))
+  best, rest = betterBad(t, MY)
+  # or s, rule in Contrast(best, rest, MY).rules:
+  # print(f&#34;{s:&gt;6.2f}&#34;, canonical(rule))
+  for rule in contrast(best, rest, MY):
+    print(canonical(rule))</code></pre>
 </details>
 </dd>
 </dl>

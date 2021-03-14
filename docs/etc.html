@@ -29,95 +29,119 @@
 <pre><code class="python">#!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 # misc python code.
-import random, sys, re
+import random
+import sys
+import re
 from types import FunctionType as fun
+
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
-  def __repr__(i): 
-    lst=sorted(i.__dict__.items())
-    return &#34;{&#34;+ &#39;, &#39;.join( [f&#34;:{k} {v}&#34; for k,v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;
+
+  def __repr__(i):
+    lst = sorted(i.__dict__.items())
+    return &#34;{&#34; + &#39;, &#39;.join([f&#34;:{k} {v}&#34; for k, v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;
+
 
 def csv(file):
   with open(file) as fp:
-    for line in fp: 
-      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;,&#39;&#39;,line)
+    for line in fp:
+      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, line)
       if line:
-        yield  line.split(&#34;,&#34;)
+        yield line.split(&#34;,&#34;)
+
 
 def subsets(l):
-  out  = [[]]
+  out = [[]]
   for x in l:
-    out  += [sub + [x] for sub in out]
+    out += [sub + [x] for sub in out]
   return out[1:]
 
 
-def eg(k,f,THE):
-  random.seed(THE.seed)
-  print(flair(HEADER= (&#34;# &#34; + k + &#34; : &#34; + (f.__doc__ or &#34;&#34;))))
-  try: f(THE)
-  except Exception: ok(False, &#34;function ran?&#34;)
+def eg(k, f, MY):
+  random.seed(MY.seed)
+  print(flair(HEADER=(&#34;# &#34; + k + &#34; : &#34; + (f.__doc__ or &#34;&#34;))))
+  try:
+    f(MY)
+  except Exception:
+    ok(False, &#34;function ran?&#34;)
   return f
 
+
 def ok(x, txt=&#34;&#34;):
-  if x: print(&#34;\t&#34; + txt + flair(OKGREEN=&#34; PASS&#34;))
-  else: print(&#34;\t&#34; + txt + flair(FAIL   =&#34; FAIL&#34;))
+  if x:
+    print(&#34;\t&#34; + txt + flair(OKGREEN=&#34; PASS&#34;))
+  else:
+    print(&#34;\t&#34; + txt + flair(FAIL=&#34; FAIL&#34;))
+
 
 def flair(**d):
   c = dict(
-    HEADER  = &#39;\033[95m&#39;, OKBLUE  = &#39;\033[94m&#39;, OKCYAN    = &#39;\033[96m&#39;,
-    OKGREEN = &#39;\033[92m&#39;, WARNING = &#39;\033[93m&#39;, FAIL      = &#39;\033[91m&#39;,
-    ENDC    = &#39;\033[0m&#39;,  BOLD    = &#39;\033[1m&#39;,  UNDERLINE = &#39;\033[4m&#39;)
-  for k,v in d.items():
+      HEADER=&#39;\033[95m&#39;, OKBLUE=&#39;\033[94m&#39;, OKCYAN=&#39;\033[96m&#39;,
+      OKGREEN=&#39;\033[92m&#39;, WARNING=&#39;\033[93m&#39;, FAIL=&#39;\033[91m&#39;,
+      ENDC=&#39;\033[0m&#39;,  BOLD=&#39;\033[1m&#39;,  UNDERLINE=&#39;\033[4m&#39;)
+  for k, v in d.items():
     return c[k] + c[&#34;BOLD&#34;] + str(v) + c[&#34;ENDC&#34;]
 
-def help_txt(doc,xpect):
+
+def help_txt(doc, xpect):
   print(flair(OKCYAN=doc))
   print(f&#34; -{&#39;h&#39;:12} show help   &#34;)
   print(f&#34; -{&#39;egs&#39;:12} run all examples   &#34;)
   print(f&#34; -{&#39;eg S&#39;:12} run examples matching &#39;S&#39;  &#34;)
   print(f&#34; -{&#39;ls&#39;:12} list all examples   &#34;)
-  for k,(v,help) in xpect.items():
-    m = (&#34;  &#34; if v==False       else (
-         &#34; I&#34; if type(v)==int   else (
-         &#34; F&#34; if type(v)==float else (
-         &#34; S&#34;))))
-    print(f&#34; +{k:12} {help}   &#34; if v==False else f&#34; -{k+m:12} {help}  &#34;)
+  for k, (v, help) in xpect.items():
+    m = (&#34;  &#34; if v == False else (
+         &#34; I&#34; if type(v) == int else (
+             &#34; F&#34; if type(v) == float else (
+                 &#34; S&#34;))))
+    print(f&#34; +{k:12} {help}   &#34; if v == False else f&#34; -{k+m:12} {help}  &#34;)
 
-def cli(doc,xpect,funs=[]):
+
+def cli(doc, xpect, funs=[]):
   &#34;&#34;&#34;Takes a dictionary (k1:(default1,help1))+, valid cli keys are one of the 
   `default` symbols and `-h` shows the `help` text. Also, new arguments to
   those flags need to be same type as `default1`.&#34;&#34;&#34;
-  want = {k:v for k,(v,_) in xpect.items()} # all the key, defaults
-  elp  = lambda k,v: print(f&#34;{k[3:]:&gt;15} :&#34;,v.__doc__) 
-  got, args, out = {}, sys.argv, {k:want[k] for k in want}
+  want = {k: v for k, (v, _) in xpect.items()}  # all the key, defaults
+  def elp(k, v): return print(f&#34;{k[3:]:&gt;15} :&#34;, v.__doc__)
+  got, args, out = {}, sys.argv, {k: want[k] for k in want}
   do = []
   while args:
-    arg,*args = args
+    arg, *args = args
     mark = arg[0]
     if mark in &#34;+-&#34;:
       flag = arg[1:]
-      if   flag==&#34;h&#34;  : help_txt(doc, xpect)
-      elif flag==&#34;ls&#34; : [elp(k,funs[k]) for k in funs]
-      elif flag==&#34;egs&#34;: do= [(k,v) for k,v in funs.items()]
-      elif not args   : print(f&#34;W: missing argument for {flag}&#34;)
-      elif flag==&#34;eg&#34; : do= [(k,funs[k]) for k in funs if args[0] in k]
-      elif flag not in want: print(f&#34;W: ignoring {flag} (not defined)&#34;)
-      else:                 
-        old,new = want[flag],args[0]
-        try: out[flag] = (float(new) if type(old) == float else (
-                          int(new)   if type(old) == int   else (
-                          new)))
-        except Exception: print(f&#34;W: {new} not of type {type(old).__name__}&#34;)
+      if flag == &#34;h&#34;:
+        help_txt(doc, xpect)
+      elif flag == &#34;ls&#34;:
+        [elp(k, funs[k]) for k in funs]
+      elif flag == &#34;egs&#34;:
+        do = [(k, v) for k, v in funs.items()]
+      elif not args:
+        print(f&#34;W: missing argument for {flag}&#34;)
+      elif flag == &#34;eg&#34;:
+        do = [(k, funs[k]) for k in funs if args[0] in k]
+      elif flag not in want:
+        print(f&#34;W: ignoring {flag} (not defined)&#34;)
+      else:
+        old, new = want[flag], args[0]
+        try:
+          out[flag] = (float(new) if type(old) == float else (
+              int(new) if type(old) == int else (
+                  new)))
+        except Exception:
+          print(f&#34;W: {new} not of type {type(old).__name__}&#34;)
   out[&#34;_do&#34;] = do
   return out
 
-def eg_s(l): return {k:v for k,v in l.items() if type(v)==fun and k[:3]==&#34;eg_&#34;}
+
+def eg_s(l): return {k: v for k, v in l.items()
+                     if type(v) == fun and k[:3] == &#34;eg_&#34;}
+
 
 def main(doc, help, funs, also=None):
-  the  = obj(**cli(doc,help, funs))
-  [eg(k,v,the) for k,v in the._do]
-  if also: also(the)</code></pre>
+  my = obj(**cli(doc, help, funs))
+  also(my) if also else [eg(k, v, my) for k, v in my._do]</code></pre>
 </details>
 </section>
 <section>
@@ -138,10 +162,10 @@ def main(doc, help, funs, also=None):
 </summary>
 <pre><code class="python">def csv(file):
   with open(file) as fp:
-    for line in fp: 
-      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;,&#39;&#39;,line)
+    for line in fp:
+      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, line)
       if line:
-        yield  line.split(&#34;,&#34;)</code></pre>
+        yield line.split(&#34;,&#34;)</code></pre>
 </details>
 </dd>
 <dt id="etc.subsets"><code class="name flex">
@@ -154,14 +178,14 @@ def main(doc, help, funs, also=None):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def subsets(l):
-  out  = [[]]
+  out = [[]]
   for x in l:
-    out  += [sub + [x] for sub in out]
+    out += [sub + [x] for sub in out]
   return out[1:]</code></pre>
 </details>
 </dd>
 <dt id="etc.eg"><code class="name flex">
-<span>def <span class="ident">eg</span></span>(<span>k, f, THE)</span>
+<span>def <span class="ident">eg</span></span>(<span>k, f, MY)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -169,11 +193,13 @@ def main(doc, help, funs, also=None):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def eg(k,f,THE):
-  random.seed(THE.seed)
-  print(flair(HEADER= (&#34;# &#34; + k + &#34; : &#34; + (f.__doc__ or &#34;&#34;))))
-  try: f(THE)
-  except Exception: ok(False, &#34;function ran?&#34;)
+<pre><code class="python">def eg(k, f, MY):
+  random.seed(MY.seed)
+  print(flair(HEADER=(&#34;# &#34; + k + &#34; : &#34; + (f.__doc__ or &#34;&#34;))))
+  try:
+    f(MY)
+  except Exception:
+    ok(False, &#34;function ran?&#34;)
   return f</code></pre>
 </details>
 </dd>
@@ -187,8 +213,10 @@ def main(doc, help, funs, also=None):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def ok(x, txt=&#34;&#34;):
-  if x: print(&#34;\t&#34; + txt + flair(OKGREEN=&#34; PASS&#34;))
-  else: print(&#34;\t&#34; + txt + flair(FAIL   =&#34; FAIL&#34;))</code></pre>
+  if x:
+    print(&#34;\t&#34; + txt + flair(OKGREEN=&#34; PASS&#34;))
+  else:
+    print(&#34;\t&#34; + txt + flair(FAIL=&#34; FAIL&#34;))</code></pre>
 </details>
 </dd>
 <dt id="etc.flair"><code class="name flex">
@@ -202,10 +230,10 @@ def main(doc, help, funs, also=None):
 </summary>
 <pre><code class="python">def flair(**d):
   c = dict(
-    HEADER  = &#39;\033[95m&#39;, OKBLUE  = &#39;\033[94m&#39;, OKCYAN    = &#39;\033[96m&#39;,
-    OKGREEN = &#39;\033[92m&#39;, WARNING = &#39;\033[93m&#39;, FAIL      = &#39;\033[91m&#39;,
-    ENDC    = &#39;\033[0m&#39;,  BOLD    = &#39;\033[1m&#39;,  UNDERLINE = &#39;\033[4m&#39;)
-  for k,v in d.items():
+      HEADER=&#39;\033[95m&#39;, OKBLUE=&#39;\033[94m&#39;, OKCYAN=&#39;\033[96m&#39;,
+      OKGREEN=&#39;\033[92m&#39;, WARNING=&#39;\033[93m&#39;, FAIL=&#39;\033[91m&#39;,
+      ENDC=&#39;\033[0m&#39;,  BOLD=&#39;\033[1m&#39;,  UNDERLINE=&#39;\033[4m&#39;)
+  for k, v in d.items():
     return c[k] + c[&#34;BOLD&#34;] + str(v) + c[&#34;ENDC&#34;]</code></pre>
 </details>
 </dd>
@@ -218,18 +246,18 @@ def main(doc, help, funs, also=None):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def help_txt(doc,xpect):
+<pre><code class="python">def help_txt(doc, xpect):
   print(flair(OKCYAN=doc))
   print(f&#34; -{&#39;h&#39;:12} show help   &#34;)
   print(f&#34; -{&#39;egs&#39;:12} run all examples   &#34;)
   print(f&#34; -{&#39;eg S&#39;:12} run examples matching &#39;S&#39;  &#34;)
   print(f&#34; -{&#39;ls&#39;:12} list all examples   &#34;)
-  for k,(v,help) in xpect.items():
-    m = (&#34;  &#34; if v==False       else (
-         &#34; I&#34; if type(v)==int   else (
-         &#34; F&#34; if type(v)==float else (
-         &#34; S&#34;))))
-    print(f&#34; +{k:12} {help}   &#34; if v==False else f&#34; -{k+m:12} {help}  &#34;)</code></pre>
+  for k, (v, help) in xpect.items():
+    m = (&#34;  &#34; if v == False else (
+         &#34; I&#34; if type(v) == int else (
+             &#34; F&#34; if type(v) == float else (
+                 &#34; S&#34;))))
+    print(f&#34; +{k:12} {help}   &#34; if v == False else f&#34; -{k+m:12} {help}  &#34;)</code></pre>
 </details>
 </dd>
 <dt id="etc.cli"><code class="name flex">
@@ -243,31 +271,39 @@ those flags need to be same type as <code>default1</code>.</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cli(doc,xpect,funs=[]):
+<pre><code class="python">def cli(doc, xpect, funs=[]):
   &#34;&#34;&#34;Takes a dictionary (k1:(default1,help1))+, valid cli keys are one of the 
   `default` symbols and `-h` shows the `help` text. Also, new arguments to
   those flags need to be same type as `default1`.&#34;&#34;&#34;
-  want = {k:v for k,(v,_) in xpect.items()} # all the key, defaults
-  elp  = lambda k,v: print(f&#34;{k[3:]:&gt;15} :&#34;,v.__doc__) 
-  got, args, out = {}, sys.argv, {k:want[k] for k in want}
+  want = {k: v for k, (v, _) in xpect.items()}  # all the key, defaults
+  def elp(k, v): return print(f&#34;{k[3:]:&gt;15} :&#34;, v.__doc__)
+  got, args, out = {}, sys.argv, {k: want[k] for k in want}
   do = []
   while args:
-    arg,*args = args
+    arg, *args = args
     mark = arg[0]
     if mark in &#34;+-&#34;:
       flag = arg[1:]
-      if   flag==&#34;h&#34;  : help_txt(doc, xpect)
-      elif flag==&#34;ls&#34; : [elp(k,funs[k]) for k in funs]
-      elif flag==&#34;egs&#34;: do= [(k,v) for k,v in funs.items()]
-      elif not args   : print(f&#34;W: missing argument for {flag}&#34;)
-      elif flag==&#34;eg&#34; : do= [(k,funs[k]) for k in funs if args[0] in k]
-      elif flag not in want: print(f&#34;W: ignoring {flag} (not defined)&#34;)
-      else:                 
-        old,new = want[flag],args[0]
-        try: out[flag] = (float(new) if type(old) == float else (
-                          int(new)   if type(old) == int   else (
-                          new)))
-        except Exception: print(f&#34;W: {new} not of type {type(old).__name__}&#34;)
+      if flag == &#34;h&#34;:
+        help_txt(doc, xpect)
+      elif flag == &#34;ls&#34;:
+        [elp(k, funs[k]) for k in funs]
+      elif flag == &#34;egs&#34;:
+        do = [(k, v) for k, v in funs.items()]
+      elif not args:
+        print(f&#34;W: missing argument for {flag}&#34;)
+      elif flag == &#34;eg&#34;:
+        do = [(k, funs[k]) for k in funs if args[0] in k]
+      elif flag not in want:
+        print(f&#34;W: ignoring {flag} (not defined)&#34;)
+      else:
+        old, new = want[flag], args[0]
+        try:
+          out[flag] = (float(new) if type(old) == float else (
+              int(new) if type(old) == int else (
+                  new)))
+        except Exception:
+          print(f&#34;W: {new} not of type {type(old).__name__}&#34;)
   out[&#34;_do&#34;] = do
   return out</code></pre>
 </details>
@@ -281,7 +317,8 @@ those flags need to be same type as <code>default1</code>.</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def eg_s(l): return {k:v for k,v in l.items() if type(v)==fun and k[:3]==&#34;eg_&#34;}</code></pre>
+<pre><code class="python">def eg_s(l): return {k: v for k, v in l.items()
+                     if type(v) == fun and k[:3] == &#34;eg_&#34;}</code></pre>
 </details>
 </dd>
 <dt id="etc.main"><code class="name flex">
@@ -294,9 +331,8 @@ those flags need to be same type as <code>default1</code>.</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def main(doc, help, funs, also=None):
-  the  = obj(**cli(doc,help, funs))
-  [eg(k,v,the) for k,v in the._do]
-  if also: also(the)</code></pre>
+  my = obj(**cli(doc, help, funs))
+  also(my) if also else [eg(k, v, my) for k, v in my._do]</code></pre>
 </details>
 </dd>
 </dl>
@@ -316,9 +352,10 @@ those flags need to be same type as <code>default1</code>.</p></div>
 </summary>
 <pre><code class="python">class obj:
   def __init__(i, **d): i.__dict__.update(d)
-  def __repr__(i): 
-    lst=sorted(i.__dict__.items())
-    return &#34;{&#34;+ &#39;, &#39;.join( [f&#34;:{k} {v}&#34; for k,v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;</code></pre>
+
+  def __repr__(i):
+    lst = sorted(i.__dict__.items())
+    return &#34;{&#34; + &#39;, &#39;.join([f&#34;:{k} {v}&#34; for k, v in lst if k[0] != &#34;_&#34;])+&#34;}&#34;</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">

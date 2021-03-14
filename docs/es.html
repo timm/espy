@@ -23,9 +23,8 @@ Optimizer, written as a data miner …" />
 <h1 class="title">Module <code>es</code></h1>
 </header>
 <section id="section-intro">
-<p>es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.<br>
-Optimizer, written as a data miner.
-</p>
+<p>es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
+Optimizer, written as a data miner.</p>
 <p>Break the data up into regions of 'bad' and 'better'. 'Interesting'
 things occur at very different frequencies in 'bad' and 'better'.
 Find interesting bits. Combine them. Repeat. Nearly all this
@@ -45,14 +44,14 @@ processing takes log linear time.</p>
 <pre><code class="python">#!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 &#34;&#34;&#34;
-es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.  
-Optimizer, written as a data miner.  
-  
+es.py /əˈspī/ verb LITERARY see something that is hidden, or obscure.
+Optimizer, written as a data miner.
+
 Break the data up into regions of &#39;bad&#39; and &#39;better&#39;. &#39;Interesting&#39;
 things occur at very different frequencies in &#39;bad&#39; and &#39;better&#39;.
 Find interesting bits. Combine them. Repeat. Nearly all this
 processing takes log linear time.
-   
+
      :-------:                 explore  = better==bad
      | Ba    | Bad &lt;----.      planning = max(better - bad)
      |    56 |          |      monitor  = max(bad - better)
@@ -164,10 +163,10 @@ class Num(obj):
     i.goalp = &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
     i._all, i.ok = [], False
 
-  def discretize(i, j, THE):
+  def discretize(i, j, MY):
     xy = [(better, True) for better in i._all] + [
         (bad, False) for bad in j._all]
-    tmp = div(xy, tooSmall=i.sd() * THE.cohen, width=len(xy)**THE.size)
+    tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
@@ -227,58 +226,101 @@ def merge(b4):
   return merge(tmp) if len(tmp) &lt; len(b4) else b4
 
 
-def betterBad(tab, THE):
-  border = len(tab.rows) * THE.best
-  if border &lt; THE.min:
+def betterBad(tab, MY):
+  border = len(tab.rows) * MY.best
+  if border &lt; MY.min:
     border = .5 * len(t.rows)
   border = int(border)
   return tab.clone(tab.rows[:int(border)]), tab.clone(tab.rows[int(border):])
 
 
-class Contrast:
-  def __init__(i, here, there, THE):
-    i.evidences = {}
-    i.f = {}
-    i.n = len(here.rows) + len(there.rows)
-    i.hs = {True: len(here.rows),
-            False: len(there.rows)}
-    i.prior = {True: (len(here.rows) + THE.k) / (i.n + THE.k * 2),
-               False: (len(there.rows) + THE.k) / (i.n + THE.k * 2)}
-    for col1, col2 in zip(here.xs, there.xs):
-      for f, klass, span in col1.discretize(col2, THE):
-        tri = (col1.txt, col1.pos, span)
-        key = (klass, tri)
-        i.f[key] = f
-        i.evidences[key] = i.eh(f, klass, THE)
-    i.rules = i.learn(True, THE)
+def contrast(here, there, MY):
+  def seen():
+    return {(kl, (col1.txt, col1.pos, span)): f
+            for col1, col2 in zip(here.xs, there.xs)
+            for f, kl, span in col1.discretize(col2, MY)}
 
-  def eh(i, f, kl, THE):
-    return (f + THE.m * i.prior[kl]) / (i.hs[kl] + THE.m)
-
-  def like(i, rule, kl, THE):
+  def like(lst, kl):
+    prior = (hs[kl] + MY.k) / (n + MY.k * 2)
     fs = {}
-    for tri in rule:
-      col = tri[0]
-      fs[col] = fs.get(col, 0) + i.f.get((kl, tri), 0)
-    parts = [i.prior[kl]] + [i.eh(f, kl, THE) for f in fs.values()]
+    for txt, pos, span in lst:
+      fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
+    parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
     like = math.e**sum(map(math.log, parts))
-    return like, rule
+    return like
 
-  def learn(i, kl, THE):
-    def b2(tri):
-      b = i.evidences.get((True, tri), 0)
-      r = i.evidences.get((False, tri), 0)
-      b2 = b**2 / (b + r) if r &gt; 0.001 and b &gt; r else 0
-      return b if b &gt; 0.001 and b &gt; r else 0
+  def value(lst):
+    b = like(lst, True)
+    r = like(lst, False)
+    return b**2 / (b + r) if (b+r) &gt; 0.01 and b &gt; r else 0
 
-    def top():
-      ones = [(b2(tri), kl, tri) for kl, tri in i.evidences.keys()]
-      ordered = sorted(ones, reverse=True)
-      useful = [tri for s, kl, tri in ordered if kl and s &gt; 0]
-      return useful[:THE.top]
-    # ----------------------------------
-    all = [i.like(rule, kl, THE) for rule in subsets(top())]
-    return sorted(all, reverse=True)[:THE.top]</code></pre>
+  def solos(pairs=[]):
+    for kl, x in f:
+      if kl == True:
+        if s := value([x]):  # if zero, then skip x
+          pairs += [(s, x)]
+    return pairs
+
+  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:MY.top]]
+
+  f = seen()
+  n = len(here.rows) + len(there.rows)
+  hs = {True: len(here.rows), False: len(there.rows)}
+  return top([(value(lst), lst) for lst in subsets(top(solos()))])
+
+
+def canonical(rule):
+  def merge(b4):
+    if len(b4) == 1 and b4 == [(LO, HI)]:
+      return None
+    j, tmp = 0, []
+    while j &lt; len(b4):
+      a = b4[j]
+      if j &lt; len(b4)-1:
+        b = b4[j+1]
+        if a[1] == b[0]:
+          a = (a[0], b[1])
+          j += 1
+      tmp += [a]
+      j += 1
+    return tmp if len(tmp) == len(b4) else merge(tmp)
+  cols = {}
+  for col, _, span in rule:
+    cols[col] = cols.get(col, []) + [span]
+  out = {}
+  for k, v in cols.items():
+    if v1 := merge(sorted(v)):
+      out[k] = v1
+  return out
+
+
+def showRulest(tab, rules):
+
+  def selects(tab, rule):
+    def selectors(val, ors):
+      for (lo, hi) in ors:
+        if lo &lt;= val &lt; hi:
+          return True
+      return False
+
+    def selects1(row, ands):
+      for (txt, ors) in ands:
+        val = row[tab.cols.named[txt].pos]
+        if val != NO:
+          if not selectors(val, ors):
+            return False
+      return True
+    s, rule = rule
+    return tab.clone([row for row in tab.rows if selects1(row, rule)])
+
+  def showRule(r):
+    def showRange(x): return Bin(x[0], x[1]).show()
+
+    def show1(k, v):
+      return k + &#34; &#34; + &#39; or &#39;.join(map(showRange, v))
+    s, rule = r
+    out = &#34;&#34;
+    return &#39; and &#39;.join([show1(k, v) for k, v in rule])</code></pre>
 </details>
 </section>
 <section>
@@ -342,7 +384,7 @@ class Contrast:
 </details>
 </dd>
 <dt id="es.betterBad"><code class="name flex">
-<span>def <span class="ident">betterBad</span></span>(<span>tab, THE)</span>
+<span>def <span class="ident">betterBad</span></span>(<span>tab, MY)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -350,12 +392,128 @@ class Contrast:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def betterBad(tab, THE):
-  border = len(tab.rows) * THE.best
-  if border &lt; THE.min:
+<pre><code class="python">def betterBad(tab, MY):
+  border = len(tab.rows) * MY.best
+  if border &lt; MY.min:
     border = .5 * len(t.rows)
   border = int(border)
   return tab.clone(tab.rows[:int(border)]), tab.clone(tab.rows[int(border):])</code></pre>
+</details>
+</dd>
+<dt id="es.contrast"><code class="name flex">
+<span>def <span class="ident">contrast</span></span>(<span>here, there, MY)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def contrast(here, there, MY):
+  def seen():
+    return {(kl, (col1.txt, col1.pos, span)): f
+            for col1, col2 in zip(here.xs, there.xs)
+            for f, kl, span in col1.discretize(col2, MY)}
+
+  def like(lst, kl):
+    prior = (hs[kl] + MY.k) / (n + MY.k * 2)
+    fs = {}
+    for txt, pos, span in lst:
+      fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
+    parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
+    like = math.e**sum(map(math.log, parts))
+    return like
+
+  def value(lst):
+    b = like(lst, True)
+    r = like(lst, False)
+    return b**2 / (b + r) if (b+r) &gt; 0.01 and b &gt; r else 0
+
+  def solos(pairs=[]):
+    for kl, x in f:
+      if kl == True:
+        if s := value([x]):  # if zero, then skip x
+          pairs += [(s, x)]
+    return pairs
+
+  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:MY.top]]
+
+  f = seen()
+  n = len(here.rows) + len(there.rows)
+  hs = {True: len(here.rows), False: len(there.rows)}
+  return top([(value(lst), lst) for lst in subsets(top(solos()))])</code></pre>
+</details>
+</dd>
+<dt id="es.canonical"><code class="name flex">
+<span>def <span class="ident">canonical</span></span>(<span>rule)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def canonical(rule):
+  def merge(b4):
+    if len(b4) == 1 and b4 == [(LO, HI)]:
+      return None
+    j, tmp = 0, []
+    while j &lt; len(b4):
+      a = b4[j]
+      if j &lt; len(b4)-1:
+        b = b4[j+1]
+        if a[1] == b[0]:
+          a = (a[0], b[1])
+          j += 1
+      tmp += [a]
+      j += 1
+    return tmp if len(tmp) == len(b4) else merge(tmp)
+  cols = {}
+  for col, _, span in rule:
+    cols[col] = cols.get(col, []) + [span]
+  out = {}
+  for k, v in cols.items():
+    if v1 := merge(sorted(v)):
+      out[k] = v1
+  return out</code></pre>
+</details>
+</dd>
+<dt id="es.showRulest"><code class="name flex">
+<span>def <span class="ident">showRulest</span></span>(<span>tab, rules)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def showRulest(tab, rules):
+
+  def selects(tab, rule):
+    def selectors(val, ors):
+      for (lo, hi) in ors:
+        if lo &lt;= val &lt; hi:
+          return True
+      return False
+
+    def selects1(row, ands):
+      for (txt, ors) in ands:
+        val = row[tab.cols.named[txt].pos]
+        if val != NO:
+          if not selectors(val, ors):
+            return False
+      return True
+    s, rule = rule
+    return tab.clone([row for row in tab.rows if selects1(row, rule)])
+
+  def showRule(r):
+    def showRange(x): return Bin(x[0], x[1]).show()
+
+    def show1(k, v):
+      return k + &#34; &#34; + &#39; or &#39;.join(map(showRange, v))
+    s, rule = r
+    out = &#34;&#34;
+    return &#39; and &#39;.join([show1(k, v) for k, v in rule])</code></pre>
 </details>
 </dd>
 </dl>
@@ -618,10 +776,10 @@ class Contrast:
     i.goalp = &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
     i._all, i.ok = [], False
 
-  def discretize(i, j, THE):
+  def discretize(i, j, MY):
     xy = [(better, True) for better in i._all] + [
         (bad, False) for bad in j._all]
-    tmp = div(xy, tooSmall=i.sd() * THE.cohen, width=len(xy)**THE.size)
+    tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
@@ -652,7 +810,7 @@ class Contrast:
 <h3>Methods</h3>
 <dl>
 <dt id="es.Num.discretize"><code class="name flex">
-<span>def <span class="ident">discretize</span></span>(<span>i, j, THE)</span>
+<span>def <span class="ident">discretize</span></span>(<span>i, j, MY)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -660,10 +818,10 @@ class Contrast:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def discretize(i, j, THE):
+<pre><code class="python">def discretize(i, j, MY):
   xy = [(better, True) for better in i._all] + [
       (bad, False) for bad in j._all]
-  tmp = div(xy, tooSmall=i.sd() * THE.cohen, width=len(xy)**THE.size)
+  tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
   for bin in merge(tmp):
     for klass, n in bin.also.seen.items():
       yield n, klass, (bin.down, bin.up)</code></pre>
@@ -726,123 +884,6 @@ class Contrast:
 </dd>
 </dl>
 </dd>
-<dt id="es.Contrast"><code class="flex name class">
-<span>class <span class="ident">Contrast</span></span>
-<span>(</span><span>here, there, THE)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class Contrast:
-  def __init__(i, here, there, THE):
-    i.evidences = {}
-    i.f = {}
-    i.n = len(here.rows) + len(there.rows)
-    i.hs = {True: len(here.rows),
-            False: len(there.rows)}
-    i.prior = {True: (len(here.rows) + THE.k) / (i.n + THE.k * 2),
-               False: (len(there.rows) + THE.k) / (i.n + THE.k * 2)}
-    for col1, col2 in zip(here.xs, there.xs):
-      for f, klass, span in col1.discretize(col2, THE):
-        tri = (col1.txt, col1.pos, span)
-        key = (klass, tri)
-        i.f[key] = f
-        i.evidences[key] = i.eh(f, klass, THE)
-    i.rules = i.learn(True, THE)
-
-  def eh(i, f, kl, THE):
-    return (f + THE.m * i.prior[kl]) / (i.hs[kl] + THE.m)
-
-  def like(i, rule, kl, THE):
-    fs = {}
-    for tri in rule:
-      col = tri[0]
-      fs[col] = fs.get(col, 0) + i.f.get((kl, tri), 0)
-    parts = [i.prior[kl]] + [i.eh(f, kl, THE) for f in fs.values()]
-    like = math.e**sum(map(math.log, parts))
-    return like, rule
-
-  def learn(i, kl, THE):
-    def b2(tri):
-      b = i.evidences.get((True, tri), 0)
-      r = i.evidences.get((False, tri), 0)
-      b2 = b**2 / (b + r) if r &gt; 0.001 and b &gt; r else 0
-      return b if b &gt; 0.001 and b &gt; r else 0
-
-    def top():
-      ones = [(b2(tri), kl, tri) for kl, tri in i.evidences.keys()]
-      ordered = sorted(ones, reverse=True)
-      useful = [tri for s, kl, tri in ordered if kl and s &gt; 0]
-      return useful[:THE.top]
-    # ----------------------------------
-    all = [i.like(rule, kl, THE) for rule in subsets(top())]
-    return sorted(all, reverse=True)[:THE.top]</code></pre>
-</details>
-<h3>Methods</h3>
-<dl>
-<dt id="es.Contrast.eh"><code class="name flex">
-<span>def <span class="ident">eh</span></span>(<span>i, f, kl, THE)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def eh(i, f, kl, THE):
-  return (f + THE.m * i.prior[kl]) / (i.hs[kl] + THE.m)</code></pre>
-</details>
-</dd>
-<dt id="es.Contrast.like"><code class="name flex">
-<span>def <span class="ident">like</span></span>(<span>i, rule, kl, THE)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def like(i, rule, kl, THE):
-  fs = {}
-  for tri in rule:
-    col = tri[0]
-    fs[col] = fs.get(col, 0) + i.f.get((kl, tri), 0)
-  parts = [i.prior[kl]] + [i.eh(f, kl, THE) for f in fs.values()]
-  like = math.e**sum(map(math.log, parts))
-  return like, rule</code></pre>
-</details>
-</dd>
-<dt id="es.Contrast.learn"><code class="name flex">
-<span>def <span class="ident">learn</span></span>(<span>i, kl, THE)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def learn(i, kl, THE):
-  def b2(tri):
-    b = i.evidences.get((True, tri), 0)
-    r = i.evidences.get((False, tri), 0)
-    b2 = b**2 / (b + r) if r &gt; 0.001 and b &gt; r else 0
-    return b if b &gt; 0.001 and b &gt; r else 0
-
-  def top():
-    ones = [(b2(tri), kl, tri) for kl, tri in i.evidences.keys()]
-    ordered = sorted(ones, reverse=True)
-    useful = [tri for s, kl, tri in ordered if kl and s &gt; 0]
-    return useful[:THE.top]
-  # ----------------------------------
-  all = [i.like(rule, kl, THE) for rule in subsets(top())]
-  return sorted(all, reverse=True)[:THE.top]</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 </dl>
 </section>
 </article>
@@ -874,10 +915,13 @@ zip
 </div>
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="es.div" href="#es.div">div</a></code></li>
 <li><code><a title="es.merge" href="#es.merge">merge</a></code></li>
 <li><code><a title="es.betterBad" href="#es.betterBad">betterBad</a></code></li>
+<li><code><a title="es.contrast" href="#es.contrast">contrast</a></code></li>
+<li><code><a title="es.canonical" href="#es.canonical">canonical</a></code></li>
+<li><code><a title="es.showRulest" href="#es.showRulest">showRulest</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -913,14 +957,6 @@ zip
 <li><code><a title="es.Num.sd" href="#es.Num.sd">sd</a></code></li>
 <li><code><a title="es.Num.mid" href="#es.Num.mid">mid</a></code></li>
 <li><code><a title="es.Num.norm" href="#es.Num.norm">norm</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="es.Contrast" href="#es.Contrast">Contrast</a></code></h4>
-<ul class="">
-<li><code><a title="es.Contrast.eh" href="#es.Contrast.eh">eh</a></code></li>
-<li><code><a title="es.Contrast.like" href="#es.Contrast.like">like</a></code></li>
-<li><code><a title="es.Contrast.learn" href="#es.Contrast.learn">learn</a></code></li>
 </ul>
 </li>
 </ul>
