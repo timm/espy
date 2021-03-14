@@ -211,7 +211,7 @@ def contrast(here, there, MY):
     r = like(lst, False)
     return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
 
-  def solos(pairs):
+  def solos(pairs=[]):
     for kl, x in f:
       if kl == True:
         if s := value([x]):  # if zero, then skip x
@@ -223,7 +223,7 @@ def contrast(here, there, MY):
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(lst), lst) for lst in subsets(top(solos([])))])
+  return top([(value(lst), lst) for lst in subsets(top(solos()))])
 
 
 def canonical(rule):
