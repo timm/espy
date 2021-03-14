@@ -21,8 +21,11 @@ def eg_one(THE):
 
 def eg_two(THE):
   "one example"
-  t=Tab(csv(THE.dir + THE.data))
-  rules(t,THE)
+  t = Tab(csv(THE.dir + THE.data))
+  best,rest = betterBad(t,THE)
+  for rule in Contrast(best,rest,THE).rules: print(rule)
+  print("")
+  for rule in Contrast(rest,best,THE).rules: print(rule)
 
 def eg(k,f,THE):
   random.seed(THE.seed)

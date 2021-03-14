@@ -35,8 +35,6 @@ LO     = -math.inf
 HI     =  math.inf
 TINY   = 1E-32
 NO     = "?"
-BAD    = "bad"
-BETTER = "better"
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
@@ -66,6 +64,7 @@ class Tab(obj):
                     for pos,txt in enumerate(row)]
          i.ys   = [col for col in i.cols if     col.goalp]
          i.xs   = [col for col in i.cols if not col.goalp]
+    i.rows = sorted(i.rows,reverse=True)
   def clone(i,inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
   def goals(i):          return [col.mid() for col in i.ys]
  
@@ -93,14 +92,6 @@ class Sym(obj):
         i.most, i.mode = tmp, x
     return x
   def ent(i): return sum(-v/i.n * math.log(v/i.n) for v in i.seen.values())
-  def discretize(i,j,_): 
-    out = []
-    for k in (i.seen | j.seen):  #a 23 b 50
-      b = Bin(k,k)
-      b.also.add(BETTER, i.seen.get(k,0))
-      b.also.add(BAD,    j.seen.get(k,0))
-      out += [b]
-    return [bin.at(i) for bin in out]
   def simplified(i,j):
     k     = i.merge(j)
     e1,n1 = i.ent(), i.n
@@ -113,6 +104,10 @@ class Sym(obj):
     for seen in [i.seen, j.seen]:
       for x,n in seen.items(): k.add(x,n)
     return k
+  def discretize(i,j,_): 
+    for k in (i.seen | j.seen):  #a 23 b 50
+      yield i.seen.get(k,0), True,  (k, k)
+      yield j.seen.get(k,0), False, (k, k)
 
 class Num(obj):
   def __init__(i,pos=0,txt=""): 
@@ -120,6 +115,13 @@ class Num(obj):
     i.w     = -1 if "-"==txt[-1] else 1
     i.goalp = "+" == txt[-1] or "-" == txt[-1] 
     i._all, i.ok = [],False
+  def discretize(i,j,THE):
+    xy  = [(better,True) for better in i._all] + [
+           (bad,   False   ) for bad    in j._all]
+    tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
+    for bin in merge(tmp):
+      for klass,n in bin.also.seen.items():
+         yield n,klass,  (bin.down, bin.up)
   def add(i,x,**_):
     if x == NO: return x
     i.n += 1
@@ -135,11 +137,6 @@ class Num(obj):
   def mid(i)   : return i._per(.5) if i._all else None 
   def _per(i,p): a= i._alls(); return a[int(p*len(a))]
   def norm(i,x): a= i._alls(); return (x-a[0])/(a[-1] - a[0] + TINY)
-  def discretize(i,j,THE):
-    xy  = [(better,BETTER) for better in i._all] + [
-           (bad,   BAD   ) for bad    in j._all]
-    tmp = div(xy, tooSmall=i.sd()*THE.cohen, width=len(xy)**THE.size)
-    return [bin.at(i) for bin in merge(tmp)]
 
 def div(xy, tooSmall=0.01, width=20):
   while width < 4 and width < len(xy) / 2: width *= 1.2
@@ -186,65 +183,113 @@ def subsets(l):
     out  += [sub + [x] for sub in out]
   return out[1:]
 
-
-def rules(tab,THE):
-  def elite(rules): 
-   tmp = [(val(r),r) for _,r in rules]
-   tmp = [(s,r)      for s,r in tmp if s >0.001]
-   tmp = sorted(tmp,reverse=True)
-   return tmp[:THE.top]
-
-  def val(rule):
-    b = like(rule, BETTER)
-    r = like(rule, BAD   )
-    tmp = b**2 / (b + r) if b > r else 0
-    x = list(rule.values())[0][0]
-    if tmp > 0: print("::", x.pos,x.down,x.up,"\t",b,r,tmp)
-    return tmp
-
-  def like(rule,h):
-    like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
-    like = math.log(like)
-    for x,bins in rule.items():
-      f = sum(b.also.seen.get(h,0) for b in bins)
-      inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
-      like += math.log(inc)
-    return math.e**like  
-
-  def combine(lst):
-    d={}
-    for _,ands in lst:
-      for k,one in ands.items():
-        d[k] = d.get(k,[]).append(one)
-    print("D",d)
-    sys.exit()
-    return 0,d
-  #---------------------------
+def betterBad(tab,THE):
   border = len(tab.rows)*THE.best
-  if border < THE.min: border = len(t.rows)*.5
-  better = tab.clone(tab.rows[:int(border)])
-  bad    = tab.clone(tab.rows[int(border):])
-  i      = obj(n  = len(tab.rows), 
-               hs = {BETTER: len(better.rows),
-                     BAD   : len(bad.rows)})
-  tmp = [(0, {col1.pos:[bin]}) 
-          for col1,col2 in zip(better.xs, bad.xs)
-          for bin       in col1.discretize(col2, THE)]
-  for _,j in tmp:
-     s0 = val(j)
-     for k,v in j.items():
-       for bin in v:
-          d= {k1 : n/i.hs[k1] for k1,n in bin.also.seen.items()}
-          ba = d.get(BETTER,0)
-          re = d.get(BAD,0)
-          s  = ba**2/(ba+re)
-          if ba > re:
-            print("==",k, bin.down, "\t",bin.up,"\t",f"nest {ba:5.4f} rest {re:5.4f}, {s:5.4f}\t",s0)
-  for x in subsets(elite(tmp)):
-     print(combine(x))
-     #print(j[1][0][0].also.seen)
-  #return elite(combine(bins) for bins in subsets(elite(tmp)))
+  if border < THE.min: 
+    border = .5*len(t.rows)
+  border  = int(border)
+  return tab.clone(tab.rows[:int(border)]), tab.clone(tab.rows[int(border):])
 
+class Contrast:
+  def __init__(i,here,there,THE):
+    i.evidences = {}
+    i.f     = {}
+    i.n     = len(here.rows) + len(there.rows)
+    i.hs    = {True : len(here.rows),
+               False: len(there.rows)}
+    i.prior = {True : (len(here.rows) + THE.k) / (i.n + THE.k*2),
+               False: (len(there.rows) + THE.k) / (i.n + THE.k*2)}
+    for col1,col2 in zip(here.xs, there.xs):
+      for f,klass,span in col1.discretize(col2, THE):
+        tri              = (col1.txt,col1.pos,span)
+        key              = (klass,tri)
+        i.f[key]         = f
+        i.evidences[key] = i.eh(f,klass,THE)
+    i.rules = i.learn(True,THE)
+  def eh(i,f,kl, THE): 
+    return (f + THE.m * i.prior[kl]) / (i.hs[kl]+THE.m)
+  def like(i,rule,kl,THE):
+    fs = {}
+    for tri in sorted(rule):
+      col=tri[0]
+      fs[col] = fs.get(col,0) + i.f.get((kl,tri),0)
+    parts= [i.prior[kl]] + [i.eh(f,kl,THE) for f in fs.values()]
+    like= math.e**sum(map(math.log, parts))
+    return like, rule
+  def learn(i,kl,THE):
+    def b2(tri) :
+      b  = i.evidences.get((True, tri),0)
+      r  = i.evidences.get((False,tri),0)
+      b2 = b**2/(b+r) if r>0.001 and b>r else 0
+      return b if b> 0.001 and b>r else 0
+    def top():
+      ones    = [(b2(tri),kl,tri) for kl,tri in i.evidences.keys()]
+      ordered = sorted(ones,reverse=True)
+      useful  = [tri for s,kl,tri in ordered if kl and s>0]
+      return useful[:THE.top]
+    #----------------------------------
+    all = [i.like(rule,kl,THE) for rule in subsets(top())]
+    return sorted(all, reverse=True)[:THE.top]
+  
+
+# def rules(tab,THE):
+#   def elite(rules): 
+#    tmp = [(val(r),r) for _,r in rules]
+#    tmp = [(s,r)      for s,r in tmp if s >0.001]
+#    tmp = sorted(tmp,reverse=True)
+#    return tmp[:THE.top]
+#
+#   def val(rule):
+#     b = like(rule, BETTER)
+#     r = like(rule, BAD   )
+#     tmp = b**2 / (b + r) if b > r else 0
+#     x = list(rule.values())[0][0]
+#     if tmp > 0: print("::", x.pos,x.down,x.up,"\t",b,r,tmp)
+#     return tmp
+#
+#   def like(rule,h):
+#     like = prior = (i.hs[h] + THE.k) / (i.n + THE.k * len(i.hs))
+#     like = math.log(like)
+#     for x,bins in rule.items():
+#       f = sum(b.also.seen.get(h,0) for b in bins)
+#       inc = (f + THE.m * prior) / (i.hs[h] + THE.m)
+#       like += math.log(inc)
+#     return math.e**like  
+#
+#   def combine(lst):
+#     d={}
+#     for _,ands in lst:
+#       for k,one in ands.items():
+#         d[k] = d.get(k,[]).append(one)
+#     print("D",d)
+#     sys.exit()
+#     return 0,d
+#   #---------------------------
+#   border = len(tab.rows)*THE.best
+#   if border < THE.min: border = len(t.rows)*.5
+#   better = tab.clone(tab.rows[:int(border)])
+#   bad    = tab.clone(tab.rows[int(border):])
+#   i      = obj(n  = len(tab.rows), 
+#                hs = {BETTER: len(better.rows),
+#                      BAD   : len(bad.rows)})
+#   tmp = [(0, {col1.pos:[bin]}) 
+#           for col1,col2 in zip(better.xs, bad.xs)
+#           for bin       in col1.discretize(col2, THE)]
+#   for _,j in tmp:
+#      s0 = val(j)
+#      for k,v in j.items():
+#        for bin in v:
+#           d= {k1 : n/i.hs[k1] for k1,n in bin.also.seen.items()}
+#           ba = d.get(BETTER,0)
+#           re = d.get(BAD,0)
+#           s  = ba**2/(ba+re)
+#           if ba > re:
+#             print("==",k, bin.down, "\t",bin.up,"\t",f"nest {ba:5.4f} rest {re:5.4f}, {s:5.4f}\t",s0)
+#   for x in subsets(elite(tmp)):
+#      print(combine(x))
+#      #print(j[1][0][0].also.seen)
+#   #return elite(combine(bins) for bins in subsets(elite(tmp)))
+#
 # 0 92 9
 # 1 8 4
 # 1 50 5
