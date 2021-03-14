@@ -17,6 +17,11 @@ processing takes log linear time.
              |    5 | Better
              :------:
 
+## Usage
+
+cd src  
+./eg.py -h
+
  -h            show help   
  -egs          run all examples   
  -eg S         run examples matching 'S'  

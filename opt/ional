@@ -6,10 +6,9 @@ Espy=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )/..
 ############# assert dirs exist
 mkdir -p $Espy/opt
 mkdir -p $Espy/docs
+mkdir -p $Espy/src
 
 chmod +x $Espy/opt/ional
-chmod +x $Espy/eg.py
-chmod +x $Espy/es.py
 
 ############# ensure files exist
 f=opt/tmux-conf; [ -f "$Espy/$f"  ] || wget -q -O $Espy/$f $web/$f
@@ -32,7 +31,7 @@ html() {
   pdoc3 --config sort_identifiers=False        \
         --config show_inherited_members=False   \
         --force --template-dir $Espy/docs --html \
-        -o $Espy/docs $Espy/*.py
+        -o $Espy/docs $Espy/src/*.py
   git add $Espy/docs/*.html
 }
 

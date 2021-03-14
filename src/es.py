@@ -31,7 +31,7 @@ HELP = dict(
     min=(20, "if rows less than 'min, then 'best'=.5"),
     size=(.5, "min size of breaks"),
     cohen=(.2, "var min"),
-    dir=("opt/data/", "dir to data"),
+    dir=("../opt/data/", "dir to data"),
     data=("auto93.csv", "data file"),
     seed=(1, "random number seed"))
 
