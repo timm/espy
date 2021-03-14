@@ -28,7 +28,7 @@ def eg_two(MY):
   # or s, rule in Contrast(best, rest, MY).rules:
   # print(f"{s:>6.2f}", canonical(rule))
   for rule in contrast(best, rest, MY):
-    print(canonical(rule))
+    print(canonical(t, rule))
 
 
 main(es.__doc__, es.HELP, eg_s(vars()),

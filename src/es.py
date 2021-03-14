@@ -226,7 +226,31 @@ def contrast(here, there, MY):
   return top([(value(lst), lst) for lst in subsets(top(solos()))])
 
 
-def canonical(rule):
+def canonical(tab, rule):
+  def selects(d):
+    def selectors(val, ors):
+      for (lo, hi) in ors:
+        if lo <= val < hi:
+          return True
+      return False
+
+    def selects1(d, row):
+      for ors in lst:
+        val = row[pos]
+        if val != NO:
+          if not selectors(val, ors):
+            return False
+      return True
+    return tab.clone([row for row in tab.rows if selects1(d, row)])
+
+  def has(s, x): return (x == s[0]) if s[0] == s[1] else (s[0] <= x < s[1])
+
+  def show(x):
+    return (f" ={x[0]}" if x[0] == x[1] else (
+        f" <={x[1]}"if x[0] == -math.inf else (
+            f" >={x[0]}"if x[1] == math.inf else (
+                f" [{x[0]}..{x[1]}"))))
+
   def merge(b4):
     if len(b4) == 1 and b4 == [(LO, HI)]:
       return None
@@ -244,37 +268,9 @@ def canonical(rule):
   cols = {}
   for col, _, span in rule:
     cols[col] = cols.get(col, []) + [span]
-  out = {}
+  d = {}
   for k, v in cols.items():
+    s = f"{k}"
     if v1 := merge(sorted(v)):
-      out[k] = v1
-  return out
-
-
-def showRulest(tab, rules):
-
-  def selects(tab, rule):
-    def selectors(val, ors):
-      for (lo, hi) in ors:
-        if lo <= val < hi:
-          return True
-      return False
-
-    def selects1(row, ands):
-      for (txt, ors) in ands:
-        val = row[tab.cols.named[txt].pos]
-        if val != NO:
-          if not selectors(val, ors):
-            return False
-      return True
-    s, rule = rule
-    return tab.clone([row for row in tab.rows if selects1(row, rule)])
-
-  def showRule(r):
-    def showRange(x): return Bin(x[0], x[1]).show()
-
-    def show1(k, v):
-      return k + " " + ' or '.join(map(showRange, v))
-    s, rule = r
-    out = ""
-    return ' and '.join([show1(k, v) for k, v in rule])
+      d[k] = v1
+  return d
