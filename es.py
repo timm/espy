@@ -197,33 +197,33 @@ def contrast(here, there, MY):
             for col1, col2 in zip(here.xs, there.xs)
             for f, kl, span in col1.discretize(col2, MY)}
 
-  def like(rule, kl):
+  def like(lst, kl):
     prior = (hs[kl] + MY.k) / (n + MY.k * 2)
     fs = {}
-    for txt, pos, span in rule:
+    for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
     parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
     like = math.e**sum(map(math.log, parts))
     return like
 
-  def value(rule):
-    b = like(rule, True)
-    r = like(rule, False)
+  def value(lst):
+    b = like(lst, True)
+    r = like(lst, False)
     return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
 
-  def solos(lst):
+  def solos(pairs):
     for kl, x in f:
       if kl == True:
         if s := value([x]):  # if zero, then skip x
-          lst += [(s, x)]
-    return lst
+          pairs += [(s, x)]
+    return pairs
 
-  def top(lst): return [x for _, x in sorted(lst, reverse=True)[:MY.top]]
+  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:MY.top]]
 
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(rule), rule) for rule in subsets(top(solos([])))])
+  return top([(value(lst), lst) for lst in subsets(top(solos([])))])
 
 
 def canonical(rule):
