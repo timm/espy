@@ -24,27 +24,28 @@ def eg_one(MY):
 def eg_two(MY):
   "one example"
   t = Tab(csv(MY.dir + MY.data))
+  best, rest = betterBad(t, MY)
+  line = "------"
+  report = []
+  report += [["notes", "N"]+[col.txt for col in t.ys]]
+  report += [[line, line]+[line for col in t.ys]]
+  report += [["all", len(t.rows)] + t.goals()]
+  report += [["best", len(best.rows)] + best.goals()]
+  report += [["rest", len(rest.rows)] + rest.goals()]
+  report += [[line, line]+[line for col in t.ys]]
+  # or s, rule in Contrast(best, rest, MY).rules:
+  # print(f"{s:>6.2f}", canonical(rule))
+  for rule in contrast(best, rest, MY):
+    n, effect, txt = canonical(t, rule)
+    if effect[0] != None:
+      report += [[txt, n] + effect]
+  printm(report)
+  print("")
   for col in t.xs:
     print(f"{col.txt:>15} :", ', '.join(map(str, col.range())))
   print("")
   for col in t.ys:
     print(f"{col.txt:>15} :", ', '.join(map(str, col.range())))
-  print("")
-  best, rest = betterBad(t, MY)
-  line = "------"
-  report = []
-  report += [[col.txt for col in t.ys] + ["Notes"]]
-  report += [[line for col in t.ys] + [line]]
-  report += [t.goals() + ["all"]]
-  report += [best.goals() + ["best"]]
-  report += [rest.goals() + ["rest"]]
-  report += [[line for col in t.ys] + [line]]
-  # or s, rule in Contrast(best, rest, MY).rules:
-  # print(f"{s:>6.2f}", canonical(rule))
-  for rule in contrast(best, rest, MY):
-    effect, txt = canonical(t, rule)
-    report += [effect + [txt]]
-  printm(report)
 
 
 main(es.__doc__, es.HELP, eg_s(vars()),

@@ -285,4 +285,5 @@ def canonical(tab, rule):
     s = f"{k}"
     if v1 := combineRanges(sorted(v)):
       d[k] = v1
-  return selects(tab, d).goals(), showRule(d)
+  found = selects(tab, d)
+  return len(found.rows), found.goals(), showRule(d)
