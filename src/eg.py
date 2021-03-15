@@ -24,8 +24,11 @@ def eg_one(MY):
 def eg_two(MY):
   "one example"
   t = Tab(csv(MY.dir + MY.data))
-  for col in t.cols:
-    print(f"{col.txt:>15} :", col.range())
+  for col in t.xs:
+    print(f"{col.txt:>15} :", ', '.join(map(str, col.range())))
+  print("")
+  for col in t.ys:
+    print(f"{col.txt:>15} :", ', '.join(map(str, col.range())))
   print("")
   best, rest = betterBad(t, MY)
   line = "------"
