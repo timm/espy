@@ -14,6 +14,11 @@ class obj:
     lst = sorted(i.__dict__.items())
     return "{" + ', '.join([f":{k} {v}" for k, v in lst if k[0] != "_"])+"}"
 
+def atom(x):
+  try: return int(x)
+  except Exception:
+     try: return float(x)
+     except Exception: return x
 
 def csv(file):
   with open(file) as fp:

@@ -21,7 +21,7 @@ import itertools
 import math
 import sys
 import re
-from etc import obj, csv, subsets
+from etc import obj, csv, subsets, atom
 
 HELP = dict(
     k=(1, "k Bayes low frequency control"),
@@ -124,8 +124,8 @@ class Num(obj):
     i._all, i.ok = [], False
 
   def discretize(i, j, MY):
-    xy = [(better, True) for better in i._all] + [
-        (bad, False) for bad in j._all]
+    xy = [(better, True)  for better in i._all] + [
+          (bad,    False) for bad    in j._all]
     tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
@@ -137,7 +137,7 @@ class Num(obj):
     if x == NO:
       return x
     i.n += 1
-    x = float(x)
+    x = atom(x) if type(x) == str else x
     i._all += [x]
     i.ok = False
     return x
