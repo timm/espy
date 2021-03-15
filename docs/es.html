@@ -339,6 +339,114 @@ def canonical(tab, rule):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="es.betterBad"><code class="name flex">
+<span>def <span class="ident">betterBad</span></span>(<span>tab, MY)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def betterBad(tab, MY):
+  border = len(tab.rows) * MY.best
+  if border &lt; MY.min:
+    border = .5 * len(t.rows)
+  border = int(border)
+  return tab.clone(tab.rows[:int(border)]), tab.clone(tab.rows[int(border):])</code></pre>
+</details>
+</dd>
+<dt id="es.canonical"><code class="name flex">
+<span>def <span class="ident">canonical</span></span>(<span>tab, rule)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def canonical(tab, rule):
+  def showSpan(x):
+    return (f&#34;={x[0]}&#34; if x[0] == x[1] else (
+        f&#34;&lt;={x[1]}&#34;if x[0] == -math.inf else (
+            f&#34;&gt;={x[0]}&#34;if x[1] == math.inf else (f&#34;[{x[0]}..{x[1]})&#34;))))
+
+  def showRule(d):
+    return &#39; and &#39;.join([k + &#39; (&#39; + (&#39; or &#39;.join(map(showSpan, v)) + &#39;)&#39;)
+                         for k, v in d.items()])
+
+  def combineRanges(b4):
+    if len(b4) == 1 and b4 == [(LO, HI)]:
+      return None
+    j, tmp = 0, []
+    while j &lt; len(b4):
+      a = b4[j]
+      if j &lt; len(b4)-1:
+        b = b4[j+1]
+        if a[1] == b[0]:
+          a = (a[0], b[1])
+          j += 1
+      tmp += [a]
+      j += 1
+    return tmp if len(tmp) == len(b4) else combineRanges(tmp)
+  cols = {}
+  for col, _, span in rule:
+    cols[col] = cols.get(col, []) + [span]
+  d = {}
+  for k, v in cols.items():
+    s = f&#34;{k}&#34;
+    if v1 := combineRanges(sorted(v)):
+      d[k] = v1
+  found = selects(tab, d)
+  return len(found.rows), found.goals(), showRule(d)</code></pre>
+</details>
+</dd>
+<dt id="es.contrast"><code class="name flex">
+<span>def <span class="ident">contrast</span></span>(<span>here, there, MY)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def contrast(here, there, MY):
+  def seen():
+    return {(kl, (col1.txt, col1.pos, span)): f
+            for col1, col2 in zip(here.xs, there.xs)
+            for f, kl, span in col1.discretize(col2, MY)}
+
+  def like(lst, kl):
+    prod = math.prod
+    prior = (hs[kl] + MY.k) / (n + MY.k * 2)
+    fs = {}
+    for txt, pos, span in lst:
+      fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
+    like = prior
+    for val in fs.values():
+      like *= (val + MY.m*prior) / (hs[kl] + MY.m)
+    return like
+
+  def value(lst):
+    b = like(lst, True)
+    r = like(lst, False)
+    return b**2 / (b + r) if (b+r) &gt; 0.01 and b &gt; r else 0
+
+  def solos(pairs):
+    for kl, x in f:
+      if kl == True:
+        if s := value([x]):  # if zero, then skip x
+          pairs += [(s, x)]
+    return pairs
+
+  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:MY.top]]
+
+  f = seen()
+  n = len(here.rows) + len(there.rows)
+  hs = {True: len(here.rows), False: len(there.rows)}
+  return top([(value(lst), lst) for lst in subsets(top(solos([])))])</code></pre>
+</details>
+</dd>
 <dt id="es.div"><code class="name flex">
 <span>def <span class="ident">div</span></span>(<span>xy, tooSmall=0.01, width=20)</span>
 </code></dt>
@@ -392,69 +500,6 @@ def canonical(tab, rule):
   return merge(tmp) if len(tmp) &lt; len(b4) else b4</code></pre>
 </details>
 </dd>
-<dt id="es.betterBad"><code class="name flex">
-<span>def <span class="ident">betterBad</span></span>(<span>tab, MY)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def betterBad(tab, MY):
-  border = len(tab.rows) * MY.best
-  if border &lt; MY.min:
-    border = .5 * len(t.rows)
-  border = int(border)
-  return tab.clone(tab.rows[:int(border)]), tab.clone(tab.rows[int(border):])</code></pre>
-</details>
-</dd>
-<dt id="es.contrast"><code class="name flex">
-<span>def <span class="ident">contrast</span></span>(<span>here, there, MY)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def contrast(here, there, MY):
-  def seen():
-    return {(kl, (col1.txt, col1.pos, span)): f
-            for col1, col2 in zip(here.xs, there.xs)
-            for f, kl, span in col1.discretize(col2, MY)}
-
-  def like(lst, kl):
-    prod = math.prod
-    prior = (hs[kl] + MY.k) / (n + MY.k * 2)
-    fs = {}
-    for txt, pos, span in lst:
-      fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
-    like = prior
-    for val in fs.values():
-      like *= (val + MY.m*prior) / (hs[kl] + MY.m)
-    return like
-
-  def value(lst):
-    b = like(lst, True)
-    r = like(lst, False)
-    return b**2 / (b + r) if (b+r) &gt; 0.01 and b &gt; r else 0
-
-  def solos(pairs):
-    for kl, x in f:
-      if kl == True:
-        if s := value([x]):  # if zero, then skip x
-          pairs += [(s, x)]
-    return pairs
-
-  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:MY.top]]
-
-  f = seen()
-  n = len(here.rows) + len(there.rows)
-  hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(lst), lst) for lst in subsets(top(solos([])))])</code></pre>
-</details>
-</dd>
 <dt id="es.selects"><code class="name flex">
 <span>def <span class="ident">selects</span></span>(<span>tab, d)</span>
 </code></dt>
@@ -484,51 +529,6 @@ def canonical(tab, rule):
   return tab.clone([row for row in tab.rows if all(d, row)])</code></pre>
 </details>
 </dd>
-<dt id="es.canonical"><code class="name flex">
-<span>def <span class="ident">canonical</span></span>(<span>tab, rule)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def canonical(tab, rule):
-  def showSpan(x):
-    return (f&#34;={x[0]}&#34; if x[0] == x[1] else (
-        f&#34;&lt;={x[1]}&#34;if x[0] == -math.inf else (
-            f&#34;&gt;={x[0]}&#34;if x[1] == math.inf else (f&#34;[{x[0]}..{x[1]})&#34;))))
-
-  def showRule(d):
-    return &#39; and &#39;.join([k + &#39; (&#39; + (&#39; or &#39;.join(map(showSpan, v)) + &#39;)&#39;)
-                         for k, v in d.items()])
-
-  def combineRanges(b4):
-    if len(b4) == 1 and b4 == [(LO, HI)]:
-      return None
-    j, tmp = 0, []
-    while j &lt; len(b4):
-      a = b4[j]
-      if j &lt; len(b4)-1:
-        b = b4[j+1]
-        if a[1] == b[0]:
-          a = (a[0], b[1])
-          j += 1
-      tmp += [a]
-      j += 1
-    return tmp if len(tmp) == len(b4) else combineRanges(tmp)
-  cols = {}
-  for col, _, span in rule:
-    cols[col] = cols.get(col, []) + [span]
-  d = {}
-  for k, v in cols.items():
-    s = f&#34;{k}&#34;
-    if v1 := combineRanges(sorted(v)):
-      d[k] = v1
-  found = selects(tab, d)
-  return len(found.rows), found.goals(), showRule(d)</code></pre>
-</details>
-</dd>
 </dl>
 </section>
 <section>
@@ -552,9 +552,9 @@ def canonical(tab, rule):
 <li><a title="etc.obj" href="etc.html#etc.obj">obj</a></li>
 </ul>
 </dd>
-<dt id="es.Tab"><code class="flex name class">
-<span>class <span class="ident">Tab</span></span>
-<span>(</span><span>src)</span>
+<dt id="es.Num"><code class="flex name class">
+<span>class <span class="ident">Num</span></span>
+<span>(</span><span>pos=0, txt='')</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -562,23 +562,41 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Tab(obj):
-  def __init__(i, src):
-    i.rows, i.cols, i.names, i.xs, i.ys = [], [], {}, [], []
-    for row in src:
-      row = row.cells if type(row) == Row else row
-      if i.cols:
-        i.rows += [Row([col.add(x) for col, x in zip(i.cols, row)], i)]
-      else:
-        i.cols = [(Num(pos, txt) if txt[0].isupper() else Sym(pos, txt))
-                  for pos, txt in enumerate(row)]
-        i.names = {txt: pos for pos, txt in enumerate(row)}
-        i.ys = [col for col in i.cols if col.goalp]
-        i.xs = [col for col in i.cols if not col.goalp]
-    i.rows = sorted(i.rows)
+<pre><code class="python">class Num(obj):
+  def __init__(i, pos=0, txt=&#34;&#34;):
+    i.pos, i.txt, i.n = pos, txt, 0
+    i.w = -1 if &#34;-&#34; == txt[-1] else 1
+    i.goalp = &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
+    i._all, i.ok = [], False
 
-  def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
-  def goals(i): return [col.mid() for col in i.ys]</code></pre>
+  def discretize(i, j, MY):
+    xy = [(better, True) for better in i._all] + [
+        (bad, False) for bad in j._all]
+    tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
+    for bin in merge(tmp):
+      for klass, n in bin.also.seen.items():
+        yield n, klass, (bin.down, bin.up)
+
+  def range(i): a = i._alls(); return a[0], a[-1]
+
+  def add(i, x, **_):
+    if x == NO:
+      return x
+    i.n += 1
+    x = float(x)
+    i._all += [x]
+    i.ok = False
+    return x
+
+  def _alls(i):
+    i._all = i._all if i.ok else sorted(i._all)
+    i.ok = True
+    return i._all
+
+  def sd(i): return (i._per(.9) - i._per(.1)) / 2.56
+  def mid(i): return i._per(.5) if i._all else None
+  def _per(i, p): a = i._alls(); return a[int(p * len(a))]
+  def norm(i, x): a = i._alls(); return (x - a[0]) / (a[-1] - a[0] + TINY)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -586,8 +604,8 @@ def canonical(tab, rule):
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="es.Tab.clone"><code class="name flex">
-<span>def <span class="ident">clone</span></span>(<span>i, inits=[])</span>
+<dt id="es.Num.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>i, x, **_)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -595,11 +613,18 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)</code></pre>
+<pre><code class="python">def add(i, x, **_):
+  if x == NO:
+    return x
+  i.n += 1
+  x = float(x)
+  i._all += [x]
+  i.ok = False
+  return x</code></pre>
 </details>
 </dd>
-<dt id="es.Tab.goals"><code class="name flex">
-<span>def <span class="ident">goals</span></span>(<span>i)</span>
+<dt id="es.Num.discretize"><code class="name flex">
+<span>def <span class="ident">discretize</span></span>(<span>i, j, MY)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -607,7 +632,61 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def goals(i): return [col.mid() for col in i.ys]</code></pre>
+<pre><code class="python">def discretize(i, j, MY):
+  xy = [(better, True) for better in i._all] + [
+      (bad, False) for bad in j._all]
+  tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
+  for bin in merge(tmp):
+    for klass, n in bin.also.seen.items():
+      yield n, klass, (bin.down, bin.up)</code></pre>
+</details>
+</dd>
+<dt id="es.Num.mid"><code class="name flex">
+<span>def <span class="ident">mid</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mid(i): return i._per(.5) if i._all else None</code></pre>
+</details>
+</dd>
+<dt id="es.Num.norm"><code class="name flex">
+<span>def <span class="ident">norm</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def norm(i, x): a = i._alls(); return (x - a[0]) / (a[-1] - a[0] + TINY)</code></pre>
+</details>
+</dd>
+<dt id="es.Num.range"><code class="name flex">
+<span>def <span class="ident">range</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def range(i): a = i._alls(); return a[0], a[-1]</code></pre>
+</details>
+</dd>
+<dt id="es.Num.sd"><code class="name flex">
+<span>def <span class="ident">sd</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sd(i): return (i._per(.9) - i._per(.1)) / 2.56</code></pre>
 </details>
 </dd>
 </dl>
@@ -711,8 +790,8 @@ def canonical(tab, rule):
   return x</code></pre>
 </details>
 </dd>
-<dt id="es.Sym.range"><code class="name flex">
-<span>def <span class="ident">range</span></span>(<span>i)</span>
+<dt id="es.Sym.discretize"><code class="name flex">
+<span>def <span class="ident">discretize</span></span>(<span>i, j, _)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -720,7 +799,10 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def range(i): return sorted(i.seen.keys())</code></pre>
+<pre><code class="python">def discretize(i, j, _):
+  for k in (i.seen | j.seen):  # a 23 b 50
+    yield i.seen.get(k, 0), True, (k, k)
+    yield j.seen.get(k, 0), False, (k, k)</code></pre>
 </details>
 </dd>
 <dt id="es.Sym.ent"><code class="name flex">
@@ -733,6 +815,35 @@ def canonical(tab, rule):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def ent(i): return sum(-v / i.n * math.log(v / i.n) for v in i.seen.values())</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.merge"><code class="name flex">
+<span>def <span class="ident">merge</span></span>(<span>i, j)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def merge(i, j):
+  k = Sym(pos=i.pos, txt=i.txt)
+  for seen in [i.seen, j.seen]:
+    for x, n in seen.items():
+      k.add(x, n)
+  return k</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.range"><code class="name flex">
+<span>def <span class="ident">range</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def range(i): return sorted(i.seen.keys())</code></pre>
 </details>
 </dd>
 <dt id="es.Sym.simplified"><code class="name flex">
@@ -753,43 +864,11 @@ def canonical(tab, rule):
     return k</code></pre>
 </details>
 </dd>
-<dt id="es.Sym.merge"><code class="name flex">
-<span>def <span class="ident">merge</span></span>(<span>i, j)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def merge(i, j):
-  k = Sym(pos=i.pos, txt=i.txt)
-  for seen in [i.seen, j.seen]:
-    for x, n in seen.items():
-      k.add(x, n)
-  return k</code></pre>
-</details>
-</dd>
-<dt id="es.Sym.discretize"><code class="name flex">
-<span>def <span class="ident">discretize</span></span>(<span>i, j, _)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def discretize(i, j, _):
-  for k in (i.seen | j.seen):  # a 23 b 50
-    yield i.seen.get(k, 0), True, (k, k)
-    yield j.seen.get(k, 0), False, (k, k)</code></pre>
-</details>
-</dd>
 </dl>
 </dd>
-<dt id="es.Num"><code class="flex name class">
-<span>class <span class="ident">Num</span></span>
-<span>(</span><span>pos=0, txt='')</span>
+<dt id="es.Tab"><code class="flex name class">
+<span>class <span class="ident">Tab</span></span>
+<span>(</span><span>src)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -797,41 +876,23 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Num(obj):
-  def __init__(i, pos=0, txt=&#34;&#34;):
-    i.pos, i.txt, i.n = pos, txt, 0
-    i.w = -1 if &#34;-&#34; == txt[-1] else 1
-    i.goalp = &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
-    i._all, i.ok = [], False
+<pre><code class="python">class Tab(obj):
+  def __init__(i, src):
+    i.rows, i.cols, i.names, i.xs, i.ys = [], [], {}, [], []
+    for row in src:
+      row = row.cells if type(row) == Row else row
+      if i.cols:
+        i.rows += [Row([col.add(x) for col, x in zip(i.cols, row)], i)]
+      else:
+        i.cols = [(Num(pos, txt) if txt[0].isupper() else Sym(pos, txt))
+                  for pos, txt in enumerate(row)]
+        i.names = {txt: pos for pos, txt in enumerate(row)}
+        i.ys = [col for col in i.cols if col.goalp]
+        i.xs = [col for col in i.cols if not col.goalp]
+    i.rows = sorted(i.rows)
 
-  def discretize(i, j, MY):
-    xy = [(better, True) for better in i._all] + [
-        (bad, False) for bad in j._all]
-    tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
-    for bin in merge(tmp):
-      for klass, n in bin.also.seen.items():
-        yield n, klass, (bin.down, bin.up)
-
-  def range(i): a = i._alls(); return a[0], a[-1]
-
-  def add(i, x, **_):
-    if x == NO:
-      return x
-    i.n += 1
-    x = float(x)
-    i._all += [x]
-    i.ok = False
-    return x
-
-  def _alls(i):
-    i._all = i._all if i.ok else sorted(i._all)
-    i.ok = True
-    return i._all
-
-  def sd(i): return (i._per(.9) - i._per(.1)) / 2.56
-  def mid(i): return i._per(.5) if i._all else None
-  def _per(i, p): a = i._alls(); return a[int(p * len(a))]
-  def norm(i, x): a = i._alls(); return (x - a[0]) / (a[-1] - a[0] + TINY)</code></pre>
+  def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
+  def goals(i): return [col.mid() for col in i.ys]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -839,8 +900,8 @@ def canonical(tab, rule):
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="es.Num.discretize"><code class="name flex">
-<span>def <span class="ident">discretize</span></span>(<span>i, j, MY)</span>
+<dt id="es.Tab.clone"><code class="name flex">
+<span>def <span class="ident">clone</span></span>(<span>i, inits=[])</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -848,17 +909,11 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def discretize(i, j, MY):
-  xy = [(better, True) for better in i._all] + [
-      (bad, False) for bad in j._all]
-  tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
-  for bin in merge(tmp):
-    for klass, n in bin.also.seen.items():
-      yield n, klass, (bin.down, bin.up)</code></pre>
+<pre><code class="python">def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)</code></pre>
 </details>
 </dd>
-<dt id="es.Num.range"><code class="name flex">
-<span>def <span class="ident">range</span></span>(<span>i)</span>
+<dt id="es.Tab.goals"><code class="name flex">
+<span>def <span class="ident">goals</span></span>(<span>i)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -866,62 +921,7 @@ def canonical(tab, rule):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def range(i): a = i._alls(); return a[0], a[-1]</code></pre>
-</details>
-</dd>
-<dt id="es.Num.add"><code class="name flex">
-<span>def <span class="ident">add</span></span>(<span>i, x, **_)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add(i, x, **_):
-  if x == NO:
-    return x
-  i.n += 1
-  x = float(x)
-  i._all += [x]
-  i.ok = False
-  return x</code></pre>
-</details>
-</dd>
-<dt id="es.Num.sd"><code class="name flex">
-<span>def <span class="ident">sd</span></span>(<span>i)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def sd(i): return (i._per(.9) - i._per(.1)) / 2.56</code></pre>
-</details>
-</dd>
-<dt id="es.Num.mid"><code class="name flex">
-<span>def <span class="ident">mid</span></span>(<span>i)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def mid(i): return i._per(.5) if i._all else None</code></pre>
-</details>
-</dd>
-<dt id="es.Num.norm"><code class="name flex">
-<span>def <span class="ident">norm</span></span>(<span>i, x)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def norm(i, x): a = i._alls(); return (x - a[0]) / (a[-1] - a[0] + TINY)</code></pre>
+<pre><code class="python">def goals(i): return [col.mid() for col in i.ys]</code></pre>
 </details>
 </dd>
 </dl>
@@ -958,12 +958,12 @@ zip
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
+<li><code><a title="es.betterBad" href="#es.betterBad">betterBad</a></code></li>
+<li><code><a title="es.canonical" href="#es.canonical">canonical</a></code></li>
+<li><code><a title="es.contrast" href="#es.contrast">contrast</a></code></li>
 <li><code><a title="es.div" href="#es.div">div</a></code></li>
 <li><code><a title="es.merge" href="#es.merge">merge</a></code></li>
-<li><code><a title="es.betterBad" href="#es.betterBad">betterBad</a></code></li>
-<li><code><a title="es.contrast" href="#es.contrast">contrast</a></code></li>
 <li><code><a title="es.selects" href="#es.selects">selects</a></code></li>
-<li><code><a title="es.canonical" href="#es.canonical">canonical</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -972,10 +972,14 @@ zip
 <h4><code><a title="es.Bin" href="#es.Bin">Bin</a></code></h4>
 </li>
 <li>
-<h4><code><a title="es.Tab" href="#es.Tab">Tab</a></code></h4>
-<ul class="">
-<li><code><a title="es.Tab.clone" href="#es.Tab.clone">clone</a></code></li>
-<li><code><a title="es.Tab.goals" href="#es.Tab.goals">goals</a></code></li>
+<h4><code><a title="es.Num" href="#es.Num">Num</a></code></h4>
+<ul class="two-column">
+<li><code><a title="es.Num.add" href="#es.Num.add">add</a></code></li>
+<li><code><a title="es.Num.discretize" href="#es.Num.discretize">discretize</a></code></li>
+<li><code><a title="es.Num.mid" href="#es.Num.mid">mid</a></code></li>
+<li><code><a title="es.Num.norm" href="#es.Num.norm">norm</a></code></li>
+<li><code><a title="es.Num.range" href="#es.Num.range">range</a></code></li>
+<li><code><a title="es.Num.sd" href="#es.Num.sd">sd</a></code></li>
 </ul>
 </li>
 <li>
@@ -985,22 +989,18 @@ zip
 <h4><code><a title="es.Sym" href="#es.Sym">Sym</a></code></h4>
 <ul class="two-column">
 <li><code><a title="es.Sym.add" href="#es.Sym.add">add</a></code></li>
-<li><code><a title="es.Sym.range" href="#es.Sym.range">range</a></code></li>
-<li><code><a title="es.Sym.ent" href="#es.Sym.ent">ent</a></code></li>
-<li><code><a title="es.Sym.simplified" href="#es.Sym.simplified">simplified</a></code></li>
-<li><code><a title="es.Sym.merge" href="#es.Sym.merge">merge</a></code></li>
 <li><code><a title="es.Sym.discretize" href="#es.Sym.discretize">discretize</a></code></li>
+<li><code><a title="es.Sym.ent" href="#es.Sym.ent">ent</a></code></li>
+<li><code><a title="es.Sym.merge" href="#es.Sym.merge">merge</a></code></li>
+<li><code><a title="es.Sym.range" href="#es.Sym.range">range</a></code></li>
+<li><code><a title="es.Sym.simplified" href="#es.Sym.simplified">simplified</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="es.Num" href="#es.Num">Num</a></code></h4>
-<ul class="two-column">
-<li><code><a title="es.Num.discretize" href="#es.Num.discretize">discretize</a></code></li>
-<li><code><a title="es.Num.range" href="#es.Num.range">range</a></code></li>
-<li><code><a title="es.Num.add" href="#es.Num.add">add</a></code></li>
-<li><code><a title="es.Num.sd" href="#es.Num.sd">sd</a></code></li>
-<li><code><a title="es.Num.mid" href="#es.Num.mid">mid</a></code></li>
-<li><code><a title="es.Num.norm" href="#es.Num.norm">norm</a></code></li>
+<h4><code><a title="es.Tab" href="#es.Tab">Tab</a></code></h4>
+<ul class="">
+<li><code><a title="es.Tab.clone" href="#es.Tab.clone">clone</a></code></li>
+<li><code><a title="es.Tab.goals" href="#es.Tab.goals">goals</a></code></li>
 </ul>
 </li>
 </ul>

@@ -159,132 +159,6 @@ def main(doc, help, funs, also=None):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="etc.csv"><code class="name flex">
-<span>def <span class="ident">csv</span></span>(<span>file)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def csv(file):
-  with open(file) as fp:
-    for line in fp:
-      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, line)
-      if line:
-        yield line.split(&#34;,&#34;)</code></pre>
-</details>
-</dd>
-<dt id="etc.printm"><code class="name flex">
-<span>def <span class="ident">printm</span></span>(<span>matrix)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def printm(matrix):
-  s = [[str(e) for e in row] for row in matrix]
-  lens = [max(map(len, col)) for col in zip(*s)]
-  fmt = &#39; | &#39;.join(&#39;{{:&gt;{}}}&#39;.format(x) for x in lens)
-  for row in [fmt.format(*row) for row in s]:
-    print(row)</code></pre>
-</details>
-</dd>
-<dt id="etc.subsets"><code class="name flex">
-<span>def <span class="ident">subsets</span></span>(<span>l)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def subsets(l):
-  out = [[]]
-  for x in l:
-    out += [sub + [x] for sub in out]
-  return out[1:]</code></pre>
-</details>
-</dd>
-<dt id="etc.eg"><code class="name flex">
-<span>def <span class="ident">eg</span></span>(<span>k, f, MY)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def eg(k, f, MY):
-  random.seed(MY.seed)
-  print(flair(HEADER=(&#34;# &#34; + k + &#34; : &#34; + (f.__doc__ or &#34;&#34;))))
-  try:
-    f(MY)
-  except Exception:
-    ok(False, &#34;function ran?&#34;)
-  return f</code></pre>
-</details>
-</dd>
-<dt id="etc.ok"><code class="name flex">
-<span>def <span class="ident">ok</span></span>(<span>x, txt='')</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def ok(x, txt=&#34;&#34;):
-  if x:
-    print(&#34;\t&#34; + txt + flair(OKGREEN=&#34; PASS&#34;))
-  else:
-    print(&#34;\t&#34; + txt + flair(FAIL=&#34; FAIL&#34;))</code></pre>
-</details>
-</dd>
-<dt id="etc.flair"><code class="name flex">
-<span>def <span class="ident">flair</span></span>(<span>**d)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def flair(**d):
-  c = dict(
-      HEADER=&#39;\033[95m&#39;, OKBLUE=&#39;\033[94m&#39;, OKCYAN=&#39;\033[96m&#39;,
-      OKGREEN=&#39;\033[92m&#39;, WARNING=&#39;\033[93m&#39;, FAIL=&#39;\033[91m&#39;,
-      ENDC=&#39;\033[0m&#39;,  BOLD=&#39;\033[1m&#39;,  UNDERLINE=&#39;\033[4m&#39;)
-  for k, v in d.items():
-    return c[k] + c[&#34;BOLD&#34;] + str(v) + c[&#34;ENDC&#34;]</code></pre>
-</details>
-</dd>
-<dt id="etc.help_txt"><code class="name flex">
-<span>def <span class="ident">help_txt</span></span>(<span>doc, xpect)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def help_txt(doc, xpect):
-  print(flair(OKCYAN=doc))
-  print(f&#34; -{&#39;h&#39;:12} show help   &#34;)
-  print(f&#34; -{&#39;egs&#39;:12} run all examples   &#34;)
-  print(f&#34; -{&#39;eg S&#39;:12} run examples matching &#39;S&#39;  &#34;)
-  print(f&#34; -{&#39;ls&#39;:12} list all examples   &#34;)
-  for k, (v, help) in xpect.items():
-    m = (&#34;  &#34; if v == False else (
-         &#34; I&#34; if type(v) == int else (
-             &#34; F&#34; if type(v) == float else (
-                 &#34; S&#34;))))
-    print(f&#34; +{k:12} {help}   &#34; if v == False else f&#34; -{k+m:12} {help}  &#34;)</code></pre>
-</details>
-</dd>
 <dt id="etc.cli"><code class="name flex">
 <span>def <span class="ident">cli</span></span>(<span>doc, xpect, funs=[])</span>
 </code></dt>
@@ -333,6 +207,42 @@ those flags need to be same type as <code>default1</code>.</p></div>
   return out</code></pre>
 </details>
 </dd>
+<dt id="etc.csv"><code class="name flex">
+<span>def <span class="ident">csv</span></span>(<span>file)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def csv(file):
+  with open(file) as fp:
+    for line in fp:
+      line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, line)
+      if line:
+        yield line.split(&#34;,&#34;)</code></pre>
+</details>
+</dd>
+<dt id="etc.eg"><code class="name flex">
+<span>def <span class="ident">eg</span></span>(<span>k, f, MY)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def eg(k, f, MY):
+  random.seed(MY.seed)
+  print(flair(HEADER=(&#34;# &#34; + k + &#34; : &#34; + (f.__doc__ or &#34;&#34;))))
+  try:
+    f(MY)
+  except Exception:
+    ok(False, &#34;function ran?&#34;)
+  return f</code></pre>
+</details>
+</dd>
 <dt id="etc.eg_s"><code class="name flex">
 <span>def <span class="ident">eg_s</span></span>(<span>l)</span>
 </code></dt>
@@ -344,6 +254,47 @@ those flags need to be same type as <code>default1</code>.</p></div>
 </summary>
 <pre><code class="python">def eg_s(l): return {k: v for k, v in l.items()
                      if type(v) == fun and k[:3] == &#34;eg_&#34;}</code></pre>
+</details>
+</dd>
+<dt id="etc.flair"><code class="name flex">
+<span>def <span class="ident">flair</span></span>(<span>**d)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def flair(**d):
+  c = dict(
+      HEADER=&#39;\033[95m&#39;, OKBLUE=&#39;\033[94m&#39;, OKCYAN=&#39;\033[96m&#39;,
+      OKGREEN=&#39;\033[92m&#39;, WARNING=&#39;\033[93m&#39;, FAIL=&#39;\033[91m&#39;,
+      ENDC=&#39;\033[0m&#39;,  BOLD=&#39;\033[1m&#39;,  UNDERLINE=&#39;\033[4m&#39;)
+  for k, v in d.items():
+    return c[k] + c[&#34;BOLD&#34;] + str(v) + c[&#34;ENDC&#34;]</code></pre>
+</details>
+</dd>
+<dt id="etc.help_txt"><code class="name flex">
+<span>def <span class="ident">help_txt</span></span>(<span>doc, xpect)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def help_txt(doc, xpect):
+  print(flair(OKCYAN=doc))
+  print(f&#34; -{&#39;h&#39;:12} show help   &#34;)
+  print(f&#34; -{&#39;egs&#39;:12} run all examples   &#34;)
+  print(f&#34; -{&#39;eg S&#39;:12} run examples matching &#39;S&#39;  &#34;)
+  print(f&#34; -{&#39;ls&#39;:12} list all examples   &#34;)
+  for k, (v, help) in xpect.items():
+    m = (&#34;  &#34; if v == False else (
+         &#34; I&#34; if type(v) == int else (
+             &#34; F&#34; if type(v) == float else (
+                 &#34; S&#34;))))
+    print(f&#34; +{k:12} {help}   &#34; if v == False else f&#34; -{k+m:12} {help}  &#34;)</code></pre>
 </details>
 </dd>
 <dt id="etc.main"><code class="name flex">
@@ -358,6 +309,55 @@ those flags need to be same type as <code>default1</code>.</p></div>
 <pre><code class="python">def main(doc, help, funs, also=None):
   my = obj(**cli(doc, help, funs))
   also(my) if also else [eg(k, v, my) for k, v in my._do]</code></pre>
+</details>
+</dd>
+<dt id="etc.ok"><code class="name flex">
+<span>def <span class="ident">ok</span></span>(<span>x, txt='')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ok(x, txt=&#34;&#34;):
+  if x:
+    print(&#34;\t&#34; + txt + flair(OKGREEN=&#34; PASS&#34;))
+  else:
+    print(&#34;\t&#34; + txt + flair(FAIL=&#34; FAIL&#34;))</code></pre>
+</details>
+</dd>
+<dt id="etc.printm"><code class="name flex">
+<span>def <span class="ident">printm</span></span>(<span>matrix)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def printm(matrix):
+  s = [[str(e) for e in row] for row in matrix]
+  lens = [max(map(len, col)) for col in zip(*s)]
+  fmt = &#39; | &#39;.join(&#39;{{:&gt;{}}}&#39;.format(x) for x in lens)
+  for row in [fmt.format(*row) for row in s]:
+    print(row)</code></pre>
+</details>
+</dd>
+<dt id="etc.subsets"><code class="name flex">
+<span>def <span class="ident">subsets</span></span>(<span>l)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def subsets(l):
+  out = [[]]
+  for x in l:
+    out += [sub + [x] for sub in out]
+  return out[1:]</code></pre>
 </details>
 </dd>
 </dl>
@@ -423,16 +423,16 @@ zip
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
+<li><code><a title="etc.cli" href="#etc.cli">cli</a></code></li>
 <li><code><a title="etc.csv" href="#etc.csv">csv</a></code></li>
-<li><code><a title="etc.printm" href="#etc.printm">printm</a></code></li>
-<li><code><a title="etc.subsets" href="#etc.subsets">subsets</a></code></li>
 <li><code><a title="etc.eg" href="#etc.eg">eg</a></code></li>
-<li><code><a title="etc.ok" href="#etc.ok">ok</a></code></li>
+<li><code><a title="etc.eg_s" href="#etc.eg_s">eg_s</a></code></li>
 <li><code><a title="etc.flair" href="#etc.flair">flair</a></code></li>
 <li><code><a title="etc.help_txt" href="#etc.help_txt">help_txt</a></code></li>
-<li><code><a title="etc.cli" href="#etc.cli">cli</a></code></li>
-<li><code><a title="etc.eg_s" href="#etc.eg_s">eg_s</a></code></li>
 <li><code><a title="etc.main" href="#etc.main">main</a></code></li>
+<li><code><a title="etc.ok" href="#etc.ok">ok</a></code></li>
+<li><code><a title="etc.printm" href="#etc.printm">printm</a></code></li>
+<li><code><a title="etc.subsets" href="#etc.subsets">subsets</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
