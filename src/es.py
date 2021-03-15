@@ -47,7 +47,7 @@ class Bin(obj):
 
 class Tab(obj):
   def __init__(i, src):
-    i.rows, i.cols, i.xs, i.ys = [], [], [], []
+    i.rows, i.cols, i.names, i.xs, i.ys = [], [], {}, [], []
     for row in src:
       row = row.cells if type(row) == Row else row
       if i.cols:
@@ -55,9 +55,10 @@ class Tab(obj):
       else:
         i.cols = [(Num(pos, txt) if txt[0].isupper() else Sym(pos, txt))
                   for pos, txt in enumerate(row)]
+        i.names = {txt: pos for pos, txt in enumerate(row)}
         i.ys = [col for col in i.cols if col.goalp]
         i.xs = [col for col in i.cols if not col.goalp]
-    i.rows = sorted(i.rows, reverse=True)
+    i.rows = sorted(i.rows)
 
   def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
   def goals(i): return [col.mid() for col in i.ys]
@@ -89,6 +90,8 @@ class Sym(obj):
       if tmp > i.most:
         i.most, i.mode = tmp, x
     return x
+
+  def range(i): return sorted(i.seen.keys())
 
   def ent(i): return sum(-v / i.n * math.log(v / i.n) for v in i.seen.values())
 
@@ -127,6 +130,8 @@ class Num(obj):
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
+
+  def range(i): a = i._alls(); return a[0], a[-1]
 
   def add(i, x, **_):
     if x == NO:
@@ -198,12 +203,14 @@ def contrast(here, there, MY):
             for f, kl, span in col1.discretize(col2, MY)}
 
   def like(lst, kl):
+    prod = math.prod
     prior = (hs[kl] + MY.k) / (n + MY.k * 2)
     fs = {}
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
-    parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
-    like = math.e**sum(map(math.log, parts))
+    like = prior
+    for val in fs.values():
+      like *= (val + MY.m*prior) / (hs[kl] + MY.m)
     return like
 
   def value(lst):
@@ -211,7 +218,7 @@ def contrast(here, there, MY):
     r = like(lst, False)
     return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
 
-  def solos(pairs=[]):
+  def solos(pairs):
     for kl, x in f:
       if kl == True:
         if s := value([x]):  # if zero, then skip x
@@ -223,35 +230,40 @@ def contrast(here, there, MY):
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(lst), lst) for lst in subsets(top(solos()))])
+  return top([(value(lst), lst) for lst in subsets(top(solos([])))])
+
+
+def selects(tab, d):
+  def any(val, span):
+    for lo, hi in span:
+      if lo == hi:
+        if lo == val:
+          return True
+      elif lo <= val < hi:
+        return True
+    return False
+
+  def all(d, row):
+    for col in d:
+      val = row.cells[tab.names[col]]
+      if val != NO:
+        if not any(val, d[col]):
+          return False
+    return True
+  return tab.clone([row for row in tab.rows if all(d, row)])
 
 
 def canonical(tab, rule):
-  def selects(d):
-    def selectors(val, ors):
-      for (lo, hi) in ors:
-        if lo <= val < hi:
-          return True
-      return False
+  def showSpan(x):
+    return (f"={x[0]}" if x[0] == x[1] else (
+        f"<={x[1]}"if x[0] == -math.inf else (
+            f">={x[0]}"if x[1] == math.inf else (f"[{x[0]}..{x[1]})"))))
 
-    def selects1(d, row):
-      for ors in lst:
-        val = row[pos]
-        if val != NO:
-          if not selectors(val, ors):
-            return False
-      return True
-    return tab.clone([row for row in tab.rows if selects1(d, row)])
+  def showRule(d):
+    return ' and '.join([k + ' (' + (' or '.join(map(showSpan, v)) + ')')
+                         for k, v in d.items()])
 
-  def has(s, x): return (x == s[0]) if s[0] == s[1] else (s[0] <= x < s[1])
-
-  def show(x):
-    return (f" ={x[0]}" if x[0] == x[1] else (
-        f" <={x[1]}"if x[0] == -math.inf else (
-            f" >={x[0]}"if x[1] == math.inf else (
-                f" [{x[0]}..{x[1]}"))))
-
-  def merge(b4):
+  def combineRanges(b4):
     if len(b4) == 1 and b4 == [(LO, HI)]:
       return None
     j, tmp = 0, []
@@ -264,13 +276,13 @@ def canonical(tab, rule):
           j += 1
       tmp += [a]
       j += 1
-    return tmp if len(tmp) == len(b4) else merge(tmp)
+    return tmp if len(tmp) == len(b4) else combineRanges(tmp)
   cols = {}
   for col, _, span in rule:
     cols[col] = cols.get(col, []) + [span]
   d = {}
   for k, v in cols.items():
     s = f"{k}"
-    if v1 := merge(sorted(v)):
+    if v1 := combineRanges(sorted(v)):
       d[k] = v1
-  return d
+  return selects(tab, d).goals(), showRule(d)

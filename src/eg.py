@@ -24,11 +24,24 @@ def eg_one(MY):
 def eg_two(MY):
   "one example"
   t = Tab(csv(MY.dir + MY.data))
+  for col in t.cols:
+    print(f"{col.txt:>15} :", col.range())
+  print("")
   best, rest = betterBad(t, MY)
+  line = "------"
+  report = []
+  report += [[col.txt for col in t.ys] + ["Notes"]]
+  report += [[line for col in t.ys] + [line]]
+  report += [t.goals() + ["all"]]
+  report += [best.goals() + ["best"]]
+  report += [rest.goals() + ["rest"]]
+  report += [[line for col in t.ys] + [line]]
   # or s, rule in Contrast(best, rest, MY).rules:
   # print(f"{s:>6.2f}", canonical(rule))
   for rule in contrast(best, rest, MY):
-    print(canonical(t, rule))
+    effect, txt = canonical(t, rule)
+    report += [effect + [txt]]
+  printm(report)
 
 
 main(es.__doc__, es.HELP, eg_s(vars()),

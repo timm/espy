@@ -18,9 +18,9 @@ processing takes log linear time.
 
 ## Files
 
-- [eg](eg.html): test suites, main cli call
-- [es](es.html): core utilities for the learning
-- [etc](etc.html): misc python utils
+- [eg.py](eg.html): test suites, main cli call
+- [es.py](es.html): core utilities for the learning
+- [etc.py](etc.html): misc python support functions
 
 ## Usage
 
