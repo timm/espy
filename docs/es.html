@@ -90,7 +90,7 @@ class Bin(obj):
 
 class Tab(obj):
   def __init__(i, src):
-    i.rows, i.cols, i.xs, i.ys = [], [], [], []
+    i.rows, i.cols, i.names, i.xs, i.ys = [], [], {}, [], []
     for row in src:
       row = row.cells if type(row) == Row else row
       if i.cols:
@@ -98,9 +98,10 @@ class Tab(obj):
       else:
         i.cols = [(Num(pos, txt) if txt[0].isupper() else Sym(pos, txt))
                   for pos, txt in enumerate(row)]
+        i.names = {txt: pos for pos, txt in enumerate(row)}
         i.ys = [col for col in i.cols if col.goalp]
         i.xs = [col for col in i.cols if not col.goalp]
-    i.rows = sorted(i.rows, reverse=True)
+    i.rows = sorted(i.rows)
 
   def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
   def goals(i): return [col.mid() for col in i.ys]
@@ -132,6 +133,8 @@ class Sym(obj):
       if tmp &gt; i.most:
         i.most, i.mode = tmp, x
     return x
+
+  def range(i): return sorted(i.seen.keys())
 
   def ent(i): return sum(-v / i.n * math.log(v / i.n) for v in i.seen.values())
 
@@ -170,6 +173,8 @@ class Num(obj):
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
+
+  def range(i): a = i._alls(); return a[0], a[-1]
 
   def add(i, x, **_):
     if x == NO:
@@ -241,12 +246,14 @@ def contrast(here, there, MY):
             for f, kl, span in col1.discretize(col2, MY)}
 
   def like(lst, kl):
+    prod = math.prod
     prior = (hs[kl] + MY.k) / (n + MY.k * 2)
     fs = {}
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
-    parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
-    like = math.e**sum(map(math.log, parts))
+    like = prior
+    for val in fs.values():
+      like *= (val + MY.m*prior) / (hs[kl] + MY.m)
     return like
 
   def value(lst):
@@ -254,7 +261,7 @@ def contrast(here, there, MY):
     r = like(lst, False)
     return b**2 / (b + r) if (b+r) &gt; 0.01 and b &gt; r else 0
 
-  def solos(pairs=[]):
+  def solos(pairs):
     for kl, x in f:
       if kl == True:
         if s := value([x]):  # if zero, then skip x
@@ -266,11 +273,40 @@ def contrast(here, there, MY):
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(lst), lst) for lst in subsets(top(solos()))])
+  return top([(value(lst), lst) for lst in subsets(top(solos([])))])
 
 
-def canonical(rule):
-  def merge(b4):
+def selects(tab, d):
+  def any(val, span):
+    for lo, hi in span:
+      if lo == hi:
+        if lo == val:
+          return True
+      elif lo &lt;= val &lt; hi:
+        return True
+    return False
+
+  def all(d, row):
+    for col in d:
+      val = row.cells[tab.names[col]]
+      if val != NO:
+        if not any(val, d[col]):
+          return False
+    return True
+  return tab.clone([row for row in tab.rows if all(d, row)])
+
+
+def canonical(tab, rule):
+  def showSpan(x):
+    return (f&#34;={x[0]}&#34; if x[0] == x[1] else (
+        f&#34;&lt;={x[1]}&#34;if x[0] == -math.inf else (
+            f&#34;&gt;={x[0]}&#34;if x[1] == math.inf else (f&#34;[{x[0]}..{x[1]})&#34;))))
+
+  def showRule(d):
+    return &#39; and &#39;.join([k + &#39; (&#39; + (&#39; or &#39;.join(map(showSpan, v)) + &#39;)&#39;)
+                         for k, v in d.items()])
+
+  def combineRanges(b4):
     if len(b4) == 1 and b4 == [(LO, HI)]:
       return None
     j, tmp = 0, []
@@ -283,44 +319,17 @@ def canonical(rule):
           j += 1
       tmp += [a]
       j += 1
-    return tmp if len(tmp) == len(b4) else merge(tmp)
+    return tmp if len(tmp) == len(b4) else combineRanges(tmp)
   cols = {}
   for col, _, span in rule:
     cols[col] = cols.get(col, []) + [span]
-  out = {}
+  d = {}
   for k, v in cols.items():
-    if v1 := merge(sorted(v)):
-      out[k] = v1
-  return out
-
-
-def showRulest(tab, rules):
-
-  def selects(tab, rule):
-    def selectors(val, ors):
-      for (lo, hi) in ors:
-        if lo &lt;= val &lt; hi:
-          return True
-      return False
-
-    def selects1(row, ands):
-      for (txt, ors) in ands:
-        val = row[tab.cols.named[txt].pos]
-        if val != NO:
-          if not selectors(val, ors):
-            return False
-      return True
-    s, rule = rule
-    return tab.clone([row for row in tab.rows if selects1(row, rule)])
-
-  def showRule(r):
-    def showRange(x): return Bin(x[0], x[1]).show()
-
-    def show1(k, v):
-      return k + &#34; &#34; + &#39; or &#39;.join(map(showRange, v))
-    s, rule = r
-    out = &#34;&#34;
-    return &#39; and &#39;.join([show1(k, v) for k, v in rule])</code></pre>
+    s = f&#34;{k}&#34;
+    if v1 := combineRanges(sorted(v)):
+      d[k] = v1
+  found = selects(tab, d)
+  return len(found.rows), found.goals(), showRule(d)</code></pre>
 </details>
 </section>
 <section>
@@ -416,12 +425,14 @@ def showRulest(tab, rules):
             for f, kl, span in col1.discretize(col2, MY)}
 
   def like(lst, kl):
+    prod = math.prod
     prior = (hs[kl] + MY.k) / (n + MY.k * 2)
     fs = {}
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
-    parts = [prior, *[(f + MY.m*prior) / (hs[kl] + MY.m) for f in fs.values()]]
-    like = math.e**sum(map(math.log, parts))
+    like = prior
+    for val in fs.values():
+      like *= (val + MY.m*prior) / (hs[kl] + MY.m)
     return like
 
   def value(lst):
@@ -429,7 +440,7 @@ def showRulest(tab, rules):
     r = like(lst, False)
     return b**2 / (b + r) if (b+r) &gt; 0.01 and b &gt; r else 0
 
-  def solos(pairs=[]):
+  def solos(pairs):
     for kl, x in f:
       if kl == True:
         if s := value([x]):  # if zero, then skip x
@@ -441,11 +452,11 @@ def showRulest(tab, rules):
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(lst), lst) for lst in subsets(top(solos()))])</code></pre>
+  return top([(value(lst), lst) for lst in subsets(top(solos([])))])</code></pre>
 </details>
 </dd>
-<dt id="es.canonical"><code class="name flex">
-<span>def <span class="ident">canonical</span></span>(<span>rule)</span>
+<dt id="es.selects"><code class="name flex">
+<span>def <span class="ident">selects</span></span>(<span>tab, d)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -453,8 +464,46 @@ def showRulest(tab, rules):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def canonical(rule):
-  def merge(b4):
+<pre><code class="python">def selects(tab, d):
+  def any(val, span):
+    for lo, hi in span:
+      if lo == hi:
+        if lo == val:
+          return True
+      elif lo &lt;= val &lt; hi:
+        return True
+    return False
+
+  def all(d, row):
+    for col in d:
+      val = row.cells[tab.names[col]]
+      if val != NO:
+        if not any(val, d[col]):
+          return False
+    return True
+  return tab.clone([row for row in tab.rows if all(d, row)])</code></pre>
+</details>
+</dd>
+<dt id="es.canonical"><code class="name flex">
+<span>def <span class="ident">canonical</span></span>(<span>tab, rule)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def canonical(tab, rule):
+  def showSpan(x):
+    return (f&#34;={x[0]}&#34; if x[0] == x[1] else (
+        f&#34;&lt;={x[1]}&#34;if x[0] == -math.inf else (
+            f&#34;&gt;={x[0]}&#34;if x[1] == math.inf else (f&#34;[{x[0]}..{x[1]})&#34;))))
+
+  def showRule(d):
+    return &#39; and &#39;.join([k + &#39; (&#39; + (&#39; or &#39;.join(map(showSpan, v)) + &#39;)&#39;)
+                         for k, v in d.items()])
+
+  def combineRanges(b4):
     if len(b4) == 1 and b4 == [(LO, HI)]:
       return None
     j, tmp = 0, []
@@ -467,53 +516,17 @@ def showRulest(tab, rules):
           j += 1
       tmp += [a]
       j += 1
-    return tmp if len(tmp) == len(b4) else merge(tmp)
+    return tmp if len(tmp) == len(b4) else combineRanges(tmp)
   cols = {}
   for col, _, span in rule:
     cols[col] = cols.get(col, []) + [span]
-  out = {}
+  d = {}
   for k, v in cols.items():
-    if v1 := merge(sorted(v)):
-      out[k] = v1
-  return out</code></pre>
-</details>
-</dd>
-<dt id="es.showRulest"><code class="name flex">
-<span>def <span class="ident">showRulest</span></span>(<span>tab, rules)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def showRulest(tab, rules):
-
-  def selects(tab, rule):
-    def selectors(val, ors):
-      for (lo, hi) in ors:
-        if lo &lt;= val &lt; hi:
-          return True
-      return False
-
-    def selects1(row, ands):
-      for (txt, ors) in ands:
-        val = row[tab.cols.named[txt].pos]
-        if val != NO:
-          if not selectors(val, ors):
-            return False
-      return True
-    s, rule = rule
-    return tab.clone([row for row in tab.rows if selects1(row, rule)])
-
-  def showRule(r):
-    def showRange(x): return Bin(x[0], x[1]).show()
-
-    def show1(k, v):
-      return k + &#34; &#34; + &#39; or &#39;.join(map(showRange, v))
-    s, rule = r
-    out = &#34;&#34;
-    return &#39; and &#39;.join([show1(k, v) for k, v in rule])</code></pre>
+    s = f&#34;{k}&#34;
+    if v1 := combineRanges(sorted(v)):
+      d[k] = v1
+  found = selects(tab, d)
+  return len(found.rows), found.goals(), showRule(d)</code></pre>
 </details>
 </dd>
 </dl>
@@ -551,7 +564,7 @@ def showRulest(tab, rules):
 </summary>
 <pre><code class="python">class Tab(obj):
   def __init__(i, src):
-    i.rows, i.cols, i.xs, i.ys = [], [], [], []
+    i.rows, i.cols, i.names, i.xs, i.ys = [], [], {}, [], []
     for row in src:
       row = row.cells if type(row) == Row else row
       if i.cols:
@@ -559,9 +572,10 @@ def showRulest(tab, rules):
       else:
         i.cols = [(Num(pos, txt) if txt[0].isupper() else Sym(pos, txt))
                   for pos, txt in enumerate(row)]
+        i.names = {txt: pos for pos, txt in enumerate(row)}
         i.ys = [col for col in i.cols if col.goalp]
         i.xs = [col for col in i.cols if not col.goalp]
-    i.rows = sorted(i.rows, reverse=True)
+    i.rows = sorted(i.rows)
 
   def clone(i, inits=[]): return Tab([[col.txt for col in i.cols]] + inits)
   def goals(i): return [col.mid() for col in i.ys]</code></pre>
@@ -649,6 +663,8 @@ def showRulest(tab, rules):
         i.most, i.mode = tmp, x
     return x
 
+  def range(i): return sorted(i.seen.keys())
+
   def ent(i): return sum(-v / i.n * math.log(v / i.n) for v in i.seen.values())
 
   def simplified(i, j):
@@ -693,6 +709,18 @@ def showRulest(tab, rules):
     if tmp &gt; i.most:
       i.most, i.mode = tmp, x
   return x</code></pre>
+</details>
+</dd>
+<dt id="es.Sym.range"><code class="name flex">
+<span>def <span class="ident">range</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def range(i): return sorted(i.seen.keys())</code></pre>
 </details>
 </dd>
 <dt id="es.Sym.ent"><code class="name flex">
@@ -784,6 +812,8 @@ def showRulest(tab, rules):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
 
+  def range(i): a = i._alls(); return a[0], a[-1]
+
   def add(i, x, **_):
     if x == NO:
       return x
@@ -825,6 +855,18 @@ def showRulest(tab, rules):
   for bin in merge(tmp):
     for klass, n in bin.also.seen.items():
       yield n, klass, (bin.down, bin.up)</code></pre>
+</details>
+</dd>
+<dt id="es.Num.range"><code class="name flex">
+<span>def <span class="ident">range</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def range(i): a = i._alls(); return a[0], a[-1]</code></pre>
 </details>
 </dd>
 <dt id="es.Num.add"><code class="name flex">
@@ -920,8 +962,8 @@ zip
 <li><code><a title="es.merge" href="#es.merge">merge</a></code></li>
 <li><code><a title="es.betterBad" href="#es.betterBad">betterBad</a></code></li>
 <li><code><a title="es.contrast" href="#es.contrast">contrast</a></code></li>
+<li><code><a title="es.selects" href="#es.selects">selects</a></code></li>
 <li><code><a title="es.canonical" href="#es.canonical">canonical</a></code></li>
-<li><code><a title="es.showRulest" href="#es.showRulest">showRulest</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -941,8 +983,9 @@ zip
 </li>
 <li>
 <h4><code><a title="es.Sym" href="#es.Sym">Sym</a></code></h4>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="es.Sym.add" href="#es.Sym.add">add</a></code></li>
+<li><code><a title="es.Sym.range" href="#es.Sym.range">range</a></code></li>
 <li><code><a title="es.Sym.ent" href="#es.Sym.ent">ent</a></code></li>
 <li><code><a title="es.Sym.simplified" href="#es.Sym.simplified">simplified</a></code></li>
 <li><code><a title="es.Sym.merge" href="#es.Sym.merge">merge</a></code></li>
@@ -951,8 +994,9 @@ zip
 </li>
 <li>
 <h4><code><a title="es.Num" href="#es.Num">Num</a></code></h4>
-<ul class="">
+<ul class="two-column">
 <li><code><a title="es.Num.discretize" href="#es.Num.discretize">discretize</a></code></li>
+<li><code><a title="es.Num.range" href="#es.Num.range">range</a></code></li>
 <li><code><a title="es.Num.add" href="#es.Num.add">add</a></code></li>
 <li><code><a title="es.Num.sd" href="#es.Num.sd">sd</a></code></li>
 <li><code><a title="es.Num.mid" href="#es.Num.mid">mid</a></code></li>

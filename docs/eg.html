@@ -53,10 +53,27 @@ def eg_two(MY):
   &#34;one example&#34;
   t = Tab(csv(MY.dir + MY.data))
   best, rest = betterBad(t, MY)
+  line = &#34;------&#34;
+  report = []
+  report += [[&#34;notes&#34;, &#34;N&#34;]+[col.txt for col in t.ys]]
+  report += [[line, line]+[line for col in t.ys]]
+  report += [[&#34;all&#34;, len(t.rows)] + t.goals()]
+  report += [[&#34;best&#34;, len(best.rows)] + best.goals()]
+  report += [[&#34;rest&#34;, len(rest.rows)] + rest.goals()]
+  report += [[line, line]+[line for col in t.ys]]
   # or s, rule in Contrast(best, rest, MY).rules:
   # print(f&#34;{s:&gt;6.2f}&#34;, canonical(rule))
   for rule in contrast(best, rest, MY):
-    print(canonical(rule))
+    n, effect, txt = canonical(t, rule)
+    if effect[0] != None:
+      report += [[txt, n] + effect]
+  printm(report)
+  print(&#34;&#34;)
+  for col in t.xs:
+    print(f&#34;{col.txt:&gt;15} :&#34;, &#39;, &#39;.join(map(str, col.range())))
+  print(&#34;&#34;)
+  for col in t.ys:
+    print(f&#34;{col.txt:&gt;15} :&#34;, &#39;, &#39;.join(map(str, col.range())))
 
 
 main(es.__doc__, es.HELP, eg_s(vars()),
@@ -107,10 +124,27 @@ main(es.__doc__, es.HELP, eg_s(vars()),
   &#34;one example&#34;
   t = Tab(csv(MY.dir + MY.data))
   best, rest = betterBad(t, MY)
+  line = &#34;------&#34;
+  report = []
+  report += [[&#34;notes&#34;, &#34;N&#34;]+[col.txt for col in t.ys]]
+  report += [[line, line]+[line for col in t.ys]]
+  report += [[&#34;all&#34;, len(t.rows)] + t.goals()]
+  report += [[&#34;best&#34;, len(best.rows)] + best.goals()]
+  report += [[&#34;rest&#34;, len(rest.rows)] + rest.goals()]
+  report += [[line, line]+[line for col in t.ys]]
   # or s, rule in Contrast(best, rest, MY).rules:
   # print(f&#34;{s:&gt;6.2f}&#34;, canonical(rule))
   for rule in contrast(best, rest, MY):
-    print(canonical(rule))</code></pre>
+    n, effect, txt = canonical(t, rule)
+    if effect[0] != None:
+      report += [[txt, n] + effect]
+  printm(report)
+  print(&#34;&#34;)
+  for col in t.xs:
+    print(f&#34;{col.txt:&gt;15} :&#34;, &#39;, &#39;.join(map(str, col.range())))
+  print(&#34;&#34;)
+  for col in t.ys:
+    print(f&#34;{col.txt:&gt;15} :&#34;, &#39;, &#39;.join(map(str, col.range())))</code></pre>
 </details>
 </dd>
 </dl>

@@ -51,6 +51,14 @@ def csv(file):
         yield line.split(&#34;,&#34;)
 
 
+def printm(matrix):
+  s = [[str(e) for e in row] for row in matrix]
+  lens = [max(map(len, col)) for col in zip(*s)]
+  fmt = &#39; | &#39;.join(&#39;{{:&gt;{}}}&#39;.format(x) for x in lens)
+  for row in [fmt.format(*row) for row in s]:
+    print(row)
+
+
 def subsets(l):
   out = [[]]
   for x in l:
@@ -166,6 +174,23 @@ def main(doc, help, funs, also=None):
       line = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, line)
       if line:
         yield line.split(&#34;,&#34;)</code></pre>
+</details>
+</dd>
+<dt id="etc.printm"><code class="name flex">
+<span>def <span class="ident">printm</span></span>(<span>matrix)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def printm(matrix):
+  s = [[str(e) for e in row] for row in matrix]
+  lens = [max(map(len, col)) for col in zip(*s)]
+  fmt = &#39; | &#39;.join(&#39;{{:&gt;{}}}&#39;.format(x) for x in lens)
+  for row in [fmt.format(*row) for row in s]:
+    print(row)</code></pre>
 </details>
 </dd>
 <dt id="etc.subsets"><code class="name flex">
@@ -399,6 +424,7 @@ zip
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
 <li><code><a title="etc.csv" href="#etc.csv">csv</a></code></li>
+<li><code><a title="etc.printm" href="#etc.printm">printm</a></code></li>
 <li><code><a title="etc.subsets" href="#etc.subsets">subsets</a></code></li>
 <li><code><a title="etc.eg" href="#etc.eg">eg</a></code></li>
 <li><code><a title="etc.ok" href="#etc.ok">ok</a></code></li>
