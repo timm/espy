@@ -64,7 +64,7 @@ import itertools
 import math
 import sys
 import re
-from etc import obj, csv, subsets
+from etc import obj, csv, subsets, atom
 
 HELP = dict(
     k=(1, &#34;k Bayes low frequency control&#34;),
@@ -167,8 +167,8 @@ class Num(obj):
     i._all, i.ok = [], False
 
   def discretize(i, j, MY):
-    xy = [(better, True) for better in i._all] + [
-        (bad, False) for bad in j._all]
+    xy = [(better, True)  for better in i._all] + [
+          (bad,    False) for bad    in j._all]
     tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
@@ -180,7 +180,7 @@ class Num(obj):
     if x == NO:
       return x
     i.n += 1
-    x = float(x)
+    x = atom(x) if type(x) == str else x
     i._all += [x]
     i.ok = False
     return x
@@ -252,7 +252,7 @@ def contrast(here, there, MY):
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
     like = prior
-    for val in fs.values():
+    for val in fs.values(): 
       like *= (val + MY.m*prior) / (hs[kl] + MY.m)
     return like
 
@@ -423,7 +423,7 @@ def canonical(tab, rule):
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
     like = prior
-    for val in fs.values():
+    for val in fs.values(): 
       like *= (val + MY.m*prior) / (hs[kl] + MY.m)
     return like
 
@@ -570,8 +570,8 @@ def canonical(tab, rule):
     i._all, i.ok = [], False
 
   def discretize(i, j, MY):
-    xy = [(better, True) for better in i._all] + [
-        (bad, False) for bad in j._all]
+    xy = [(better, True)  for better in i._all] + [
+          (bad,    False) for bad    in j._all]
     tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
@@ -583,7 +583,7 @@ def canonical(tab, rule):
     if x == NO:
       return x
     i.n += 1
-    x = float(x)
+    x = atom(x) if type(x) == str else x
     i._all += [x]
     i.ok = False
     return x
@@ -617,7 +617,7 @@ def canonical(tab, rule):
   if x == NO:
     return x
   i.n += 1
-  x = float(x)
+  x = atom(x) if type(x) == str else x
   i._all += [x]
   i.ok = False
   return x</code></pre>
@@ -633,8 +633,8 @@ def canonical(tab, rule):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def discretize(i, j, MY):
-  xy = [(better, True) for better in i._all] + [
-      (bad, False) for bad in j._all]
+  xy = [(better, True)  for better in i._all] + [
+        (bad,    False) for bad    in j._all]
   tmp = div(xy, tooSmall=i.sd() * MY.cohen, width=len(xy)**MY.size)
   for bin in merge(tmp):
     for klass, n in bin.also.seen.items():
@@ -931,10 +931,17 @@ def canonical(tab, rule):
 </article>
 <nav id="sidebar">
 <center>
+<hr>
+<a href="index.html"> home </a> ::
+<a href="https://github.com/timm/espy/blob/master/README.md"> github </a> ::
+<a href="https://github.com/timm/espy/archive/master.zip">
+zip
+</a>
+<hr>
+<h3>ESPY: data miners<br>using/used-by optimizers</h3>
 <img width=250
 src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 >
-<h3>ESPY: data miners<br>using/used-by optimizers</h3>
 <p>
 <a href="#license">&copy; 2021</a>, Tim Menzies<br>
 <a href="mailto:timm@ieee.org">timm@ieee.org</a><br>
@@ -944,12 +951,6 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <img src="https://img.shields.io/badge/license-mit-lightgrey">
 <img src="https://img.shields.io/badge/purpose-ai%20,%20se-blueviolet">
 <br><img src="https://img.shields.io/badge/language-python3,bash-blue">
-<hr>
-<a href="https://github.com/timm/espy/blob/master/README.md"> github </a> ::
-<a href="https://github.com/timm/espy/archive/master.zip">
-zip
-</a>
-<hr>
 </center>
 <h1>Index</h1>
 <div class="toc">

@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>ball API documentation</title>
+<meta name="description" content="ball: a Bayesian active learning laboratory.
+(c) 2021 Tim Menzies timm@ieee.org, MIT license …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.3em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex;font-size:.7em;line-height:1em}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ball</code></h1>
+</header>
+<section id="section-intro">
+<p>ball: a Bayesian active learning laboratory.
+<br>
+(c) 2021 Tim Menzies timm@ieee.org, MIT license.</p>
+<p>usage: ./ball.py [OPTIONS]</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#!/usr/bin/env python3
+# vim: filetype=python ts=2 sw=2 sts=2 et :
+&#34;&#34;&#34;
+ball: a Bayesian active learning laboratory.    
+(c) 2021 Tim Menzies timm@ieee.org, MIT license.
+
+usage: ./ball.py [OPTIONS]
+&#34;&#34;&#34;
+import re
+import sys
+import math
+import functools
+import random
+from types import FunctionType as fun
+
+OPTIONS = dict(data=(&#34;&#34;, &#34;input data. Defaults to standard input&#34;),
+               do=(&#34;?&#34;, &#34;some start up function(s) to run&#34;),
+               seed=(10023, &#34;random number seed&#34;),
+               k=(1, &#34;low frequency&#34;),
+               m=(2, &#34;low fro&#34;))
+&#34;&#34;&#34;
+option         |  notes
+---------------|-----------------------------------------------  
+ -data S       | input data. Defaults to standard input; e.g. []  
+ -do S         | some start up function(s) to run; e.g. [?]  
+ -seed I       | random number seed; e.g. [10023]  
+ -k I          | low frequency ; e.g. [1]  
+ -m I          | low fro ; e.g. [2]  
+ -h            | show help text
+&#34;&#34;&#34;
+
+
+class obj:
+  &#34;&#34;&#34;Simple base class that  pretty prints slots, that can be easy
+  initialized with (e.g.) `x=obj(name=&#39;tim&#39;,age=21)`,
+  with names slots we can get or set; e.g `x.age += 1`.&#34;&#34;&#34;
+  def __init__(i, **d): i.__dict__.update(d)
+  def __getitem__(i, k): return i.__dict__[k]
+  def __setitem__(i, k, v): i.__dict__[k] = v
+  def __contains__(i, k): return k in i.__dict__
+  def __repr__(i): return &#34;{&#34; + &#39;, &#39;.join(
+      [f&#34;:{k} {v}&#34; for k, v in sorted(i.__dict__.items()) if k[0] != &#34;_&#34;])+&#34;}&#34;
+
+
+class Col(obj):
+  @staticmethod
+  def new(tab, at, txt):
+    &#34;Factory for making and storing different column types.&#34;
+    x = (Num if txt[0].isupper() else Sym)(at, txt)
+    if &#34;?&#34; not in txt:
+      (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+    return x
+
+  @staticmethod
+  def goalp(txt):
+    &#34;Goal names end in `+` or `-`.&#34;
+    return &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
+
+  def add(i, x):
+    &#34;Skip missing values, increment counter, add `x`.&#34;
+    if x == &#34;?&#34;:
+      return x
+    i.n += 1
+    return i.add1(x)
+
+
+class Num(Col):
+  def __init__(i, at=0, txt=&#34;&#34;):
+    i.txt, i.at, i.n, i.mu, i.m2, i.sd = txt, at, 0, 0, 0, 0
+
+  def mid(i):
+    &#34;Return mid point&#34;
+    return i.mu
+
+  def add1(i, x):
+    &#34;Incrementally update `mu` and `sd`.&#34;
+    d = x - i.mu
+    i.mu += d/i.n
+    i.m2 += d*(x - i.mu)
+    i.sd = (i.m2/i.n)**0.5
+    return x
+
+  def like(i, x, *_):
+    &#34;Returns probability of `x`.&#34;
+    if (i.mu - 4*i.sd) &lt; x &lt; (i.mu + 4*i.sd):
+      var = i.sd ** 2
+      denom = (math.pi*2*var) ** .5
+      num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
+      return num/(denom + 1E-64)
+    else:
+      return 0
+
+
+class Sym(Col):
+  def __init__(i, at=0, txt=&#34;&#34;):
+    i.txt, i.at, i.n, i.seen, i.most, i.mode = txt, at, 0, {}, 0, None
+
+  def mid(i):
+    &#34;Returns mid point.&#34;
+    return i.mode
+
+  def like(i, x, prior, my):
+    &#34;Returns probability of `x`.&#34;
+    return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)
+
+  def add1(i, x):
+    &#34;Incrementally update symbol counts, and the mode.&#34;
+    tmp = i.seen[x] = i.seen.get(x, 0) + 1
+    if tmp &gt; i.most:
+      i.most, i.mode = tmp, x
+    return x
+
+
+class Tab(obj):
+  &#34;&#34;&#34;Given a rows of data, and row0 defines column name and type,
+   store the rows, summarized in the headers. Header names starting
+   with upper case letters are numerics. Names ending in &#39;+-&#39; are
+   goals to be maximized or minimized. Names containing &#39;?&#39; are ignored
+   in the reasoning.&#34;&#34;&#34;
+  def __init__(i, inits=[]):
+    i.rows, i.cols, i.xs, i.ys = [], [], [], []
+    [i.add(x) for x in inits]
+
+  def x(i):
+    &#34;Return mid values of the independent variables&#34;
+    return [col.mid() for col in i.xs]
+
+  def y(i):
+    &#34;Return mid values of the dependent variables&#34;
+    return [col.mid() for col in i.ys]
+
+  def clone(i, lst=[]):
+    &#34;Return a new table with the same structure as this one.&#34;
+    return Tab([[col.txt for col in i.cols]] + lst)
+
+  def add(i, row):
+    &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
+    then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
+    if i.cols:
+      i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    else:
+      i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
+
+  def like(i, row, my):
+    &#34;Report how much this table likes &#39;row&#39;&#34;
+    return i.classify(row, my)[0]
+
+  def classify(i, row, my, tabs=[]):
+    &#34;&#34;&#34;For a set of tables, including this one, find which one mostlikes &#39;row&#39;.
+     Returns a tuple (mostlike,tab)&#34;&#34;&#34;
+    tabs = [i]+tabs
+    n = sum(len(t.rows) for t in tabs)
+    mostlike = -1E64
+    out = tabs[0]
+    for t in tabs:
+      prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+      tmp = math.log(prior)
+      for col in i.xs:
+        v = row[col.at]
+        if v != &#34;?&#34;:
+          if inc := col.like(v, prior, my):
+            tmp += math.log(inc)
+      if tmp &gt; mostlike:
+        mostlike, out = tmp, t
+    return mostlike, out
+
+
+def coerce(string):
+  &#34;If appropriate, coerce `string` into an integer or a float.&#34;
+  try:
+    return int(string)
+  except Exception:
+    try:
+      return float(string)
+    except Exception:
+      return string
+
+
+def csv(file=None):
+  &#34;&#34;&#34;From `file` (or standard input) return lists of values from
+  comma-separated lines(skipping over whitespace and comments).&#34;&#34;&#34;
+  def lines(src):
+    for lst in src:
+      lst = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, lst)
+      if lst:
+        yield [coerce(x) for x in lst.split(&#34;,&#34;)]
+  if file:
+    with open(file) as fp:
+      for lst in lines(fp):
+        yield lst
+  else:
+    for lst in lines(sys.stdin):
+      yield lst
+
+
+def cli(d, doc=&#34;&#34;, funs=[]):
+  &#34;&#34;&#34;Drives command-line interface from a dictionary `dict(flag=(default, help), ..)`.  
+  Returns `d` (as an `obj`) updated from command-line, with num strings coerced to numbers.  
+  Command-line values must be of the same type as `default`.   
+  Command-line flags must be one `- flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
+  For a list of functions `funs`, `-do S` will run all functions containing `S`.
+  &#34;&#34;&#34;
+  def showHelp():
+    if doc:
+      print(doc)
+    print(&#34;option          | notes&#34;)
+    print(&#34;----------------|------------------------&#34;)
+    for k, (v, help) in d.items():
+      m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
+      print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
+            &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
+    print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
+
+  def handle(arg, args):
+    flag = arg[1:]
+    assert flag in my
+    if arg[0] == &#34;+&#34;:
+      now = True
+    else:
+      assert len(args) &gt;= 1
+      now = coerce(args[0])
+    assert type(now) == type(my[flag])
+    my[flag] = now
+  # ------------------
+  funs = [v for k, v in funs.items() if type(v) == fun and &#34;eg_&#34; == k[:3]]
+  my = obj(**{k: v for k, (v, _) in d.items()})
+  args = sys.argv
+  while args:
+    arg, *args = args
+    if arg == &#34;-h&#34;:
+      return showHelp()
+    if arg[0] in &#34;+-&#34;:
+      handle(arg, args)
+  if my.do:
+    funs = [one for one in funs if my.do in one.__name__]
+  for one in funs:
+    random.seed(my.seed)
+    print(&#34;%&#34;, one.__doc__)
+    one(my)
+  return my
+
+
+def eg_two(my): print(my)
+
+
+def eg_one(my):
+  &#34;table1&#34;
+  def r2(x): return round(x, 2)
+  t = Tab()
+  [t.add(lst) for lst in csv(my.data)]
+  t.rows.sort(key=lambda r: t.like(r, my))
+  n = 50
+  t1 = t.clone(t.rows[:n])
+  t2 = t.clone(t.rows[-n:])
+  print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
+  print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
+  print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])
+
+
+if __name__ == &#34;__main__&#34;:
+  cli(OPTIONS, __doc__, vars())
+#  def better(i, r1, r2):
+#     s1, s2, n = 0, 0, len(i.cols.y)
+#     for col in i.cols.y:
+#       a, b = r1[col.at], r2[col.at]
+#       a, b = col.norm(a), col.norm(b)
+#       s1 -= math.e**(at.w*(a-b)/n)
+#       s2 -= math.e**(at.w*(b-a)/n)
+#     return s1/n &lt; s2/n
+#
+#   def ordered(i, THE):
+#
+#</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-variables">Global variables</h2>
+<dl>
+<dt id="ball.OPTIONS"><code class="name">var <span class="ident">OPTIONS</span></code></dt>
+<dd>
+<div class="desc"><table>
+<thead>
+<tr>
+<th>option</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-data S</td>
+<td>input data. Defaults to standard input; e.g. []</td>
+</tr>
+<tr>
+<td>-do S</td>
+<td>some start up function(s) to run; e.g. [?]</td>
+</tr>
+<tr>
+<td>-seed I</td>
+<td>random number seed; e.g. [10023]</td>
+</tr>
+<tr>
+<td>-k I</td>
+<td>low frequency ; e.g. [1]</td>
+</tr>
+<tr>
+<td>-m I</td>
+<td>low fro ; e.g. [2]</td>
+</tr>
+<tr>
+<td>-h</td>
+<td>show help text</td>
+</tr>
+</tbody>
+</table></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="ball.cli"><code class="name flex">
+<span>def <span class="ident">cli</span></span>(<span>d, doc='', funs=[])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Drives command-line interface from a dictionary <code>dict(flag=(default, help), ..)</code>.<br>
+Returns <code>d</code> (as an <code><a title="ball.obj" href="#ball.obj">obj</a></code>) updated from command-line, with num strings coerced to numbers.<br>
+Command-line values must be of the same type as <code>default</code>. <br>
+Command-line flags must be one <code>- flag X</code> (for setting <code>flag</code>) or <code>+flag</code> (for enabling booleans). <br>
+For a list of functions <code>funs</code>, <code>-do S</code> will run all functions containing <code>S</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cli(d, doc=&#34;&#34;, funs=[]):
+  &#34;&#34;&#34;Drives command-line interface from a dictionary `dict(flag=(default, help), ..)`.  
+  Returns `d` (as an `obj`) updated from command-line, with num strings coerced to numbers.  
+  Command-line values must be of the same type as `default`.   
+  Command-line flags must be one `- flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
+  For a list of functions `funs`, `-do S` will run all functions containing `S`.
+  &#34;&#34;&#34;
+  def showHelp():
+    if doc:
+      print(doc)
+    print(&#34;option          | notes&#34;)
+    print(&#34;----------------|------------------------&#34;)
+    for k, (v, help) in d.items():
+      m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
+      print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
+            &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
+    print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
+
+  def handle(arg, args):
+    flag = arg[1:]
+    assert flag in my
+    if arg[0] == &#34;+&#34;:
+      now = True
+    else:
+      assert len(args) &gt;= 1
+      now = coerce(args[0])
+    assert type(now) == type(my[flag])
+    my[flag] = now
+  # ------------------
+  funs = [v for k, v in funs.items() if type(v) == fun and &#34;eg_&#34; == k[:3]]
+  my = obj(**{k: v for k, (v, _) in d.items()})
+  args = sys.argv
+  while args:
+    arg, *args = args
+    if arg == &#34;-h&#34;:
+      return showHelp()
+    if arg[0] in &#34;+-&#34;:
+      handle(arg, args)
+  if my.do:
+    funs = [one for one in funs if my.do in one.__name__]
+  for one in funs:
+    random.seed(my.seed)
+    print(&#34;%&#34;, one.__doc__)
+    one(my)
+  return my</code></pre>
+</details>
+</dd>
+<dt id="ball.coerce"><code class="name flex">
+<span>def <span class="ident">coerce</span></span>(<span>string)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If appropriate, coerce <code>string</code> into an integer or a float.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def coerce(string):
+  &#34;If appropriate, coerce `string` into an integer or a float.&#34;
+  try:
+    return int(string)
+  except Exception:
+    try:
+      return float(string)
+    except Exception:
+      return string</code></pre>
+</details>
+</dd>
+<dt id="ball.csv"><code class="name flex">
+<span>def <span class="ident">csv</span></span>(<span>file=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>From <code>file</code> (or standard input) return lists of values from
+comma-separated lines(skipping over whitespace and comments).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def csv(file=None):
+  &#34;&#34;&#34;From `file` (or standard input) return lists of values from
+  comma-separated lines(skipping over whitespace and comments).&#34;&#34;&#34;
+  def lines(src):
+    for lst in src:
+      lst = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, lst)
+      if lst:
+        yield [coerce(x) for x in lst.split(&#34;,&#34;)]
+  if file:
+    with open(file) as fp:
+      for lst in lines(fp):
+        yield lst
+  else:
+    for lst in lines(sys.stdin):
+      yield lst</code></pre>
+</details>
+</dd>
+<dt id="ball.eg_one"><code class="name flex">
+<span>def <span class="ident">eg_one</span></span>(<span>my)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>table1</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def eg_one(my):
+  &#34;table1&#34;
+  def r2(x): return round(x, 2)
+  t = Tab()
+  [t.add(lst) for lst in csv(my.data)]
+  t.rows.sort(key=lambda r: t.like(r, my))
+  n = 50
+  t1 = t.clone(t.rows[:n])
+  t2 = t.clone(t.rows[-n:])
+  print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
+  print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
+  print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])</code></pre>
+</details>
+</dd>
+<dt id="ball.eg_two"><code class="name flex">
+<span>def <span class="ident">eg_two</span></span>(<span>my)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def eg_two(my): print(my)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="ball.Col"><code class="flex name class">
+<span>class <span class="ident">Col</span></span>
+<span>(</span><span>**d)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple base class that
+pretty prints slots, that can be easy
+initialized with (e.g.) <code>x=obj(name='tim',age=21)</code>,
+with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Col(obj):
+  @staticmethod
+  def new(tab, at, txt):
+    &#34;Factory for making and storing different column types.&#34;
+    x = (Num if txt[0].isupper() else Sym)(at, txt)
+    if &#34;?&#34; not in txt:
+      (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+    return x
+
+  @staticmethod
+  def goalp(txt):
+    &#34;Goal names end in `+` or `-`.&#34;
+    return &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
+
+  def add(i, x):
+    &#34;Skip missing values, increment counter, add `x`.&#34;
+    if x == &#34;?&#34;:
+      return x
+    i.n += 1
+    return i.add1(x)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="ball.obj" href="#ball.obj">obj</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ball.Num" href="#ball.Num">Num</a></li>
+<li><a title="ball.Sym" href="#ball.Sym">Sym</a></li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="ball.Col.goalp"><code class="name flex">
+<span>def <span class="ident">goalp</span></span>(<span>txt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Goal names end in <code>+</code> or <code>-</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def goalp(txt):
+  &#34;Goal names end in `+` or `-`.&#34;
+  return &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]</code></pre>
+</details>
+</dd>
+<dt id="ball.Col.new"><code class="name flex">
+<span>def <span class="ident">new</span></span>(<span>tab, at, txt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Factory for making and storing different column types.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def new(tab, at, txt):
+  &#34;Factory for making and storing different column types.&#34;
+  x = (Num if txt[0].isupper() else Sym)(at, txt)
+  if &#34;?&#34; not in txt:
+    (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+  return x</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ball.Col.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Skip missing values, increment counter, add <code>x</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add(i, x):
+  &#34;Skip missing values, increment counter, add `x`.&#34;
+  if x == &#34;?&#34;:
+    return x
+  i.n += 1
+  return i.add1(x)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ball.Num"><code class="flex name class">
+<span>class <span class="ident">Num</span></span>
+<span>(</span><span>at=0, txt='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple base class that
+pretty prints slots, that can be easy
+initialized with (e.g.) <code>x=obj(name='tim',age=21)</code>,
+with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Num(Col):
+  def __init__(i, at=0, txt=&#34;&#34;):
+    i.txt, i.at, i.n, i.mu, i.m2, i.sd = txt, at, 0, 0, 0, 0
+
+  def mid(i):
+    &#34;Return mid point&#34;
+    return i.mu
+
+  def add1(i, x):
+    &#34;Incrementally update `mu` and `sd`.&#34;
+    d = x - i.mu
+    i.mu += d/i.n
+    i.m2 += d*(x - i.mu)
+    i.sd = (i.m2/i.n)**0.5
+    return x
+
+  def like(i, x, *_):
+    &#34;Returns probability of `x`.&#34;
+    if (i.mu - 4*i.sd) &lt; x &lt; (i.mu + 4*i.sd):
+      var = i.sd ** 2
+      denom = (math.pi*2*var) ** .5
+      num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
+      return num/(denom + 1E-64)
+    else:
+      return 0</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="ball.Col" href="#ball.Col">Col</a></li>
+<li><a title="ball.obj" href="#ball.obj">obj</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="ball.Num.add1"><code class="name flex">
+<span>def <span class="ident">add1</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Incrementally update <code>mu</code> and <code>sd</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add1(i, x):
+  &#34;Incrementally update `mu` and `sd`.&#34;
+  d = x - i.mu
+  i.mu += d/i.n
+  i.m2 += d*(x - i.mu)
+  i.sd = (i.m2/i.n)**0.5
+  return x</code></pre>
+</details>
+</dd>
+<dt id="ball.Num.like"><code class="name flex">
+<span>def <span class="ident">like</span></span>(<span>i, x, *_)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns probability of <code>x</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def like(i, x, *_):
+  &#34;Returns probability of `x`.&#34;
+  if (i.mu - 4*i.sd) &lt; x &lt; (i.mu + 4*i.sd):
+    var = i.sd ** 2
+    denom = (math.pi*2*var) ** .5
+    num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
+    return num/(denom + 1E-64)
+  else:
+    return 0</code></pre>
+</details>
+</dd>
+<dt id="ball.Num.mid"><code class="name flex">
+<span>def <span class="ident">mid</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return mid point</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mid(i):
+  &#34;Return mid point&#34;
+  return i.mu</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="ball.Col" href="#ball.Col">Col</a></b></code>:
+<ul class="hlist">
+<li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
+<li><code><a title="ball.Col.goalp" href="#ball.Col.goalp">goalp</a></code></li>
+<li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="ball.Sym"><code class="flex name class">
+<span>class <span class="ident">Sym</span></span>
+<span>(</span><span>at=0, txt='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple base class that
+pretty prints slots, that can be easy
+initialized with (e.g.) <code>x=obj(name='tim',age=21)</code>,
+with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Sym(Col):
+  def __init__(i, at=0, txt=&#34;&#34;):
+    i.txt, i.at, i.n, i.seen, i.most, i.mode = txt, at, 0, {}, 0, None
+
+  def mid(i):
+    &#34;Returns mid point.&#34;
+    return i.mode
+
+  def like(i, x, prior, my):
+    &#34;Returns probability of `x`.&#34;
+    return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)
+
+  def add1(i, x):
+    &#34;Incrementally update symbol counts, and the mode.&#34;
+    tmp = i.seen[x] = i.seen.get(x, 0) + 1
+    if tmp &gt; i.most:
+      i.most, i.mode = tmp, x
+    return x</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="ball.Col" href="#ball.Col">Col</a></li>
+<li><a title="ball.obj" href="#ball.obj">obj</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="ball.Sym.add1"><code class="name flex">
+<span>def <span class="ident">add1</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Incrementally update symbol counts, and the mode.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add1(i, x):
+  &#34;Incrementally update symbol counts, and the mode.&#34;
+  tmp = i.seen[x] = i.seen.get(x, 0) + 1
+  if tmp &gt; i.most:
+    i.most, i.mode = tmp, x
+  return x</code></pre>
+</details>
+</dd>
+<dt id="ball.Sym.like"><code class="name flex">
+<span>def <span class="ident">like</span></span>(<span>i, x, prior, my)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns probability of <code>x</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def like(i, x, prior, my):
+  &#34;Returns probability of `x`.&#34;
+  return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)</code></pre>
+</details>
+</dd>
+<dt id="ball.Sym.mid"><code class="name flex">
+<span>def <span class="ident">mid</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns mid point.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mid(i):
+  &#34;Returns mid point.&#34;
+  return i.mode</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="ball.Col" href="#ball.Col">Col</a></b></code>:
+<ul class="hlist">
+<li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
+<li><code><a title="ball.Col.goalp" href="#ball.Col.goalp">goalp</a></code></li>
+<li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="ball.Tab"><code class="flex name class">
+<span>class <span class="ident">Tab</span></span>
+<span>(</span><span>inits=[])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Given a rows of data, and row0 defines column name and type,
+store the rows, summarized in the headers. Header names starting
+with upper case letters are numerics. Names ending in '+-' are
+goals to be maximized or minimized. Names containing '?' are ignored
+in the reasoning.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Tab(obj):
+  &#34;&#34;&#34;Given a rows of data, and row0 defines column name and type,
+   store the rows, summarized in the headers. Header names starting
+   with upper case letters are numerics. Names ending in &#39;+-&#39; are
+   goals to be maximized or minimized. Names containing &#39;?&#39; are ignored
+   in the reasoning.&#34;&#34;&#34;
+  def __init__(i, inits=[]):
+    i.rows, i.cols, i.xs, i.ys = [], [], [], []
+    [i.add(x) for x in inits]
+
+  def x(i):
+    &#34;Return mid values of the independent variables&#34;
+    return [col.mid() for col in i.xs]
+
+  def y(i):
+    &#34;Return mid values of the dependent variables&#34;
+    return [col.mid() for col in i.ys]
+
+  def clone(i, lst=[]):
+    &#34;Return a new table with the same structure as this one.&#34;
+    return Tab([[col.txt for col in i.cols]] + lst)
+
+  def add(i, row):
+    &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
+    then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
+    if i.cols:
+      i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    else:
+      i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
+
+  def like(i, row, my):
+    &#34;Report how much this table likes &#39;row&#39;&#34;
+    return i.classify(row, my)[0]
+
+  def classify(i, row, my, tabs=[]):
+    &#34;&#34;&#34;For a set of tables, including this one, find which one mostlikes &#39;row&#39;.
+     Returns a tuple (mostlike,tab)&#34;&#34;&#34;
+    tabs = [i]+tabs
+    n = sum(len(t.rows) for t in tabs)
+    mostlike = -1E64
+    out = tabs[0]
+    for t in tabs:
+      prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+      tmp = math.log(prior)
+      for col in i.xs:
+        v = row[col.at]
+        if v != &#34;?&#34;:
+          if inc := col.like(v, prior, my):
+            tmp += math.log(inc)
+      if tmp &gt; mostlike:
+        mostlike, out = tmp, t
+    return mostlike, out</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="ball.obj" href="#ball.obj">obj</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="ball.Tab.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>i, row)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>If this is row0, create the headers. Else update the headers with 'row'
+then store the 'row' in 'rows'.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add(i, row):
+  &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
+  then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
+  if i.cols:
+    i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+  else:
+    i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]</code></pre>
+</details>
+</dd>
+<dt id="ball.Tab.classify"><code class="name flex">
+<span>def <span class="ident">classify</span></span>(<span>i, row, my, tabs=[])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>For a set of tables, including this one, find which one mostlikes 'row'.
+Returns a tuple (mostlike,tab)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def classify(i, row, my, tabs=[]):
+  &#34;&#34;&#34;For a set of tables, including this one, find which one mostlikes &#39;row&#39;.
+   Returns a tuple (mostlike,tab)&#34;&#34;&#34;
+  tabs = [i]+tabs
+  n = sum(len(t.rows) for t in tabs)
+  mostlike = -1E64
+  out = tabs[0]
+  for t in tabs:
+    prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+    tmp = math.log(prior)
+    for col in i.xs:
+      v = row[col.at]
+      if v != &#34;?&#34;:
+        if inc := col.like(v, prior, my):
+          tmp += math.log(inc)
+    if tmp &gt; mostlike:
+      mostlike, out = tmp, t
+  return mostlike, out</code></pre>
+</details>
+</dd>
+<dt id="ball.Tab.clone"><code class="name flex">
+<span>def <span class="ident">clone</span></span>(<span>i, lst=[])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return a new table with the same structure as this one.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clone(i, lst=[]):
+  &#34;Return a new table with the same structure as this one.&#34;
+  return Tab([[col.txt for col in i.cols]] + lst)</code></pre>
+</details>
+</dd>
+<dt id="ball.Tab.like"><code class="name flex">
+<span>def <span class="ident">like</span></span>(<span>i, row, my)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Report how much this table likes 'row'</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def like(i, row, my):
+  &#34;Report how much this table likes &#39;row&#39;&#34;
+  return i.classify(row, my)[0]</code></pre>
+</details>
+</dd>
+<dt id="ball.Tab.x"><code class="name flex">
+<span>def <span class="ident">x</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return mid values of the independent variables</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def x(i):
+  &#34;Return mid values of the independent variables&#34;
+  return [col.mid() for col in i.xs]</code></pre>
+</details>
+</dd>
+<dt id="ball.Tab.y"><code class="name flex">
+<span>def <span class="ident">y</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return mid values of the dependent variables</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def y(i):
+  &#34;Return mid values of the dependent variables&#34;
+  return [col.mid() for col in i.ys]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ball.obj"><code class="flex name class">
+<span>class <span class="ident">obj</span></span>
+<span>(</span><span>**d)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple base class that
+pretty prints slots, that can be easy
+initialized with (e.g.) <code>x=obj(name='tim',age=21)</code>,
+with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class obj:
+  &#34;&#34;&#34;Simple base class that  pretty prints slots, that can be easy
+  initialized with (e.g.) `x=obj(name=&#39;tim&#39;,age=21)`,
+  with names slots we can get or set; e.g `x.age += 1`.&#34;&#34;&#34;
+  def __init__(i, **d): i.__dict__.update(d)
+  def __getitem__(i, k): return i.__dict__[k]
+  def __setitem__(i, k, v): i.__dict__[k] = v
+  def __contains__(i, k): return k in i.__dict__
+  def __repr__(i): return &#34;{&#34; + &#39;, &#39;.join(
+      [f&#34;:{k} {v}&#34; for k, v in sorted(i.__dict__.items()) if k[0] != &#34;_&#34;])+&#34;}&#34;</code></pre>
+</details>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="ball.Col" href="#ball.Col">Col</a></li>
+<li><a title="ball.Tab" href="#ball.Tab">Tab</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<center>
+<hr>
+<a href="index.html"> home </a> ::
+<a href="https://github.com/timm/espy/blob/master/README.md"> github </a> ::
+<a href="https://github.com/timm/espy/archive/master.zip">
+zip
+</a>
+<hr>
+<h3>ESPY: data miners<br>using/used-by optimizers</h3>
+<img width=250
+src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
+>
+<p>
+<a href="#license">&copy; 2021</a>, Tim Menzies<br>
+<a href="mailto:timm@ieee.org">timm@ieee.org</a><br>
+<a href="http://menzies.us">http://menzies.us</a>
+</p>
+<p>
+<img src="https://img.shields.io/badge/license-mit-lightgrey">
+<img src="https://img.shields.io/badge/purpose-ai%20,%20se-blueviolet">
+<br><img src="https://img.shields.io/badge/language-python3,bash-blue">
+</center>
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-variables">Global variables</a></h3>
+<ul class="">
+<li><code><a title="ball.OPTIONS" href="#ball.OPTIONS">OPTIONS</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="ball.cli" href="#ball.cli">cli</a></code></li>
+<li><code><a title="ball.coerce" href="#ball.coerce">coerce</a></code></li>
+<li><code><a title="ball.csv" href="#ball.csv">csv</a></code></li>
+<li><code><a title="ball.eg_one" href="#ball.eg_one">eg_one</a></code></li>
+<li><code><a title="ball.eg_two" href="#ball.eg_two">eg_two</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="ball.Col" href="#ball.Col">Col</a></code></h4>
+<ul class="">
+<li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
+<li><code><a title="ball.Col.goalp" href="#ball.Col.goalp">goalp</a></code></li>
+<li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ball.Num" href="#ball.Num">Num</a></code></h4>
+<ul class="">
+<li><code><a title="ball.Num.add1" href="#ball.Num.add1">add1</a></code></li>
+<li><code><a title="ball.Num.like" href="#ball.Num.like">like</a></code></li>
+<li><code><a title="ball.Num.mid" href="#ball.Num.mid">mid</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ball.Sym" href="#ball.Sym">Sym</a></code></h4>
+<ul class="">
+<li><code><a title="ball.Sym.add1" href="#ball.Sym.add1">add1</a></code></li>
+<li><code><a title="ball.Sym.like" href="#ball.Sym.like">like</a></code></li>
+<li><code><a title="ball.Sym.mid" href="#ball.Sym.mid">mid</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ball.Tab" href="#ball.Tab">Tab</a></code></h4>
+<ul class="two-column">
+<li><code><a title="ball.Tab.add" href="#ball.Tab.add">add</a></code></li>
+<li><code><a title="ball.Tab.classify" href="#ball.Tab.classify">classify</a></code></li>
+<li><code><a title="ball.Tab.clone" href="#ball.Tab.clone">clone</a></code></li>
+<li><code><a title="ball.Tab.like" href="#ball.Tab.like">like</a></code></li>
+<li><code><a title="ball.Tab.x" href="#ball.Tab.x">x</a></code></li>
+<li><code><a title="ball.Tab.y" href="#ball.Tab.y">y</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ball.obj" href="#ball.obj">obj</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
