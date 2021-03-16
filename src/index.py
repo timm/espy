@@ -28,16 +28,18 @@ processing takes log linear time.
 cd src    
 ./eg.py -h   
 
- -h            show help   
- -egs          run all examples   
- -eg S         run examples matching 'S'  
- -ls           list all examples   
- -k I          k Bayes low frequency control  
- -m I          m Bayes low frequency control  
- -best F       size of best set  
- -size F       min size of breaks  
- -cohen F      var min  
- -dir S        dir to data  
- -data S       data file  
- -seed I       random number seed  
+option        | notes
+-----------------------------------
+ -h           | show help   
+ -egs         | run all examples   
+ -eg S        | run examples matching 'S'  
+ -ls          | list all examples   
+ -k I         | k Bayes low frequency control  
+ -m I         | m Bayes low frequency control  
+ -best F      | size of best set  
+ -size F      | min size of breaks  
+ -cohen F     | var min  
+ -dir S       | dir to data  
+ -data S      | data file  
+ -seed I      | random number seed  
 """
