@@ -227,10 +227,10 @@ def csv(file=None):
 
 
 def cli(d, doc=&#34;&#34;, funs=[]):
-  &#34;&#34;&#34;Drives command-line interface from a dictionary `dict(flag=(default, help), ..)`.  
-  Returns `d` (as an `obj`) updated from command-line, with num strings coerced to numbers.  
+  &#34;&#34;&#34;Drives command-line from `d=s `dict(flag=(default, help), ..)`.  
+  Returns `d` (as an `obj`) updated from command-line.    
   Command-line values must be of the same type as `default`.   
-  Command-line flags must be one `- flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
+  Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
   For a list of functions `funs`, `-do S` will run all functions containing `S`.
   &#34;&#34;&#34;
   def showHelp():
@@ -357,20 +357,20 @@ if __name__ == &#34;__main__&#34;:
 <span>def <span class="ident">cli</span></span>(<span>d, doc='', funs=[])</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Drives command-line interface from a dictionary <code>dict(flag=(default, help), ..)</code>.<br>
-Returns <code>d</code> (as an <code><a title="ball.obj" href="#ball.obj">obj</a></code>) updated from command-line, with num strings coerced to numbers.<br>
-Command-line values must be of the same type as <code>default</code>. <br>
-Command-line flags must be one <code>- flag X</code> (for setting <code>flag</code>) or <code>+flag</code> (for enabling booleans). <br>
-For a list of functions <code>funs</code>, <code>-do S</code> will run all functions containing <code>S</code>.</p></div>
+<div class="desc"><p>Drives command-line from <code>d=s</code>dict(flag=(default, help), ..)<code>.
+Returns &lt;code&gt;d&lt;/code&gt; (as an &lt;code&gt;&lt;a title="ball.obj" href="#ball.obj"&gt;obj&lt;/a&gt;&lt;/code&gt;) updated from command-line.
+Command-line values must be of the same type as &lt;code&gt;default&lt;/code&gt;.
+Command-line flags must be one</code>-flag X<code>(for setting &lt;code&gt;flag&lt;/code&gt;) or</code>+flag<code>(for enabling booleans).
+For a list of functions &lt;code&gt;funs&lt;/code&gt;,</code>-do S` will run all functions containing <code>S</code>.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def cli(d, doc=&#34;&#34;, funs=[]):
-  &#34;&#34;&#34;Drives command-line interface from a dictionary `dict(flag=(default, help), ..)`.  
-  Returns `d` (as an `obj`) updated from command-line, with num strings coerced to numbers.  
+  &#34;&#34;&#34;Drives command-line from `d=s `dict(flag=(default, help), ..)`.  
+  Returns `d` (as an `obj`) updated from command-line.    
   Command-line values must be of the same type as `default`.   
-  Command-line flags must be one `- flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
+  Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
   For a list of functions `funs`, `-do S` will run all functions containing `S`.
   &#34;&#34;&#34;
   def showHelp():
