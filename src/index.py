@@ -26,10 +26,10 @@ processing takes log linear time.
 ## Usage
 
 cd src    
-./eg.py -h   
+./eg.py [OPTIONS]   
 
-option        | notes
---------------|--------------------
+OPTION        | NOTES
+--------------|:-------------------
  -h           | show help   
  -egs         | run all examples   
  -eg S        | run examples matching 'S'  
