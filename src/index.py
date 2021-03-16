@@ -29,7 +29,7 @@ cd src
 ./eg.py -h   
 
 option        | notes
------------------------------------
+--------------|--------------------
  -h           | show help   
  -egs         | run all examples   
  -eg S        | run examples matching 'S'  
