@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 """
-ball : an Bayesian active learning laboratory
+ball: a Bayesian active learning laboratory
 (c) 2021 Tim Menzies timm@ieee.org, MIT license
 
 usage: ./ball.py [OPTIONS]
@@ -13,10 +13,11 @@ import functools
 import random
 from types import FunctionType as fun
 
-DEFAULTS = dict(data=("", "input data. Defaults to standard input"),
-                seed=(10023, "random number seed"),
-                k=(1, "low freuecny"),
-                m=(2, "low frq"))
+ARGS = dict(data=("", "input data. Defaults to standard input"),
+            do=("?", "some start up function(s) to run"),
+            seed=(10023, "random number seed"),
+            k=(1, "low freuecny"),
+            m=(2, "low frq"))
 
 
 class obj:
@@ -29,7 +30,7 @@ class obj:
 
 
 class Col(obj):
-  @ staticmethod
+  @staticmethod
   def new(tab, at, txt):
     x = (Num if txt[0].isupper() else Sym)(at, txt)
     if "?" not in txt:
@@ -153,18 +154,19 @@ def csv(file=None):
 
 def main(doc, funs):
   funs = [v for k, v in funs.items() if type(v) == fun and "eg_" == k[:3]]
-  my = obj(**{k: v for k, (v, _) in DEFAULTS.items()})
+  my = obj(**{k: v for k, (v, _) in ARGS.items()})
   args = sys.argv
   while args:
     arg, *args = args
     if arg == "-h":
       print(doc)
-      for k, (v, help) in DEFAULTS.items():
-        print(f" +{k:13}" if v == False else f" -{k+' X ':13}",
+      for k, (v, help) in ARGS.items():
+        m = "F" if type(v) == float else ("I" if type(v) == int else "S")
+        print(f" +{k:13}" if v == False else f" -{k+' '+m' ':13}",
               help, f"(default={v})")
       print(f" -{'h':13}", "show help text")
       sys.exit()
-    elif arg[0] in "+-":
+    if arg[0] in "+-":
       flag = arg[1:]
       assert flag in my
       if arg[0] == "+":
@@ -172,12 +174,16 @@ def main(doc, funs):
       else:
         assert len(args) >= 1
         now = atom(args[0])
-        assert type(now) == type(my[flag])
+      assert type(now) == type(my[flag])
       my[flag] = now
   for one in funs:
-    random.seed(my.seed)
-    print("%", one.__doc__)
-    one(my)
+    if my.do and my.do in one.__name__ or not my.do:
+      random.seed(my.seed)
+      print("%", one.__doc__)
+      one(my)
+
+
+def eg_two(my): print(my)
 
 
 def eg_one(my):
