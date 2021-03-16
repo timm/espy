@@ -162,7 +162,7 @@ def main(doc, funs):
       print(doc)
       for k, (v, help) in ARGS.items():
         m = "F" if type(v) == float else ("I" if type(v) == int else "S")
-        print(f" +{k:13}" if v == False else f" -{k+' '+m' ':13}",
+        print(f" +{k:13}" if v == False else f" -{k+' '+m+' ':13}",
               help, f"(default={v})")
       print(f" -{'h':13}", "show help text")
       sys.exit()
