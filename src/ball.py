@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
+"""
+ball : an Bayesian active learning laboratory
+(c) 2021 Tim Menzies timm@ieee.org, MIT license
 
-from types import FunctionType as fun
-import random
-import functools
-import math
-import sys
+usage: ./ball.py [OPTIONS]
+"""
 import re
+import sys
+import math
+import functools
+import random
+from types import FunctionType as fun
+
+DEFAULTS = dict(data=("", "input data. Defaults to standard input"),
+                seed=(10023, "random number seed"),
+                k=(1, "low freuecny"),
+                m=(2, "low frq"))
 
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
+  def __getitem__(i, k): return i.__dict__[k]
+  def __setitem__(i, k, v): i.__dict__[k] = v
+  def __contains__(i, k): return k in i.__dict__
   def __repr__(i): return "{" + ', '.join(
       [f":{k} {v}" for k, v in sorted(i.__dict__.items()) if k[0] != "_"])+"}"
-
-
-my0 = dict(seed=(10023, "random number seed"),
-           k=(1, "low freuecny"),
-           m=(2, "low frq"))
 
 
 class Col(obj):
@@ -95,6 +103,8 @@ class Tab(obj):
     else:
       i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
+  def like(i, row, my): return i.classify(row, my)[0]
+
   def classify(i, row, my, tabs=[]):
     tabs = [i]+tabs
     n = sum(len(t.rows) for t in tabs)
@@ -141,34 +151,50 @@ def csv(file=None):
 #     def gt(a, b): return 0 if id(a) == id(b) else (-1 if i.better(a, b) else 1)
 #     return i.rows.sort(key=functools.cmp_to_key(gt))
 
+def main(doc, funs):
+  funs = [v for k, v in funs.items() if type(v) == fun and "eg_" == k[:3]]
+  my = obj(**{k: v for k, (v, _) in DEFAULTS.items()})
+  args = sys.argv
+  while args:
+    arg, *args = args
+    if arg == "-h":
+      print(doc)
+      for k, (v, help) in DEFAULTS.items():
+        print(f" +{k:13}" if v == False else f" -{k+' X ':13}",
+              help, f"(default={v})")
+      print(f" -{'h':13}", "show help text")
+      sys.exit()
+    elif arg[0] in "+-":
+      flag = arg[1:]
+      assert flag in my
+      if arg[0] == "+":
+        now = True
+      else:
+        assert len(args) >= 1
+        now = atom(args[0])
+        assert type(now) == type(my[flag])
+      my[flag] = now
+  for one in funs:
+    random.seed(my.seed)
+    print("%", one.__doc__)
+    one(my)
+
+
 def eg_one(my):
   "table1"
-  def like(r): return t.classify(r, my)[0]
   def r2(x): return round(x, 2)
   t = Tab()
-  [t.add(lst) for lst in csv(my.file)]
-  t.rows.sort(key=like)
+  [t.add(lst) for lst in csv(my.data)]
+  t.rows.sort(key=lambda r: t.like(r, my))
   n = 50
   t1 = t.clone(t.rows[:n])
   t2 = t.clone(t.rows[-n:])
-
-  print("lo  ", [r2(col.mid()) for col in t1.cols])
-  print("hi  ", [r2(col.mid()) for col in t2.cols])
-  print("mid ", [r2(col.mid()) for col in t.cols])
-
-
-def main(funs,
-         file=sys.argv[2] if "-d" in sys.argv else None,
-         my=obj(**{k: v for k, (v, _) in my0.items()})):
-  my.file = file
-  for k, f in funs.items():
-    if type(f) == fun and "eg_" in k:
-      print("%", f.__doc__)
-      random.seed(my.seed)
-      f(my)
+  print("lo  ", [r2(col.mid()) for col in t1.xs])
+  print("hi  ", [r2(col.mid()) for col in t2.xs])
+  print("mid ", [r2(col.mid()) for col in t.xs])
 
 
-main(vars())
+main(__doc__, vars())
 #  def better(i, r1, r2):
 #     s1, s2, n = 0, 0, len(i.cols.y)
 #     for col in i.cols.y:
