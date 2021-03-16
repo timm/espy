@@ -209,7 +209,7 @@ def contrast(here, there, MY):
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
     like = prior
-    for val in fs.values():
+    for val in fs.values(): 
       like *= (val + MY.m*prior) / (hs[kl] + MY.m)
     return like
 
