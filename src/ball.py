@@ -182,9 +182,7 @@ def main(doc, funs):
       print("%", one.__doc__)
       one(my)
 
-
 def eg_two(my): print(my)
-
 
 def eg_one(my):
   "table1"
