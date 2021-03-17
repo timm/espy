@@ -16,7 +16,7 @@ OPTIONS = dict(data=("../opt/data/auto93.csv",
                k=(1, "low frequency"),
                m=(2, "low fro"))
 """
-OPTION         |  NOTES
+Option         |  Notes
 ---------------|:----------------------------------------------
  -data S       | input data. Defaults to standard input; e.g. []
  -do S         | some start up function(s) to run; e.g. [?]

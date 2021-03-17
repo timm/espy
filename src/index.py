@@ -28,7 +28,7 @@ processing takes log linear time.
 cd src    
 ./eg.py [OPTIONS]   
 
-OPTION        | NOTES
+Option        | Notes
 --------------|:-------------------
  -h           | show help   
  -egs         | run all examples   
