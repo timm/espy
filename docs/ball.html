@@ -24,7 +24,6 @@
 </header>
 <section id="section-intro">
 <p>ball: a Bayesian active learning laboratory.
-<br>
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.</p>
 <p>usage: ./ball.py [OPTIONS]</p>
 <details class="source">
@@ -34,7 +33,7 @@
 <pre><code class="python">#!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 &#34;&#34;&#34;
-ball: a Bayesian active learning laboratory.    
+ball: a Bayesian active learning laboratory.
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.
 
 usage: ./ball.py [OPTIONS]
@@ -53,12 +52,12 @@ OPTIONS = dict(data=(&#34;&#34;, &#34;input data. Defaults to standard input&#34
                m=(2, &#34;low fro&#34;))
 &#34;&#34;&#34;
 option         |  notes
----------------|-----------------------------------------------  
- -data S       | input data. Defaults to standard input; e.g. []  
- -do S         | some start up function(s) to run; e.g. [?]  
- -seed I       | random number seed; e.g. [10023]  
- -k I          | low frequency ; e.g. [1]  
- -m I          | low fro ; e.g. [2]  
+---------------|-----------------------------------------------
+ -data S       | input data. Defaults to standard input; e.g. []
+ -do S         | some start up function(s) to run; e.g. [?]
+ -seed I       | random number seed; e.g. [10023]
+ -k I          | low frequency ; e.g. [1]
+ -m I          | low fro ; e.g. [2]
  -h            | show help text
 &#34;&#34;&#34;
 
@@ -146,9 +145,9 @@ class Sym(Col):
 
 class Tab(obj):
   &#34;&#34;&#34;
-   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers. 
-   - Header names starting with upper case letters are numerics (others are symbols). 
-   - Names ending in &#39;+-&#39; are goals to be maximized or minimized. 
+   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers.
+   - Header names starting with upper case letters are numerics (others are symbols).
+   - Names ending in &#39;+-&#39; are goals to be maximized or minimized.
    - Names containing &#39;?&#39; are ignored in the reasoning.&#34;&#34;&#34;
   def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []
@@ -226,14 +225,14 @@ def csv(file=None):
       yield lst
 
 
-def cli(options, doc=&#34;&#34;, funs=[]):
+def cli(options, doc=&#34;&#34;, funs=[], eg=&#34;eg_&#34;):
   &#34;&#34;&#34;
-  - Drives command-line from `options= `dict(flag=(default, help), ..)`.  
-  - Returns `d` (as an `obj`) updated from command-line.    
-  - Command-line values must be of the same type as `default`.   
-  - Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
-  - For a list of functions `funs`, `-do S` will run all functions containing `S`.  
-  &#34;&#34;&#34;
+  - Drives command-line from `options= `dict(flag=(default, help), ..)`.
+  - Command-line values must be of the same type as `default`.
+  - Command-line flags must be one `-flag X` (for setting `flag`) 
+    or `+flag` (for enabling booleans).
+  - For a list of functions `funs`, `-do S` will run all functions 
+    containing `S`, passing in the updated values.  &#34;&#34;&#34;
   def say():
     if doc:
       print(doc)
@@ -245,32 +244,27 @@ def cli(options, doc=&#34;&#34;, funs=[]):
             &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
     print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
 
-  def act(arg, after):
-    flag = arg[1:]
+  def update(prefix, flag,  after):
     assert flag in my
-    if arg[0] == &#34;+&#34;:
-      now = True
-    else:
+    now = True  # for &#39;+&#39; just google the value
+    if prefix == &#34;-&#34;:
       assert len(after) &gt;= 1
       now = coerce(after[0])
     assert type(now) == type(my[flag])
     my[flag] = now
-  # ------------------
-  funs = [v for k, v in funs.items() if type(v) == fun and &#34;eg_&#34; == k[:3]]
+  # --------------
   my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    say() if arg == &#34;-h&#34; else (arg[0] in &#34;+-&#34; and act(arg, args))
-  if my.do:
-    funs = [one for one in funs if my.do in one.__name__]
-  for one in funs:
-    random.seed(my.seed)
-    print(&#34;# &#34; + one.__name__)
-    if one.__doc__:
-      print(&#34;# &#34;+re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, one.__doc__))
-    one(my)
-  return my
+    say() if arg == &#34;-h&#34; else (arg[0] in &#34;+-&#34; and update(arg[0], arg[1:], args))
+  for f, v in funs.items():
+    if type(v) == fun and eg == f[:len(eg)] and my.do and my.do in f:
+      print(&#34;\n### &#34; + f)
+      if v.__doc__:
+        print(&#34;# &#34;+re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, v.__doc__))
+      random.seed(my.seed)
+      v(my)
 
 
 def eg_two(my):
@@ -287,7 +281,7 @@ def eg_one(my):
   [t.add(lst) for lst in csv(my.data)]
   t.rows.sort(key=lambda r: t.like(r, my))
   n = 50
-  t1 = t.clone(t.rows[:n])
+  t1 = t.clone(t.rows[: n])
   t2 = t.clone(t.rows[-n:])
   print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
   print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
@@ -358,32 +352,29 @@ if __name__ == &#34;__main__&#34;:
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="ball.cli"><code class="name flex">
-<span>def <span class="ident">cli</span></span>(<span>options, doc='', funs=[])</span>
+<span>def <span class="ident">cli</span></span>(<span>options, doc='', funs=[], eg='eg_')</span>
 </code></dt>
 <dd>
 <div class="desc"><ul>
-<li>Drives command-line from <code>options=</code>dict(flag=(default, help), ..)`.
-</li>
-<li>Returns <code>d</code> (as an <code><a title="ball.obj" href="#ball.obj">obj</a></code>) updated from command-line.
-</li>
-<li>Command-line values must be of the same type as <code>default</code>.
-</li>
-<li>Command-line flags must be one <code>-flag X</code> (for setting <code>flag</code>) or <code>+flag</code> (for enabling booleans).
-</li>
-<li>For a list of functions <code>funs</code>, <code>-do S</code> will run all functions containing <code>S</code>.</li>
+<li>Drives command-line from <code>options=</code>dict(flag=(default, help), ..)`.</li>
+<li>Command-line values must be of the same type as <code>default</code>.</li>
+<li>Command-line flags must be one <code>-flag X</code> (for setting <code>flag</code>)
+or <code>+flag</code> (for enabling booleans).</li>
+<li>For a list of functions <code>funs</code>, <code>-do S</code> will run all functions
+containing <code>S</code>, passing in the updated values.</li>
 </ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cli(options, doc=&#34;&#34;, funs=[]):
+<pre><code class="python">def cli(options, doc=&#34;&#34;, funs=[], eg=&#34;eg_&#34;):
   &#34;&#34;&#34;
-  - Drives command-line from `options= `dict(flag=(default, help), ..)`.  
-  - Returns `d` (as an `obj`) updated from command-line.    
-  - Command-line values must be of the same type as `default`.   
-  - Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
-  - For a list of functions `funs`, `-do S` will run all functions containing `S`.  
-  &#34;&#34;&#34;
+  - Drives command-line from `options= `dict(flag=(default, help), ..)`.
+  - Command-line values must be of the same type as `default`.
+  - Command-line flags must be one `-flag X` (for setting `flag`) 
+    or `+flag` (for enabling booleans).
+  - For a list of functions `funs`, `-do S` will run all functions 
+    containing `S`, passing in the updated values.  &#34;&#34;&#34;
   def say():
     if doc:
       print(doc)
@@ -395,32 +386,27 @@ if __name__ == &#34;__main__&#34;:
             &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
     print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
 
-  def act(arg, after):
-    flag = arg[1:]
+  def update(prefix, flag,  after):
     assert flag in my
-    if arg[0] == &#34;+&#34;:
-      now = True
-    else:
+    now = True  # for &#39;+&#39; just google the value
+    if prefix == &#34;-&#34;:
       assert len(after) &gt;= 1
       now = coerce(after[0])
     assert type(now) == type(my[flag])
     my[flag] = now
-  # ------------------
-  funs = [v for k, v in funs.items() if type(v) == fun and &#34;eg_&#34; == k[:3]]
+  # --------------
   my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    say() if arg == &#34;-h&#34; else (arg[0] in &#34;+-&#34; and act(arg, args))
-  if my.do:
-    funs = [one for one in funs if my.do in one.__name__]
-  for one in funs:
-    random.seed(my.seed)
-    print(&#34;# &#34; + one.__name__)
-    if one.__doc__:
-      print(&#34;# &#34;+re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, one.__doc__))
-    one(my)
-  return my</code></pre>
+    say() if arg == &#34;-h&#34; else (arg[0] in &#34;+-&#34; and update(arg[0], arg[1:], args))
+  for f, v in funs.items():
+    if type(v) == fun and eg == f[:len(eg)] and my.do and my.do in f:
+      print(&#34;\n### &#34; + f)
+      if v.__doc__:
+        print(&#34;# &#34;+re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, v.__doc__))
+      random.seed(my.seed)
+      v(my)</code></pre>
 </details>
 </dd>
 <dt id="ball.coerce"><code class="name flex">
@@ -486,7 +472,7 @@ comma-separated lines(skipping over whitespace and comments).</p></div>
   [t.add(lst) for lst in csv(my.data)]
   t.rows.sort(key=lambda r: t.like(r, my))
   n = 50
-  t1 = t.clone(t.rows[:n])
+  t1 = t.clone(t.rows[: n])
   t2 = t.clone(t.rows[-n:])
   print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
   print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
@@ -829,9 +815,9 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 </code></dt>
 <dd>
 <div class="desc"><ul>
-<li>Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers. </li>
-<li>Header names starting with upper case letters are numerics (others are symbols). </li>
-<li>Names ending in '+-' are goals to be maximized or minimized. </li>
+<li>Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers.</li>
+<li>Header names starting with upper case letters are numerics (others are symbols).</li>
+<li>Names ending in '+-' are goals to be maximized or minimized.</li>
 <li>Names containing '?' are ignored in the reasoning.</li>
 </ul></div>
 <details class="source">
@@ -840,9 +826,9 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 </summary>
 <pre><code class="python">class Tab(obj):
   &#34;&#34;&#34;
-   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers. 
-   - Header names starting with upper case letters are numerics (others are symbols). 
-   - Names ending in &#39;+-&#39; are goals to be maximized or minimized. 
+   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers.
+   - Header names starting with upper case letters are numerics (others are symbols).
+   - Names ending in &#39;+-&#39; are goals to be maximized or minimized.
    - Names containing &#39;?&#39; are ignored in the reasoning.&#34;&#34;&#34;
   def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []

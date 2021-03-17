@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 """
-ball: a Bayesian active learning laboratory.    
+ball: a Bayesian active learning laboratory.
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.
 
 usage: ./ball.py [OPTIONS]
@@ -20,12 +20,12 @@ OPTIONS = dict(data=("", "input data. Defaults to standard input"),
                m=(2, "low fro"))
 """
 option         |  notes
----------------|-----------------------------------------------  
- -data S       | input data. Defaults to standard input; e.g. []  
- -do S         | some start up function(s) to run; e.g. [?]  
- -seed I       | random number seed; e.g. [10023]  
- -k I          | low frequency ; e.g. [1]  
- -m I          | low fro ; e.g. [2]  
+---------------|-----------------------------------------------
+ -data S       | input data. Defaults to standard input; e.g. []
+ -do S         | some start up function(s) to run; e.g. [?]
+ -seed I       | random number seed; e.g. [10023]
+ -k I          | low frequency ; e.g. [1]
+ -m I          | low fro ; e.g. [2]
  -h            | show help text
 """
 
@@ -113,9 +113,9 @@ class Sym(Col):
 
 class Tab(obj):
   """
-   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers. 
-   - Header names starting with upper case letters are numerics (others are symbols). 
-   - Names ending in '+-' are goals to be maximized or minimized. 
+   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers.
+   - Header names starting with upper case letters are numerics (others are symbols).
+   - Names ending in '+-' are goals to be maximized or minimized.
    - Names containing '?' are ignored in the reasoning."""
   def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []
@@ -193,14 +193,14 @@ def csv(file=None):
       yield lst
 
 
-def cli(options, doc="", funs=[]):
+def cli(options, doc="", funs=[], eg="eg_"):
   """
-  - Drives command-line from `options= `dict(flag=(default, help), ..)`.  
-  - Returns `d` (as an `obj`) updated from command-line.    
-  - Command-line values must be of the same type as `default`.   
-  - Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
-  - For a list of functions `funs`, `-do S` will run all functions containing `S`.  
-  """
+  - Drives command-line from `options= `dict(flag=(default, help), ..)`.
+  - Command-line values must be of the same type as `default`.
+  - Command-line flags must be one `-flag X` (for setting `flag`) 
+    or `+flag` (for enabling booleans).
+  - For a list of functions `funs`, `-do S` will run all functions 
+    containing `S`, passing in the updated values.  """
   def say():
     if doc:
       print(doc)
@@ -212,32 +212,27 @@ def cli(options, doc="", funs=[]):
             "|", help, f"; e.g. [{v}]   ")
     print(f" -{'h':13}", "|", "show help text")
 
-  def act(arg, after):
-    flag = arg[1:]
+  def update(prefix, flag,  after):
     assert flag in my
-    if arg[0] == "+":
-      now = True
-    else:
+    now = True  # for '+' just google the value
+    if prefix == "-":
       assert len(after) >= 1
       now = coerce(after[0])
     assert type(now) == type(my[flag])
     my[flag] = now
-  # ------------------
-  funs = [v for k, v in funs.items() if type(v) == fun and "eg_" == k[:3]]
+  # --------------
   my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    say() if arg == "-h" else (arg[0] in "+-" and act(arg, args))
-  if my.do:
-    funs = [one for one in funs if my.do in one.__name__]
-  for one in funs:
-    random.seed(my.seed)
-    print("# " + one.__name__)
-    if one.__doc__:
-      print("# "+re.sub(r"\n[\t ]*", "\n# ", one.__doc__))
-    one(my)
-  return my
+    say() if arg == "-h" else (arg[0] in "+-" and update(arg[0], arg[1:], args))
+  for f, v in funs.items():
+    if type(v) == fun and eg == f[:len(eg)] and my.do and my.do in f:
+      print("\n### " + f)
+      if v.__doc__:
+        print("# "+re.sub(r"\n[\t ]*", "\n# ", v.__doc__))
+      random.seed(my.seed)
+      v(my)
 
 
 def eg_two(my):
@@ -254,7 +249,7 @@ def eg_one(my):
   [t.add(lst) for lst in csv(my.data)]
   t.rows.sort(key=lambda r: t.like(r, my))
   n = 50
-  t1 = t.clone(t.rows[:n])
+  t1 = t.clone(t.rows[: n])
   t2 = t.clone(t.rows[-n:])
   print("lo  ", [r2(col.mid()) for col in t1.xs])
   print("hi  ", [r2(col.mid()) for col in t2.xs])
