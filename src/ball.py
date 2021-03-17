@@ -5,25 +5,15 @@ ball: a Bayesian active learning laboratory.
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.
 
 usage: ./ball.py [OPTIONS]
+
+Option    |  Notes               | Default
+----------|:---------------------|:----------------------
+ -data S  | input data           | ../opt/data/auto93.csv
+ -seed I  | random number seed   | 10023
+ -k I     | low frequency        | 1
+ -m I     | low fro ; e.g.       | 2
 """
 import functools, random, types, math, sys, re
-
-OPTIONS = dict(data = ("../opt/data/auto93.csv",
-                               "input data. Defaults to standard input"),
-               do   = ("?",   "some start up function(s) to run"),
-               seed = (10023, "random number seed"),
-               k    = (1,     "low frequency"),
-               m    = (2,     "low fro"))
-"""
-Option         |  Notes
----------------|:----------------------------------------------
- -data S       | input data. Defaults to standard input; e.g. []
- -do S         | some start up function(s) to run; e.g. [?]
- -seed I       | random number seed; e.g. [10023]
- -k I          | low frequency ; e.g. [1]
- -m I          | low fro ; e.g. [2]
- -h            | show help text
-"""
 
 #-------------------------------------------------------------------------------
 class obj:
@@ -192,29 +182,27 @@ class Yell:
   - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  
   """
-  def ing(options,funs):
-    fun = types.FunctionType
-    funs = {k:v for k, v in funs.items() if type(v)== fun and "eg_"== k[:3]}
-    d    = {k: v for k, (v, _) in options.items()}
+  def options(d):
+    for line in __doc__.split("\n\n")[-1].split("\n")[2:]:
+      if line:
+        line    = [x.strip() for x in line.split("|")]
+        flag    = line[0].split(" ")[0][1:]
+        d[flag] = (line[1], coerce(line[-1]))
+    return d
+
+  def ing(funs):
+    fun     = types.FunctionType
+    options = Yell.options({})
+    funs    = {k:v for k, v in funs.items() if type(v)== fun and "eg_"== k[:3]}
+    d       = {k: v for k, (_,v) in options.items()}
+    d["do"] =  "?"
     args = sys.argv
     while args:
       arg, *args = args
-      if   arg  == "-h"            : Yell.hello(options,funs)
+      if   arg  == "-h"            : print(__doc__)
       elif ("eg_"+arg[1:]) in funs : d["do"] = "eg_"+arg[1:]
       elif arg[0]  in "+-"         : Yell.update(arg[0], arg[1:], args,d,funs)
     [eg(v,d) for k,v  in funs.items() if d["do"] and d["do"] in k]
-
-  def hello(options,funs):
-    if __doc__: print(__doc__)
-    print("Option          |Notes")
-    print("----------------|:-----------------------")
-    for k, (v, help) in options.items():
-      m = " F " if type(v) == float else (" I " if type(v) == int else " S ")
-      print(f" +{k:13}" if v == False else f" -{k+m:13}",
-            "|", help, f"; e.g. [{v}]   ")
-    for k,v in funs.items():
-      print(f" -{k[3:]:13}", "|", v.__doc__)
-    print(f" -{'h':13}", "|", "show help text")
 
   def update(prefix, flag, after,d,funs):
     assert flag in d, f"{flag} not one of {list(d.keys())}"
@@ -645,7 +633,8 @@ class Yell:
     4, 86, 65, 2110, 17.9, 80, 3, 50"""
 
 if __name__ == "__main__":
-  Yell.ing(OPTIONS,vars(Yell))
+   Yell.ing(vars(Yell))
+
 #  def better(i, r1, r2):
 #     s1, s2, n = 0, 0, len(i.cols.y)
 #     for col in i.cols.y:

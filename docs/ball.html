@@ -26,6 +26,37 @@
 <p>ball: a Bayesian active learning laboratory.
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.</p>
 <p>usage: ./ball.py [OPTIONS]</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th align="left">Notes</th>
+<th align="left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-data S</td>
+<td align="left">input data</td>
+<td align="left">../opt/data/auto93.csv</td>
+</tr>
+<tr>
+<td>-seed I</td>
+<td align="left">random number seed</td>
+<td align="left">10023</td>
+</tr>
+<tr>
+<td>-k I</td>
+<td align="left">low frequency</td>
+<td align="left">1</td>
+</tr>
+<tr>
+<td>-m I</td>
+<td align="left">low fro ; e.g.</td>
+<td align="left">2</td>
+</tr>
+</tbody>
+</table>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -37,25 +68,15 @@ ball: a Bayesian active learning laboratory.
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.
 
 usage: ./ball.py [OPTIONS]
+
+Option    |  Notes               | Default
+----------|:---------------------|:----------------------
+ -data S  | input data           | ../opt/data/auto93.csv
+ -seed I  | random number seed   | 10023
+ -k I     | low frequency        | 1
+ -m I     | low fro ; e.g.       | 2
 &#34;&#34;&#34;
 import functools, random, types, math, sys, re
-
-OPTIONS = dict(data = (&#34;../opt/data/auto93.csv&#34;,
-                               &#34;input data. Defaults to standard input&#34;),
-               do   = (&#34;?&#34;,   &#34;some start up function(s) to run&#34;),
-               seed = (10023, &#34;random number seed&#34;),
-               k    = (1,     &#34;low frequency&#34;),
-               m    = (2,     &#34;low fro&#34;))
-&#34;&#34;&#34;
-Option         |  Notes
----------------|:----------------------------------------------
- -data S       | input data. Defaults to standard input; e.g. []
- -do S         | some start up function(s) to run; e.g. [?]
- -seed I       | random number seed; e.g. [10023]
- -k I          | low frequency ; e.g. [1]
- -m I          | low fro ; e.g. [2]
- -h            | show help text
-&#34;&#34;&#34;
 
 #-------------------------------------------------------------------------------
 class obj:
@@ -71,21 +92,22 @@ class Col(obj):
   @staticmethod
   def new(tab, at, txt):
     &#34;Factory for making and storing different column types.&#34;
+    if &#34;?&#34; in txt: return Skip(at,txt)
     x = (Num if txt[0].isupper() else Sym)(at, txt)
-    if &#34;?&#34; not in txt:
-      (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+    (tab.ys if txt[-1] in &#34;+-&#34; else tab.xs).append(x)
     return x
-
-  @staticmethod
-  def goalp(txt):
-    &#34;Goal names end in `+` or `-`.&#34;
-    return &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
 
   def add(i, x):
     &#34;Skip missing values, increment counter, add `x`.&#34;
     if x == &#34;?&#34;: return x
     i.n += 1
     return i.add1(x)
+
+#-------------------------------------------------------------------------------
+class Skip(Col):
+  def __init__(i, at=0, txt=&#34;&#34;): i.txt, i.at, i.n
+  def add1(i,x): return x
+  def mid(i): return &#34;?&#34;
 
 #-------------------------------------------------------------------------------
 class Num(Col):
@@ -157,7 +179,7 @@ class Tab(obj):
   def add(i, row):
     &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
     then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
-    if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
     else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def like(i, row, my):
@@ -183,7 +205,6 @@ class Tab(obj):
         mostlike, out = tmp, t
     return mostlike, out
 
-
 #-------------------------------------------------------------------------------
 def rows(src=None):
   &#34;From files or standard input or a string, return an iterator for the lines.&#34;
@@ -207,6 +228,7 @@ def coerce(string):
     except Exception: return string
   
 def eg(f,d):
+  &#34;Run an example.&#34;
   print(&#34;\n### &#34; + f.__name__)
   if f.__doc__: print(&#34;# &#34; + re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, f.__doc__))
   my=obj(**d)
@@ -223,29 +245,27 @@ class Yell:
   - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  
   &#34;&#34;&#34;
-  def ing(options,funs):
-    fun = types.FunctionType
-    funs = {k:v for k, v in funs.items() if type(v)== fun and &#34;eg_&#34;== k[:3]}
-    d    = {k: v for k, (v, _) in options.items()}
+  def options(d):
+    for line in __doc__.split(&#34;\n\n&#34;)[-1].split(&#34;\n&#34;)[2:]:
+      if line:
+        line    = [x.strip() for x in line.split(&#34;|&#34;)]
+        flag    = line[0].split(&#34; &#34;)[0][1:]
+        d[flag] = (line[1], coerce(line[-1]))
+    return d
+
+  def ing(funs):
+    fun     = types.FunctionType
+    options = Yell.options({})
+    funs    = {k:v for k, v in funs.items() if type(v)== fun and &#34;eg_&#34;== k[:3]}
+    d       = {k: v for k, (_,v) in options.items()}
+    d[&#34;do&#34;] =  &#34;?&#34;
     args = sys.argv
     while args:
       arg, *args = args
-      if   arg  == &#34;-h&#34;            : Yell.hello(options,funs)
+      if   arg  == &#34;-h&#34;            : print(__doc__)
       elif (&#34;eg_&#34;+arg[1:]) in funs : d[&#34;do&#34;] = &#34;eg_&#34;+arg[1:]
       elif arg[0]  in &#34;+-&#34;         : Yell.update(arg[0], arg[1:], args,d,funs)
     [eg(v,d) for k,v  in funs.items() if d[&#34;do&#34;] and d[&#34;do&#34;] in k]
-
-  def hello(options,funs):
-    if __doc__: print(__doc__)
-    print(&#34;Option          |Notes&#34;)
-    print(&#34;----------------|:-----------------------&#34;)
-    for k, (v, help) in options.items():
-      m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
-      print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
-            &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
-    for k,v in funs.items():
-      print(f&#34; -{k[3:]:13}&#34;, &#34;|&#34;, v.__doc__)
-    print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
 
   def update(prefix, flag, after,d,funs):
     assert flag in d, f&#34;{flag} not one of {list(d.keys())}&#34;
@@ -260,7 +280,7 @@ class Yell:
     &#34;table1&#34;
     def r2(x): return round(x, 2)
     t = Tab()
-    [t.add(row) for row in rows(Yell.auto93)]
+    [t.add(row) for row in rows(Yell.auto93)] #  if random.random&lt; 0.1
     t.rows.sort(key=lambda r: t.like(r, my))
     n = 50
     t1 = t.clone(t.rows[: n])
@@ -676,7 +696,8 @@ class Yell:
     4, 86, 65, 2110, 17.9, 80, 3, 50&#34;&#34;&#34;
 
 if __name__ == &#34;__main__&#34;:
-  Yell.ing(OPTIONS,vars(Yell))
+   Yell.ing(vars(Yell))
+
 #  def better(i, r1, r2):
 #     s1, s2, n = 0, 0, len(i.cols.y)
 #     for col in i.cols.y:
@@ -694,46 +715,6 @@ if __name__ == &#34;__main__&#34;:
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-variables">Global variables</h2>
-<dl>
-<dt id="ball.OPTIONS"><code class="name">var <span class="ident">OPTIONS</span></code></dt>
-<dd>
-<div class="desc"><table>
-<thead>
-<tr>
-<th>Option</th>
-<th align="left">Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>-data S</td>
-<td align="left">input data. Defaults to standard input; e.g. []</td>
-</tr>
-<tr>
-<td>-do S</td>
-<td align="left">some start up function(s) to run; e.g. [?]</td>
-</tr>
-<tr>
-<td>-seed I</td>
-<td align="left">random number seed; e.g. [10023]</td>
-</tr>
-<tr>
-<td>-k I</td>
-<td align="left">low frequency ; e.g. [1]</td>
-</tr>
-<tr>
-<td>-m I</td>
-<td align="left">low fro ; e.g. [2]</td>
-</tr>
-<tr>
-<td>-h</td>
-<td align="left">show help text</td>
-</tr>
-</tbody>
-</table></div>
-</dd>
-</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
@@ -759,12 +740,13 @@ if __name__ == &#34;__main__&#34;:
 <span>def <span class="ident">eg</span></span>(<span>f, d)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Run an example.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def eg(f,d):
+  &#34;Run an example.&#34;
   print(&#34;\n### &#34; + f.__name__)
   if f.__doc__: print(&#34;# &#34; + re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, f.__doc__))
   my=obj(**d)
@@ -818,15 +800,10 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
   @staticmethod
   def new(tab, at, txt):
     &#34;Factory for making and storing different column types.&#34;
+    if &#34;?&#34; in txt: return Skip(at,txt)
     x = (Num if txt[0].isupper() else Sym)(at, txt)
-    if &#34;?&#34; not in txt:
-      (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+    (tab.ys if txt[-1] in &#34;+-&#34; else tab.xs).append(x)
     return x
-
-  @staticmethod
-  def goalp(txt):
-    &#34;Goal names end in `+` or `-`.&#34;
-    return &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]
 
   def add(i, x):
     &#34;Skip missing values, increment counter, add `x`.&#34;
@@ -841,25 +818,11 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="ball.Num" href="#ball.Num">Num</a></li>
+<li><a title="ball.Skip" href="#ball.Skip">Skip</a></li>
 <li><a title="ball.Sym" href="#ball.Sym">Sym</a></li>
 </ul>
 <h3>Static methods</h3>
 <dl>
-<dt id="ball.Col.goalp"><code class="name flex">
-<span>def <span class="ident">goalp</span></span>(<span>txt)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Goal names end in <code>+</code> or <code>-</code>.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def goalp(txt):
-  &#34;Goal names end in `+` or `-`.&#34;
-  return &#34;+&#34; == txt[-1] or &#34;-&#34; == txt[-1]</code></pre>
-</details>
-</dd>
 <dt id="ball.Col.new"><code class="name flex">
 <span>def <span class="ident">new</span></span>(<span>tab, at, txt)</span>
 </code></dt>
@@ -872,9 +835,9 @@ def goalp(txt):
 <pre><code class="python">@staticmethod
 def new(tab, at, txt):
   &#34;Factory for making and storing different column types.&#34;
+  if &#34;?&#34; in txt: return Skip(at,txt)
   x = (Num if txt[0].isupper() else Sym)(at, txt)
-  if &#34;?&#34; not in txt:
-    (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+  (tab.ys if txt[-1] in &#34;+-&#34; else tab.xs).append(x)
   return x</code></pre>
 </details>
 </dd>
@@ -999,7 +962,66 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 <li><code><b><a title="ball.Col" href="#ball.Col">Col</a></b></code>:
 <ul class="hlist">
 <li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
-<li><code><a title="ball.Col.goalp" href="#ball.Col.goalp">goalp</a></code></li>
+<li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="ball.Skip"><code class="flex name class">
+<span>class <span class="ident">Skip</span></span>
+<span>(</span><span>at=0, txt='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple base class that
+pretty prints slots, that can be easy
+initialized with (e.g.) <code>x=obj(name='tim',age=21)</code>,
+with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Skip(Col):
+  def __init__(i, at=0, txt=&#34;&#34;): i.txt, i.at, i.n
+  def add1(i,x): return x
+  def mid(i): return &#34;?&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="ball.Col" href="#ball.Col">Col</a></li>
+<li><a title="ball.obj" href="#ball.obj">obj</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="ball.Skip.add1"><code class="name flex">
+<span>def <span class="ident">add1</span></span>(<span>i, x)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add1(i,x): return x</code></pre>
+</details>
+</dd>
+<dt id="ball.Skip.mid"><code class="name flex">
+<span>def <span class="ident">mid</span></span>(<span>i)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mid(i): return &#34;?&#34;</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="ball.Col" href="#ball.Col">Col</a></b></code>:
+<ul class="hlist">
+<li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
 <li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
 </ul>
 </li>
@@ -1093,7 +1115,6 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 <li><code><b><a title="ball.Col" href="#ball.Col">Col</a></b></code>:
 <ul class="hlist">
 <li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
-<li><code><a title="ball.Col.goalp" href="#ball.Col.goalp">goalp</a></code></li>
 <li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
 </ul>
 </li>
@@ -1139,7 +1160,7 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
   def add(i, row):
     &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
     then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
-    if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
     else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def like(i, row, my):
@@ -1184,7 +1205,7 @@ then store the 'row' in 'rows'.</p></div>
 <pre><code class="python">def add(i, row):
   &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
   then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
-  if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+  if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
   else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]</code></pre>
 </details>
 </dd>
@@ -1301,29 +1322,27 @@ containing <code>S</code>, passing in the updated values.</li>
   - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  
   &#34;&#34;&#34;
-  def ing(options,funs):
-    fun = types.FunctionType
-    funs = {k:v for k, v in funs.items() if type(v)== fun and &#34;eg_&#34;== k[:3]}
-    d    = {k: v for k, (v, _) in options.items()}
+  def options(d):
+    for line in __doc__.split(&#34;\n\n&#34;)[-1].split(&#34;\n&#34;)[2:]:
+      if line:
+        line    = [x.strip() for x in line.split(&#34;|&#34;)]
+        flag    = line[0].split(&#34; &#34;)[0][1:]
+        d[flag] = (line[1], coerce(line[-1]))
+    return d
+
+  def ing(funs):
+    fun     = types.FunctionType
+    options = Yell.options({})
+    funs    = {k:v for k, v in funs.items() if type(v)== fun and &#34;eg_&#34;== k[:3]}
+    d       = {k: v for k, (_,v) in options.items()}
+    d[&#34;do&#34;] =  &#34;?&#34;
     args = sys.argv
     while args:
       arg, *args = args
-      if   arg  == &#34;-h&#34;            : Yell.hello(options,funs)
+      if   arg  == &#34;-h&#34;            : print(__doc__)
       elif (&#34;eg_&#34;+arg[1:]) in funs : d[&#34;do&#34;] = &#34;eg_&#34;+arg[1:]
       elif arg[0]  in &#34;+-&#34;         : Yell.update(arg[0], arg[1:], args,d,funs)
     [eg(v,d) for k,v  in funs.items() if d[&#34;do&#34;] and d[&#34;do&#34;] in k]
-
-  def hello(options,funs):
-    if __doc__: print(__doc__)
-    print(&#34;Option          |Notes&#34;)
-    print(&#34;----------------|:-----------------------&#34;)
-    for k, (v, help) in options.items():
-      m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
-      print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
-            &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
-    for k,v in funs.items():
-      print(f&#34; -{k[3:]:13}&#34;, &#34;|&#34;, v.__doc__)
-    print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
 
   def update(prefix, flag, after,d,funs):
     assert flag in d, f&#34;{flag} not one of {list(d.keys())}&#34;
@@ -1338,7 +1357,7 @@ containing <code>S</code>, passing in the updated values.</li>
     &#34;table1&#34;
     def r2(x): return round(x, 2)
     t = Tab()
-    [t.add(row) for row in rows(Yell.auto93)]
+    [t.add(row) for row in rows(Yell.auto93)] #  if random.random&lt; 0.1
     t.rows.sort(key=lambda r: t.like(r, my))
     n = 50
     t1 = t.clone(t.rows[: n])
@@ -1775,7 +1794,7 @@ containing <code>S</code>, passing in the updated values.</li>
   &#34;table1&#34;
   def r2(x): return round(x, 2)
   t = Tab()
-  [t.add(row) for row in rows(Yell.auto93)]
+  [t.add(row) for row in rows(Yell.auto93)] #  if random.random&lt; 0.1
   t.rows.sort(key=lambda r: t.like(r, my))
   n = 50
   t1 = t.clone(t.rows[: n])
@@ -1800,30 +1819,8 @@ lots of comments lines</p></div>
   print(my)</code></pre>
 </details>
 </dd>
-<dt id="ball.Yell.hello"><code class="name flex">
-<span>def <span class="ident">hello</span></span>(<span>options, funs)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def hello(options,funs):
-  if __doc__: print(__doc__)
-  print(&#34;Option          |Notes&#34;)
-  print(&#34;----------------|:-----------------------&#34;)
-  for k, (v, help) in options.items():
-    m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
-    print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
-          &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
-  for k,v in funs.items():
-    print(f&#34; -{k[3:]:13}&#34;, &#34;|&#34;, v.__doc__)
-  print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)</code></pre>
-</details>
-</dd>
 <dt id="ball.Yell.ing"><code class="name flex">
-<span>def <span class="ident">ing</span></span>(<span>options, funs)</span>
+<span>def <span class="ident">ing</span></span>(<span>funs)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1831,17 +1828,37 @@ lots of comments lines</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ing(options,funs):
-  fun = types.FunctionType
-  funs = {k:v for k, v in funs.items() if type(v)== fun and &#34;eg_&#34;== k[:3]}
-  d    = {k: v for k, (v, _) in options.items()}
+<pre><code class="python">def ing(funs):
+  fun     = types.FunctionType
+  options = Yell.options({})
+  funs    = {k:v for k, v in funs.items() if type(v)== fun and &#34;eg_&#34;== k[:3]}
+  d       = {k: v for k, (_,v) in options.items()}
+  d[&#34;do&#34;] =  &#34;?&#34;
   args = sys.argv
   while args:
     arg, *args = args
-    if   arg  == &#34;-h&#34;            : Yell.hello(options,funs)
+    if   arg  == &#34;-h&#34;            : print(__doc__)
     elif (&#34;eg_&#34;+arg[1:]) in funs : d[&#34;do&#34;] = &#34;eg_&#34;+arg[1:]
     elif arg[0]  in &#34;+-&#34;         : Yell.update(arg[0], arg[1:], args,d,funs)
   [eg(v,d) for k,v  in funs.items() if d[&#34;do&#34;] and d[&#34;do&#34;] in k]</code></pre>
+</details>
+</dd>
+<dt id="ball.Yell.options"><code class="name flex">
+<span>def <span class="ident">options</span></span>(<span>d)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def options(d):
+  for line in __doc__.split(&#34;\n\n&#34;)[-1].split(&#34;\n&#34;)[2:]:
+    if line:
+      line    = [x.strip() for x in line.split(&#34;|&#34;)]
+      flag    = line[0].split(&#34; &#34;)[0][1:]
+      d[flag] = (line[1], coerce(line[-1]))
+  return d</code></pre>
 </details>
 </dd>
 <dt id="ball.Yell.update"><code class="name flex">
@@ -1923,11 +1940,6 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <ul></ul>
 </div>
 <ul id="index">
-<li><h3><a href="#header-variables">Global variables</a></h3>
-<ul class="">
-<li><code><a title="ball.OPTIONS" href="#ball.OPTIONS">OPTIONS</a></code></li>
-</ul>
-</li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="ball.coerce" href="#ball.coerce">coerce</a></code></li>
@@ -1941,7 +1953,6 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <h4><code><a title="ball.Col" href="#ball.Col">Col</a></code></h4>
 <ul class="">
 <li><code><a title="ball.Col.add" href="#ball.Col.add">add</a></code></li>
-<li><code><a title="ball.Col.goalp" href="#ball.Col.goalp">goalp</a></code></li>
 <li><code><a title="ball.Col.new" href="#ball.Col.new">new</a></code></li>
 </ul>
 </li>
@@ -1951,6 +1962,13 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <li><code><a title="ball.Num.add1" href="#ball.Num.add1">add1</a></code></li>
 <li><code><a title="ball.Num.like" href="#ball.Num.like">like</a></code></li>
 <li><code><a title="ball.Num.mid" href="#ball.Num.mid">mid</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ball.Skip" href="#ball.Skip">Skip</a></code></h4>
+<ul class="">
+<li><code><a title="ball.Skip.add1" href="#ball.Skip.add1">add1</a></code></li>
+<li><code><a title="ball.Skip.mid" href="#ball.Skip.mid">mid</a></code></li>
 </ul>
 </li>
 <li>
@@ -1978,8 +1996,8 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <li><code><a title="ball.Yell.auto93" href="#ball.Yell.auto93">auto93</a></code></li>
 <li><code><a title="ball.Yell.eg_One" href="#ball.Yell.eg_One">eg_One</a></code></li>
 <li><code><a title="ball.Yell.eg_Two" href="#ball.Yell.eg_Two">eg_Two</a></code></li>
-<li><code><a title="ball.Yell.hello" href="#ball.Yell.hello">hello</a></code></li>
 <li><code><a title="ball.Yell.ing" href="#ball.Yell.ing">ing</a></code></li>
+<li><code><a title="ball.Yell.options" href="#ball.Yell.options">options</a></code></li>
 <li><code><a title="ball.Yell.update" href="#ball.Yell.update">update</a></code></li>
 </ul>
 </li>
