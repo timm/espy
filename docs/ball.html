@@ -38,21 +38,18 @@ ball: a Bayesian active learning laboratory.
 
 usage: ./ball.py [OPTIONS]
 &#34;&#34;&#34;
-import re
-import sys
-import math
-import functools
-import random
+import functools, random, math, sys, re
 from types import FunctionType as fun
 
-OPTIONS = dict(data=(&#34;&#34;, &#34;input data. Defaults to standard input&#34;),
+OPTIONS = dict(data=(&#34;../opt/data/auto93.csv&#34;,
+                     &#34;input data. Defaults to standard input&#34;),
                do=(&#34;?&#34;, &#34;some start up function(s) to run&#34;),
                seed=(10023, &#34;random number seed&#34;),
                k=(1, &#34;low frequency&#34;),
                m=(2, &#34;low fro&#34;))
 &#34;&#34;&#34;
-option         |  notes
----------------|-----------------------------------------------
+OPTION         |  NOTES
+---------------|:----------------------------------------------
  -data S       | input data. Defaults to standard input; e.g. []
  -do S         | some start up function(s) to run; e.g. [?]
  -seed I       | random number seed; e.g. [10023]
@@ -71,7 +68,7 @@ class obj:
   def __setitem__(i, k, v): i.__dict__[k] = v
   def __contains__(i, k): return k in i.__dict__
   def __repr__(i): return &#34;{&#34; + &#39;, &#39;.join(
-      [f&#34;:{k} {v}&#34; for k, v in sorted(i.__dict__.items()) if k[0] != &#34;_&#34;])+&#34;}&#34;
+      [f&#34;:{k} {v}&#34; for k, v in sorted(i.__dict__.items()) if k[0] != &#34;_&#34;]) + &#34;}&#34;
 
 
 class Col(obj):
@@ -90,8 +87,7 @@ class Col(obj):
 
   def add(i, x):
     &#34;Skip missing values, increment counter, add `x`.&#34;
-    if x == &#34;?&#34;:
-      return x
+    if x == &#34;?&#34;: return x
     i.n += 1
     return i.add1(x)
 
@@ -107,20 +103,18 @@ class Num(Col):
   def add1(i, x):
     &#34;Incrementally update `mu` and `sd`.&#34;
     d = x - i.mu
-    i.mu += d/i.n
-    i.m2 += d*(x - i.mu)
-    i.sd = (i.m2/i.n)**0.5
+    i.mu += d / i.n
+    i.m2 += d * (x - i.mu)
+    i.sd = (i.m2 / i.n)**0.5
     return x
 
   def like(i, x, *_):
     &#34;Returns probability of `x`.&#34;
-    if (i.mu - 4*i.sd) &lt; x &lt; (i.mu + 4*i.sd):
-      var = i.sd ** 2
-      denom = (math.pi*2*var) ** .5
-      num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
-      return num/(denom + 1E-64)
-    else:
-      return 0
+    if not((i.mu - 4 * i.sd) &lt; x &lt; (i.mu + 4 * i.sd)): return 0
+    var = i.sd ** 2
+    denom = (math.pi * 2 * var) ** .5
+    num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
+    return num / (denom + 1E-64)
 
 
 class Sym(Col):
@@ -133,13 +127,12 @@ class Sym(Col):
 
   def like(i, x, prior, my):
     &#34;Returns probability of `x`.&#34;
-    return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)
+    return (i.seen.get(x, 0) + my.m * prior) / (i.n + my.m)
 
   def add1(i, x):
     &#34;Incrementally update symbol counts, and the mode.&#34;
     tmp = i.seen[x] = i.seen.get(x, 0) + 1
-    if tmp &gt; i.most:
-      i.most, i.mode = tmp, x
+    if tmp &gt; i.most: i.most, i.mode = tmp, x
     return x
 
 
@@ -151,7 +144,7 @@ class Tab(obj):
    - Names containing &#39;?&#39; are ignored in the reasoning.&#34;&#34;&#34;
   def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []
-    [i.add(x) for lst in rows]
+    [i.add(lst) for lst in rows]
 
   def x(i):
     &#34;Return mid values of the independent variables&#34;
@@ -168,10 +161,8 @@ class Tab(obj):
   def add(i, row):
     &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
     then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
-    if i.cols:
-      i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
-    else:
-      i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
+    if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def like(i, row, my):
     &#34;Report how much this table likes &#39;row&#39;&#34;
@@ -180,12 +171,12 @@ class Tab(obj):
   def classify(i, row, my, tabs=[]):
     &#34;&#34;&#34;For a set of tables, including this one, find which one mostlikes &#39;row&#39;.
      Returns a tuple (mostlike,tab)&#34;&#34;&#34;
-    tabs = [i]+tabs
+    tabs = [i] + tabs
     n = sum(len(t.rows) for t in tabs)
     mostlike = -1E64
     out = tabs[0]
     for t in tabs:
-      prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+      prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
       tmp = math.log(prior)
       for col in i.xs:
         v = row[col.at]
@@ -199,13 +190,10 @@ class Tab(obj):
 
 def coerce(string):
   &#34;If appropriate, coerce `string` into an integer or a float.&#34;
-  try:
-    return int(string)
+  try: return int(string)
   except Exception:
-    try:
-      return float(string)
-    except Exception:
-      return string
+    try: return float(string)
+    except Exception: return string
 
 
 def csv(file=None):
@@ -214,37 +202,34 @@ def csv(file=None):
   def lines(src):
     for lst in src:
       lst = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, lst)
-      if lst:
-        yield [coerce(x) for x in lst.split(&#34;,&#34;)]
+      if lst: yield [coerce(x) for x in lst.split(&#34;,&#34;)]
   if file:
     with open(file) as fp:
-      for lst in lines(fp):
-        yield lst
+      for lst in lines(fp): yield lst
   else:
-    for lst in lines(sys.stdin):
-      yield lst
+    for lst in lines(sys.stdin): yield lst
 
 
 def cli(options, doc=&#34;&#34;, funs=[], eg=&#34;eg_&#34;):
   &#34;&#34;&#34;
   - Drives command-line from `options= `dict(flag=(default, help), ..)`.
   - Command-line values must be of the same type as `default`.
-  - Command-line flags must be one `-flag X` (for setting `flag`) 
+  - Command-line flags must be one `-flag X` (for setting `flag`)
     or `+flag` (for enabling booleans).
-  - For a list of functions `funs`, `-do S` will run all functions 
+  - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  &#34;&#34;&#34;
   def say():
-    if doc:
-      print(doc)
+    if doc: print(doc)
     print(&#34;option          | notes&#34;)
-    print(&#34;----------------|------------------------&#34;)
+    print(&#34;----------------|:-----------------------&#34;)
     for k, (v, help) in options.items():
       m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
       print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
             &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
+    print(f&#34; -{&#39;dos&#39;:13}&#34;, &#34;|&#34;, &#34;list everything we can &#39;do&#39;&#34;)
     print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
 
-  def update(prefix, flag,  after):
+  def update(prefix, flag, after):
     assert flag in my
     now = True  # for &#39;+&#39; just google the value
     if prefix == &#34;-&#34;:
@@ -253,24 +238,24 @@ def cli(options, doc=&#34;&#34;, funs=[], eg=&#34;eg_&#34;):
     assert type(now) == type(my[flag])
     my[flag] = now
   # --------------
+  funs = {f: v for f, v in funs.items() if type(v) == fun and eg == f[:len(eg)]}
   my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    say() if arg == &#34;-h&#34; else (arg[0] in &#34;+-&#34; and update(arg[0], arg[1:], args))
+    if arg == &#34;-h&#34;: say()
+    elif arg == &#34;-dos&#34;: [print(f&#34;{k:&gt;13} : {v.__doc__}&#34;)for k, v in funs.items()]
+    elif arg[0] in &#34;+-&#34;: update(arg[0], arg[1:], args)
   for f, v in funs.items():
-    if type(v) == fun and eg == f[:len(eg)] and my.do and my.do in f:
+    if my.do and my.do in f:
       print(&#34;\n### &#34; + f)
-      if v.__doc__:
-        print(&#34;# &#34;+re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, v.__doc__))
+      if v.__doc__: print(&#34;# &#34; + re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, v.__doc__))
       random.seed(my.seed)
       v(my)
 
 
 def eg_two(my):
-  &#34;&#34;&#34;function with  lots
-   of comments
-      on many lines&#34;&#34;&#34;
+  &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
   print(my)
 
 
@@ -314,34 +299,34 @@ if __name__ == &#34;__main__&#34;:
 <div class="desc"><table>
 <thead>
 <tr>
-<th>option</th>
-<th>notes</th>
+<th>OPTION</th>
+<th align="left">NOTES</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>-data S</td>
-<td>input data. Defaults to standard input; e.g. []</td>
+<td align="left">input data. Defaults to standard input; e.g. []</td>
 </tr>
 <tr>
 <td>-do S</td>
-<td>some start up function(s) to run; e.g. [?]</td>
+<td align="left">some start up function(s) to run; e.g. [?]</td>
 </tr>
 <tr>
 <td>-seed I</td>
-<td>random number seed; e.g. [10023]</td>
+<td align="left">random number seed; e.g. [10023]</td>
 </tr>
 <tr>
 <td>-k I</td>
-<td>low frequency ; e.g. [1]</td>
+<td align="left">low frequency ; e.g. [1]</td>
 </tr>
 <tr>
 <td>-m I</td>
-<td>low fro ; e.g. [2]</td>
+<td align="left">low fro ; e.g. [2]</td>
 </tr>
 <tr>
 <td>-h</td>
-<td>show help text</td>
+<td align="left">show help text</td>
 </tr>
 </tbody>
 </table></div>
@@ -371,22 +356,22 @@ containing <code>S</code>, passing in the updated values.</li>
   &#34;&#34;&#34;
   - Drives command-line from `options= `dict(flag=(default, help), ..)`.
   - Command-line values must be of the same type as `default`.
-  - Command-line flags must be one `-flag X` (for setting `flag`) 
+  - Command-line flags must be one `-flag X` (for setting `flag`)
     or `+flag` (for enabling booleans).
-  - For a list of functions `funs`, `-do S` will run all functions 
+  - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  &#34;&#34;&#34;
   def say():
-    if doc:
-      print(doc)
+    if doc: print(doc)
     print(&#34;option          | notes&#34;)
-    print(&#34;----------------|------------------------&#34;)
+    print(&#34;----------------|:-----------------------&#34;)
     for k, (v, help) in options.items():
       m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
       print(f&#34; +{k:13}&#34; if v == False else f&#34; -{k+m:13}&#34;,
             &#34;|&#34;, help, f&#34;; e.g. [{v}]   &#34;)
+    print(f&#34; -{&#39;dos&#39;:13}&#34;, &#34;|&#34;, &#34;list everything we can &#39;do&#39;&#34;)
     print(f&#34; -{&#39;h&#39;:13}&#34;, &#34;|&#34;, &#34;show help text&#34;)
 
-  def update(prefix, flag,  after):
+  def update(prefix, flag, after):
     assert flag in my
     now = True  # for &#39;+&#39; just google the value
     if prefix == &#34;-&#34;:
@@ -395,16 +380,18 @@ containing <code>S</code>, passing in the updated values.</li>
     assert type(now) == type(my[flag])
     my[flag] = now
   # --------------
+  funs = {f: v for f, v in funs.items() if type(v) == fun and eg == f[:len(eg)]}
   my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    say() if arg == &#34;-h&#34; else (arg[0] in &#34;+-&#34; and update(arg[0], arg[1:], args))
+    if arg == &#34;-h&#34;: say()
+    elif arg == &#34;-dos&#34;: [print(f&#34;{k:&gt;13} : {v.__doc__}&#34;)for k, v in funs.items()]
+    elif arg[0] in &#34;+-&#34;: update(arg[0], arg[1:], args)
   for f, v in funs.items():
-    if type(v) == fun and eg == f[:len(eg)] and my.do and my.do in f:
+    if my.do and my.do in f:
       print(&#34;\n### &#34; + f)
-      if v.__doc__:
-        print(&#34;# &#34;+re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, v.__doc__))
+      if v.__doc__: print(&#34;# &#34; + re.sub(r&#34;\n[\t ]*&#34;, &#34;\n# &#34;, v.__doc__))
       random.seed(my.seed)
       v(my)</code></pre>
 </details>
@@ -420,13 +407,10 @@ containing <code>S</code>, passing in the updated values.</li>
 </summary>
 <pre><code class="python">def coerce(string):
   &#34;If appropriate, coerce `string` into an integer or a float.&#34;
-  try:
-    return int(string)
+  try: return int(string)
   except Exception:
-    try:
-      return float(string)
-    except Exception:
-      return string</code></pre>
+    try: return float(string)
+    except Exception: return string</code></pre>
 </details>
 </dd>
 <dt id="ball.csv"><code class="name flex">
@@ -445,15 +429,12 @@ comma-separated lines(skipping over whitespace and comments).</p></div>
   def lines(src):
     for lst in src:
       lst = re.sub(r&#39;([\n\t\r ]|#.*)&#39;, &#39;&#39;, lst)
-      if lst:
-        yield [coerce(x) for x in lst.split(&#34;,&#34;)]
+      if lst: yield [coerce(x) for x in lst.split(&#34;,&#34;)]
   if file:
     with open(file) as fp:
-      for lst in lines(fp):
-        yield lst
+      for lst in lines(fp): yield lst
   else:
-    for lst in lines(sys.stdin):
-      yield lst</code></pre>
+    for lst in lines(sys.stdin): yield lst</code></pre>
 </details>
 </dd>
 <dt id="ball.eg_one"><code class="name flex">
@@ -484,17 +465,13 @@ comma-separated lines(skipping over whitespace and comments).</p></div>
 </code></dt>
 <dd>
 <div class="desc"><p>function with
-lots
-of comments
-on many lines</p></div>
+lots of comments lines</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def eg_two(my):
-  &#34;&#34;&#34;function with  lots
-   of comments
-      on many lines&#34;&#34;&#34;
+  &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
   print(my)</code></pre>
 </details>
 </dd>
@@ -532,8 +509,7 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 
   def add(i, x):
     &#34;Skip missing values, increment counter, add `x`.&#34;
-    if x == &#34;?&#34;:
-      return x
+    if x == &#34;?&#34;: return x
     i.n += 1
     return i.add1(x)</code></pre>
 </details>
@@ -595,8 +571,7 @@ def new(tab, at, txt):
 </summary>
 <pre><code class="python">def add(i, x):
   &#34;Skip missing values, increment counter, add `x`.&#34;
-  if x == &#34;?&#34;:
-    return x
+  if x == &#34;?&#34;: return x
   i.n += 1
   return i.add1(x)</code></pre>
 </details>
@@ -627,20 +602,18 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
   def add1(i, x):
     &#34;Incrementally update `mu` and `sd`.&#34;
     d = x - i.mu
-    i.mu += d/i.n
-    i.m2 += d*(x - i.mu)
-    i.sd = (i.m2/i.n)**0.5
+    i.mu += d / i.n
+    i.m2 += d * (x - i.mu)
+    i.sd = (i.m2 / i.n)**0.5
     return x
 
   def like(i, x, *_):
     &#34;Returns probability of `x`.&#34;
-    if (i.mu - 4*i.sd) &lt; x &lt; (i.mu + 4*i.sd):
-      var = i.sd ** 2
-      denom = (math.pi*2*var) ** .5
-      num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
-      return num/(denom + 1E-64)
-    else:
-      return 0</code></pre>
+    if not((i.mu - 4 * i.sd) &lt; x &lt; (i.mu + 4 * i.sd)): return 0
+    var = i.sd ** 2
+    denom = (math.pi * 2 * var) ** .5
+    num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
+    return num / (denom + 1E-64)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -661,9 +634,9 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 <pre><code class="python">def add1(i, x):
   &#34;Incrementally update `mu` and `sd`.&#34;
   d = x - i.mu
-  i.mu += d/i.n
-  i.m2 += d*(x - i.mu)
-  i.sd = (i.m2/i.n)**0.5
+  i.mu += d / i.n
+  i.m2 += d * (x - i.mu)
+  i.sd = (i.m2 / i.n)**0.5
   return x</code></pre>
 </details>
 </dd>
@@ -678,13 +651,11 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 </summary>
 <pre><code class="python">def like(i, x, *_):
   &#34;Returns probability of `x`.&#34;
-  if (i.mu - 4*i.sd) &lt; x &lt; (i.mu + 4*i.sd):
-    var = i.sd ** 2
-    denom = (math.pi*2*var) ** .5
-    num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
-    return num/(denom + 1E-64)
-  else:
-    return 0</code></pre>
+  if not((i.mu - 4 * i.sd) &lt; x &lt; (i.mu + 4 * i.sd)): return 0
+  var = i.sd ** 2
+  denom = (math.pi * 2 * var) ** .5
+  num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
+  return num / (denom + 1E-64)</code></pre>
 </details>
 </dd>
 <dt id="ball.Num.mid"><code class="name flex">
@@ -736,13 +707,12 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 
   def like(i, x, prior, my):
     &#34;Returns probability of `x`.&#34;
-    return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)
+    return (i.seen.get(x, 0) + my.m * prior) / (i.n + my.m)
 
   def add1(i, x):
     &#34;Incrementally update symbol counts, and the mode.&#34;
     tmp = i.seen[x] = i.seen.get(x, 0) + 1
-    if tmp &gt; i.most:
-      i.most, i.mode = tmp, x
+    if tmp &gt; i.most: i.most, i.mode = tmp, x
     return x</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -764,8 +734,7 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 <pre><code class="python">def add1(i, x):
   &#34;Incrementally update symbol counts, and the mode.&#34;
   tmp = i.seen[x] = i.seen.get(x, 0) + 1
-  if tmp &gt; i.most:
-    i.most, i.mode = tmp, x
+  if tmp &gt; i.most: i.most, i.mode = tmp, x
   return x</code></pre>
 </details>
 </dd>
@@ -780,7 +749,7 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
 </summary>
 <pre><code class="python">def like(i, x, prior, my):
   &#34;Returns probability of `x`.&#34;
-  return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)</code></pre>
+  return (i.seen.get(x, 0) + my.m * prior) / (i.n + my.m)</code></pre>
 </details>
 </dd>
 <dt id="ball.Sym.mid"><code class="name flex">
@@ -832,7 +801,7 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
    - Names containing &#39;?&#39; are ignored in the reasoning.&#34;&#34;&#34;
   def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []
-    [i.add(x) for lst in rows]
+    [i.add(lst) for lst in rows]
 
   def x(i):
     &#34;Return mid values of the independent variables&#34;
@@ -849,10 +818,8 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
   def add(i, row):
     &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
     then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
-    if i.cols:
-      i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
-    else:
-      i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
+    if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def like(i, row, my):
     &#34;Report how much this table likes &#39;row&#39;&#34;
@@ -861,12 +828,12 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
   def classify(i, row, my, tabs=[]):
     &#34;&#34;&#34;For a set of tables, including this one, find which one mostlikes &#39;row&#39;.
      Returns a tuple (mostlike,tab)&#34;&#34;&#34;
-    tabs = [i]+tabs
+    tabs = [i] + tabs
     n = sum(len(t.rows) for t in tabs)
     mostlike = -1E64
     out = tabs[0]
     for t in tabs:
-      prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+      prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
       tmp = math.log(prior)
       for col in i.xs:
         v = row[col.at]
@@ -896,10 +863,8 @@ then store the 'row' in 'rows'.</p></div>
 <pre><code class="python">def add(i, row):
   &#34;&#34;&#34;If this is row0, create the headers. Else update the headers with &#39;row&#39;
   then store the &#39;row&#39; in &#39;rows&#39;.&#34;&#34;&#34;
-  if i.cols:
-    i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
-  else:
-    i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]</code></pre>
+  if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+  else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]</code></pre>
 </details>
 </dd>
 <dt id="ball.Tab.classify"><code class="name flex">
@@ -915,12 +880,12 @@ Returns a tuple (mostlike,tab)</p></div>
 <pre><code class="python">def classify(i, row, my, tabs=[]):
   &#34;&#34;&#34;For a set of tables, including this one, find which one mostlikes &#39;row&#39;.
    Returns a tuple (mostlike,tab)&#34;&#34;&#34;
-  tabs = [i]+tabs
+  tabs = [i] + tabs
   n = sum(len(t.rows) for t in tabs)
   mostlike = -1E64
   out = tabs[0]
   for t in tabs:
-    prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+    prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
     tmp = math.log(prior)
     for col in i.xs:
       v = row[col.at]
@@ -1012,7 +977,7 @@ with names slots we can get or set; e.g <code>x.age += 1</code>.</p></div>
   def __setitem__(i, k, v): i.__dict__[k] = v
   def __contains__(i, k): return k in i.__dict__
   def __repr__(i): return &#34;{&#34; + &#39;, &#39;.join(
-      [f&#34;:{k} {v}&#34; for k, v in sorted(i.__dict__.items()) if k[0] != &#34;_&#34;])+&#34;}&#34;</code></pre>
+      [f&#34;:{k} {v}&#34; for k, v in sorted(i.__dict__.items()) if k[0] != &#34;_&#34;]) + &#34;}&#34;</code></pre>
 </details>
 <h3>Subclasses</h3>
 <ul class="hlist">

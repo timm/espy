@@ -119,7 +119,7 @@ let g:autopep8_indent_size=2
 let g:autopep8_max_line_length=80
 let g:autopep8_on_save = 1
 let g:autopep8_disable_show_diff=1
-"let g:autopep8_ignore="E261,E302"
+let g:autopep8_ignore="E261,E302,E704,E701,E401"
 autocmd FileType python noremap <buffer> <F8> :call Autopep8()<CR>
 colorscheme harlequin
 nmap <F9> :!../../gold -t %<C-M>p

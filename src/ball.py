@@ -6,21 +6,18 @@ ball: a Bayesian active learning laboratory.
 
 usage: ./ball.py [OPTIONS]
 """
-import re
-import sys
-import math
-import functools
-import random
+import functools, random, math, sys, re
 from types import FunctionType as fun
 
-OPTIONS = dict(data=("", "input data. Defaults to standard input"),
+OPTIONS = dict(data=("../opt/data/auto93.csv",
+                     "input data. Defaults to standard input"),
                do=("?", "some start up function(s) to run"),
                seed=(10023, "random number seed"),
                k=(1, "low frequency"),
                m=(2, "low fro"))
 """
-option         |  notes
----------------|-----------------------------------------------
+OPTION         |  NOTES
+---------------|:----------------------------------------------
  -data S       | input data. Defaults to standard input; e.g. []
  -do S         | some start up function(s) to run; e.g. [?]
  -seed I       | random number seed; e.g. [10023]
@@ -39,7 +36,7 @@ class obj:
   def __setitem__(i, k, v): i.__dict__[k] = v
   def __contains__(i, k): return k in i.__dict__
   def __repr__(i): return "{" + ', '.join(
-      [f":{k} {v}" for k, v in sorted(i.__dict__.items()) if k[0] != "_"])+"}"
+      [f":{k} {v}" for k, v in sorted(i.__dict__.items()) if k[0] != "_"]) + "}"
 
 
 class Col(obj):
@@ -58,8 +55,7 @@ class Col(obj):
 
   def add(i, x):
     "Skip missing values, increment counter, add `x`."
-    if x == "?":
-      return x
+    if x == "?": return x
     i.n += 1
     return i.add1(x)
 
@@ -75,20 +71,18 @@ class Num(Col):
   def add1(i, x):
     "Incrementally update `mu` and `sd`."
     d = x - i.mu
-    i.mu += d/i.n
-    i.m2 += d*(x - i.mu)
-    i.sd = (i.m2/i.n)**0.5
+    i.mu += d / i.n
+    i.m2 += d * (x - i.mu)
+    i.sd = (i.m2 / i.n)**0.5
     return x
 
   def like(i, x, *_):
     "Returns probability of `x`."
-    if (i.mu - 4*i.sd) < x < (i.mu + 4*i.sd):
-      var = i.sd ** 2
-      denom = (math.pi*2*var) ** .5
-      num = math.e ** (-(x-i.mu)**2/(2*var+0.0001))
-      return num/(denom + 1E-64)
-    else:
-      return 0
+    if not((i.mu - 4 * i.sd) < x < (i.mu + 4 * i.sd)): return 0
+    var = i.sd ** 2
+    denom = (math.pi * 2 * var) ** .5
+    num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
+    return num / (denom + 1E-64)
 
 
 class Sym(Col):
@@ -101,13 +95,12 @@ class Sym(Col):
 
   def like(i, x, prior, my):
     "Returns probability of `x`."
-    return (i.seen.get(x, 0) + my.m*prior) / (i.n + my.m)
+    return (i.seen.get(x, 0) + my.m * prior) / (i.n + my.m)
 
   def add1(i, x):
     "Incrementally update symbol counts, and the mode."
     tmp = i.seen[x] = i.seen.get(x, 0) + 1
-    if tmp > i.most:
-      i.most, i.mode = tmp, x
+    if tmp > i.most: i.most, i.mode = tmp, x
     return x
 
 
@@ -119,7 +112,7 @@ class Tab(obj):
    - Names containing '?' are ignored in the reasoning."""
   def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []
-    [i.add(x) for lst in rows]
+    [i.add(lst) for lst in rows]
 
   def x(i):
     "Return mid values of the independent variables"
@@ -136,10 +129,8 @@ class Tab(obj):
   def add(i, row):
     """If this is row0, create the headers. Else update the headers with 'row'
     then store the 'row' in 'rows'."""
-    if i.cols:
-      i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
-    else:
-      i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
+    if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def like(i, row, my):
     "Report how much this table likes 'row'"
@@ -148,12 +139,12 @@ class Tab(obj):
   def classify(i, row, my, tabs=[]):
     """For a set of tables, including this one, find which one mostlikes 'row'.
      Returns a tuple (mostlike,tab)"""
-    tabs = [i]+tabs
+    tabs = [i] + tabs
     n = sum(len(t.rows) for t in tabs)
     mostlike = -1E64
     out = tabs[0]
     for t in tabs:
-      prior = (len(t.rows) + my.k) / (n + my.k*len(tabs))
+      prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
       tmp = math.log(prior)
       for col in i.xs:
         v = row[col.at]
@@ -167,13 +158,10 @@ class Tab(obj):
 
 def coerce(string):
   "If appropriate, coerce `string` into an integer or a float."
-  try:
-    return int(string)
+  try: return int(string)
   except Exception:
-    try:
-      return float(string)
-    except Exception:
-      return string
+    try: return float(string)
+    except Exception: return string
 
 
 def csv(file=None):
@@ -182,37 +170,34 @@ def csv(file=None):
   def lines(src):
     for lst in src:
       lst = re.sub(r'([\n\t\r ]|#.*)', '', lst)
-      if lst:
-        yield [coerce(x) for x in lst.split(",")]
+      if lst: yield [coerce(x) for x in lst.split(",")]
   if file:
     with open(file) as fp:
-      for lst in lines(fp):
-        yield lst
+      for lst in lines(fp): yield lst
   else:
-    for lst in lines(sys.stdin):
-      yield lst
+    for lst in lines(sys.stdin): yield lst
 
 
 def cli(options, doc="", funs=[], eg="eg_"):
   """
   - Drives command-line from `options= `dict(flag=(default, help), ..)`.
   - Command-line values must be of the same type as `default`.
-  - Command-line flags must be one `-flag X` (for setting `flag`) 
+  - Command-line flags must be one `-flag X` (for setting `flag`)
     or `+flag` (for enabling booleans).
-  - For a list of functions `funs`, `-do S` will run all functions 
+  - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  """
   def say():
-    if doc:
-      print(doc)
+    if doc: print(doc)
     print("option          | notes")
-    print("----------------|------------------------")
+    print("----------------|:-----------------------")
     for k, (v, help) in options.items():
       m = " F " if type(v) == float else (" I " if type(v) == int else " S ")
       print(f" +{k:13}" if v == False else f" -{k+m:13}",
             "|", help, f"; e.g. [{v}]   ")
+    print(f" -{'dos':13}", "|", "list everything we can 'do'")
     print(f" -{'h':13}", "|", "show help text")
 
-  def update(prefix, flag,  after):
+  def update(prefix, flag, after):
     assert flag in my
     now = True  # for '+' just google the value
     if prefix == "-":
@@ -221,24 +206,24 @@ def cli(options, doc="", funs=[], eg="eg_"):
     assert type(now) == type(my[flag])
     my[flag] = now
   # --------------
+  funs = {f: v for f, v in funs.items() if type(v) == fun and eg == f[:len(eg)]}
   my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    say() if arg == "-h" else (arg[0] in "+-" and update(arg[0], arg[1:], args))
+    if arg == "-h": say()
+    elif arg == "-dos": [print(f"{k:>13} : {v.__doc__}")for k, v in funs.items()]
+    elif arg[0] in "+-": update(arg[0], arg[1:], args)
   for f, v in funs.items():
-    if type(v) == fun and eg == f[:len(eg)] and my.do and my.do in f:
+    if my.do and my.do in f:
       print("\n### " + f)
-      if v.__doc__:
-        print("# "+re.sub(r"\n[\t ]*", "\n# ", v.__doc__))
+      if v.__doc__: print("# " + re.sub(r"\n[\t ]*", "\n# ", v.__doc__))
       random.seed(my.seed)
       v(my)
 
 
 def eg_two(my):
-  """function with  lots
-   of comments
-      on many lines"""
+  """function with  lots of comments lines"""
   print(my)
 
 
