@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 """
-ball: a Bayesian active learning laboratory.    
+ball: a Bayesian active learning laboratory.
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.
 
 usage: ./ball.py [OPTIONS]
@@ -222,7 +222,7 @@ def cli(options, doc="", funs=[], eg="eg_"):
       v(my)
 
 
-class Verify:
+class Zest:
   def eg_two(my):
     """function with  lots of comments lines"""
     print(my)
@@ -242,7 +242,7 @@ class Verify:
 
 
 if __name__ == "__main__":
-  cli(OPTIONS, __doc__, vars(Verify))
+  cli(OPTIONS, __doc__, vars(Zest))
 #  def better(i, r1, r2):
 #     s1, s2, n = 0, 0, len(i.cols.y)
 #     for col in i.cols.y:
