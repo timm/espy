@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 """
-ball: a Bayesian active learning laboratory.
+ball: a Bayesian active learning laboratory.    
 (c) 2021 Tim Menzies timm@ieee.org, MIT license.
 
 usage: ./ball.py [OPTIONS]
@@ -188,7 +188,7 @@ def cli(options, doc="", funs=[], eg="eg_"):
     containing `S`, passing in the updated values.  """
   def say():
     if doc: print(doc)
-    print("option          | notes")
+    print("Option          |Notes")
     print("----------------|:-----------------------")
     for k, (v, help) in options.items():
       m = " F " if type(v) == float else (" I " if type(v) == int else " S ")
