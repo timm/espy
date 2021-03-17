@@ -21,7 +21,7 @@ processing takes log linear time.
 - [eg.py](eg.html): test suites, main cli call
 - [es.py](es.html): core utilities for the learning
 - [etc.py](etc.html): misc python support functions
-- [ball.py](etc.html): experiments with instance-based reasoning
+- [ball.py](ball.html): experiments with instance-based reasoning
 
 ## Usage
 
