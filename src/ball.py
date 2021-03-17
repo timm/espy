@@ -112,14 +112,14 @@ class Sym(Col):
 
 
 class Tab(obj):
-  """Given a rows of data, and row0 defines column name and type,
-   store the rows, summarized in the headers. Header names starting
-   with upper case letters are numerics. Names ending in '+-' are
-   goals to be maximized or minimized. Names containing '?' are ignored
-   in the reasoning."""
-  def __init__(i, inits=[]):
+  """
+   - Given a rows of data, and row0 defines column name and type, store the rows, summarized in the headers. 
+   - Header names starting with upper case letters are numerics (others are symbols). 
+   - Names ending in '+-' are goals to be maximized or minimized. 
+   - Names containing '?' are ignored in the reasoning."""
+  def __init__(i, rows=[]):
     i.rows, i.cols, i.xs, i.ys = [], [], [], []
-    [i.add(x) for x in inits]
+    [i.add(x) for lst in rows]
 
   def x(i):
     "Return mid values of the independent variables"
@@ -193,54 +193,58 @@ def csv(file=None):
       yield lst
 
 
-def cli(d, doc="", funs=[]):
-  """Drives command-line from `d=s `dict(flag=(default, help), ..)`.  
-  Returns `d` (as an `obj`) updated from command-line.    
-  Command-line values must be of the same type as `default`.   
-  Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
-  For a list of functions `funs`, `-do S` will run all functions containing `S`.
+def cli(options, doc="", funs=[]):
   """
-  def showHelp():
+  - Drives command-line from `options= `dict(flag=(default, help), ..)`.  
+  - Returns `d` (as an `obj`) updated from command-line.    
+  - Command-line values must be of the same type as `default`.   
+  - Command-line flags must be one `-flag X` (for setting `flag`) or `+flag` (for enabling booleans).   
+  - For a list of functions `funs`, `-do S` will run all functions containing `S`.  
+  """
+  def say():
     if doc:
       print(doc)
     print("option          | notes")
     print("----------------|------------------------")
-    for k, (v, help) in d.items():
+    for k, (v, help) in options.items():
       m = " F " if type(v) == float else (" I " if type(v) == int else " S ")
       print(f" +{k:13}" if v == False else f" -{k+m:13}",
             "|", help, f"; e.g. [{v}]   ")
     print(f" -{'h':13}", "|", "show help text")
 
-  def handle(arg, args):
+  def act(arg, after):
     flag = arg[1:]
     assert flag in my
     if arg[0] == "+":
       now = True
     else:
-      assert len(args) >= 1
-      now = coerce(args[0])
+      assert len(after) >= 1
+      now = coerce(after[0])
     assert type(now) == type(my[flag])
     my[flag] = now
   # ------------------
   funs = [v for k, v in funs.items() if type(v) == fun and "eg_" == k[:3]]
-  my = obj(**{k: v for k, (v, _) in d.items()})
+  my = obj(**{k: v for k, (v, _) in options.items()})
   args = sys.argv
   while args:
     arg, *args = args
-    if arg == "-h":
-      return showHelp()
-    if arg[0] in "+-":
-      handle(arg, args)
+    say() if arg == "-h" else (arg[0] in "+-" and act(arg, args))
   if my.do:
     funs = [one for one in funs if my.do in one.__name__]
   for one in funs:
     random.seed(my.seed)
-    print("%", one.__doc__)
+    print("# " + one.__name__)
+    if one.__doc__:
+      print("# "+re.sub(r"\n[\t ]*", "\n# ", one.__doc__))
     one(my)
   return my
 
 
-def eg_two(my): print(my)
+def eg_two(my):
+  """function with  lots
+   of comments
+      on many lines"""
+  print(my)
 
 
 def eg_one(my):
