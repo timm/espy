@@ -222,27 +222,27 @@ def cli(options, doc="", funs=[], eg="eg_"):
       v(my)
 
 
-def eg_two(my):
-  """function with  lots of comments lines"""
-  print(my)
+class Verify:
+  def eg_two(my):
+    """function with  lots of comments lines"""
+    print(my)
 
-
-def eg_one(my):
-  "table1"
-  def r2(x): return round(x, 2)
-  t = Tab()
-  [t.add(lst) for lst in csv(my.data)]
-  t.rows.sort(key=lambda r: t.like(r, my))
-  n = 50
-  t1 = t.clone(t.rows[: n])
-  t2 = t.clone(t.rows[-n:])
-  print("lo  ", [r2(col.mid()) for col in t1.xs])
-  print("hi  ", [r2(col.mid()) for col in t2.xs])
-  print("mid ", [r2(col.mid()) for col in t.xs])
+  def eg_one(my):
+    "table1"
+    def r2(x): return round(x, 2)
+    t = Tab()
+    [t.add(lst) for lst in csv(my.data)]
+    t.rows.sort(key=lambda r: t.like(r, my))
+    n = 50
+    t1 = t.clone(t.rows[: n])
+    t2 = t.clone(t.rows[-n:])
+    print("lo  ", [r2(col.mid()) for col in t1.xs])
+    print("hi  ", [r2(col.mid()) for col in t2.xs])
+    print("mid ", [r2(col.mid()) for col in t.xs])
 
 
 if __name__ == "__main__":
-  cli(OPTIONS, __doc__, vars())
+  cli(OPTIONS, __doc__, vars(Verify))
 #  def better(i, r1, r2):
 #     s1, s2, n = 0, 0, len(i.cols.y)
 #     for col in i.cols.y:

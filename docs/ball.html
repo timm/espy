@@ -221,7 +221,7 @@ def cli(options, doc=&#34;&#34;, funs=[], eg=&#34;eg_&#34;):
     containing `S`, passing in the updated values.  &#34;&#34;&#34;
   def say():
     if doc: print(doc)
-    print(&#34;option          | notes&#34;)
+    print(&#34;Option          |Notes&#34;)
     print(&#34;----------------|:-----------------------&#34;)
     for k, (v, help) in options.items():
       m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
@@ -255,27 +255,27 @@ def cli(options, doc=&#34;&#34;, funs=[], eg=&#34;eg_&#34;):
       v(my)
 
 
-def eg_two(my):
-  &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
-  print(my)
+class Verify:
+  def eg_two(my):
+    &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
+    print(my)
 
-
-def eg_one(my):
-  &#34;table1&#34;
-  def r2(x): return round(x, 2)
-  t = Tab()
-  [t.add(lst) for lst in csv(my.data)]
-  t.rows.sort(key=lambda r: t.like(r, my))
-  n = 50
-  t1 = t.clone(t.rows[: n])
-  t2 = t.clone(t.rows[-n:])
-  print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
-  print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
-  print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])
+  def eg_one(my):
+    &#34;table1&#34;
+    def r2(x): return round(x, 2)
+    t = Tab()
+    [t.add(lst) for lst in csv(my.data)]
+    t.rows.sort(key=lambda r: t.like(r, my))
+    n = 50
+    t1 = t.clone(t.rows[: n])
+    t2 = t.clone(t.rows[-n:])
+    print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
+    print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
+    print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])
 
 
 if __name__ == &#34;__main__&#34;:
-  cli(OPTIONS, __doc__, vars())
+  cli(OPTIONS, __doc__, vars(Verify))
 #  def better(i, r1, r2):
 #     s1, s2, n = 0, 0, len(i.cols.y)
 #     for col in i.cols.y:
@@ -363,7 +363,7 @@ containing <code>S</code>, passing in the updated values.</li>
     containing `S`, passing in the updated values.  &#34;&#34;&#34;
   def say():
     if doc: print(doc)
-    print(&#34;option          | notes&#34;)
+    print(&#34;Option          |Notes&#34;)
     print(&#34;----------------|:-----------------------&#34;)
     for k, (v, help) in options.items():
       m = &#34; F &#34; if type(v) == float else (&#34; I &#34; if type(v) == int else &#34; S &#34;)
@@ -436,44 +436,6 @@ comma-separated lines(skipping over whitespace and comments).</p></div>
       for lst in lines(fp): yield lst
   else:
     for lst in lines(sys.stdin): yield lst</code></pre>
-</details>
-</dd>
-<dt id="ball.eg_one"><code class="name flex">
-<span>def <span class="ident">eg_one</span></span>(<span>my)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>table1</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def eg_one(my):
-  &#34;table1&#34;
-  def r2(x): return round(x, 2)
-  t = Tab()
-  [t.add(lst) for lst in csv(my.data)]
-  t.rows.sort(key=lambda r: t.like(r, my))
-  n = 50
-  t1 = t.clone(t.rows[: n])
-  t2 = t.clone(t.rows[-n:])
-  print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
-  print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
-  print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])</code></pre>
-</details>
-</dd>
-<dt id="ball.eg_two"><code class="name flex">
-<span>def <span class="ident">eg_two</span></span>(<span>my)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>function with
-lots of comments lines</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def eg_two(my):
-  &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
-  print(my)</code></pre>
 </details>
 </dd>
 </dl>
@@ -956,6 +918,75 @@ Returns a tuple (mostlike,tab)</p></div>
 </dd>
 </dl>
 </dd>
+<dt id="ball.Verify"><code class="flex name class">
+<span>class <span class="ident">Verify</span></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Verify:
+  def eg_two(my):
+    &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
+    print(my)
+
+  def eg_one(my):
+    &#34;table1&#34;
+    def r2(x): return round(x, 2)
+    t = Tab()
+    [t.add(lst) for lst in csv(my.data)]
+    t.rows.sort(key=lambda r: t.like(r, my))
+    n = 50
+    t1 = t.clone(t.rows[: n])
+    t2 = t.clone(t.rows[-n:])
+    print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
+    print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
+    print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="ball.Verify.eg_one"><code class="name flex">
+<span>def <span class="ident">eg_one</span></span>(<span>my)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>table1</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def eg_one(my):
+  &#34;table1&#34;
+  def r2(x): return round(x, 2)
+  t = Tab()
+  [t.add(lst) for lst in csv(my.data)]
+  t.rows.sort(key=lambda r: t.like(r, my))
+  n = 50
+  t1 = t.clone(t.rows[: n])
+  t2 = t.clone(t.rows[-n:])
+  print(&#34;lo  &#34;, [r2(col.mid()) for col in t1.xs])
+  print(&#34;hi  &#34;, [r2(col.mid()) for col in t2.xs])
+  print(&#34;mid &#34;, [r2(col.mid()) for col in t.xs])</code></pre>
+</details>
+</dd>
+<dt id="ball.Verify.eg_two"><code class="name flex">
+<span>def <span class="ident">eg_two</span></span>(<span>my)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>function with
+lots of comments lines</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def eg_two(my):
+  &#34;&#34;&#34;function with  lots of comments lines&#34;&#34;&#34;
+  print(my)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
 <dt id="ball.obj"><code class="flex name class">
 <span>class <span class="ident">obj</span></span>
 <span>(</span><span>**d)</span>
@@ -1027,8 +1058,6 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <li><code><a title="ball.cli" href="#ball.cli">cli</a></code></li>
 <li><code><a title="ball.coerce" href="#ball.coerce">coerce</a></code></li>
 <li><code><a title="ball.csv" href="#ball.csv">csv</a></code></li>
-<li><code><a title="ball.eg_one" href="#ball.eg_one">eg_one</a></code></li>
-<li><code><a title="ball.eg_two" href="#ball.eg_two">eg_two</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -1066,6 +1095,13 @@ src="https://raw.githubusercontent.com/timm/espy/main/docs/espy.png"
 <li><code><a title="ball.Tab.like" href="#ball.Tab.like">like</a></code></li>
 <li><code><a title="ball.Tab.x" href="#ball.Tab.x">x</a></code></li>
 <li><code><a title="ball.Tab.y" href="#ball.Tab.y">y</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ball.Verify" href="#ball.Verify">Verify</a></code></h4>
+<ul class="">
+<li><code><a title="ball.Verify.eg_one" href="#ball.Verify.eg_one">eg_one</a></code></li>
+<li><code><a title="ball.Verify.eg_two" href="#ball.Verify.eg_two">eg_two</a></code></li>
 </ul>
 </li>
 <li>
