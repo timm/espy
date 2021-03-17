@@ -39,21 +39,22 @@ class Col(obj):
   @staticmethod
   def new(tab, at, txt):
     "Factory for making and storing different column types."
+    if "?" in txt: return Skip(at,txt)
     x = (Num if txt[0].isupper() else Sym)(at, txt)
-    if "?" not in txt:
-      (tab.ys if Col.goalp(txt) else tab.xs).append(x)
+    (tab.ys if txt[-1] in "+-" else tab.xs).append(x)
     return x
-
-  @staticmethod
-  def goalp(txt):
-    "Goal names end in `+` or `-`."
-    return "+" == txt[-1] or "-" == txt[-1]
 
   def add(i, x):
     "Skip missing values, increment counter, add `x`."
     if x == "?": return x
     i.n += 1
     return i.add1(x)
+
+#-------------------------------------------------------------------------------
+class Skip(Col):
+  def __init__(i, at=0, txt=""): i.txt, i.at, i.n
+  def add1(i,x): return x
+  def mid(i): return "?"
 
 #-------------------------------------------------------------------------------
 class Num(Col):
@@ -125,7 +126,7 @@ class Tab(obj):
   def add(i, row):
     """If this is row0, create the headers. Else update the headers with 'row'
     then store the 'row' in 'rows'."""
-    if i.cols: i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
+    if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
     else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def like(i, row, my):
@@ -228,7 +229,7 @@ class Yell:
     "table1"
     def r2(x): return round(x, 2)
     t = Tab()
-    [t.add(row) for row in rows(Yell.auto93)]
+    [t.add(row) for row in rows(Yell.auto93)] #  if random.random< 0.1
     t.rows.sort(key=lambda r: t.like(r, my))
     n = 50
     t1 = t.clone(t.rows[: n])
