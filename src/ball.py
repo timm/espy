@@ -6,13 +6,14 @@ ball: a Bayesian active learning laboratory.
 
 usage: ./ball.py [OPTIONS]
 
-Option    |  Notes               | Default
-----------|:---------------------|:----------------------
- -data S  | input data           | ../opt/data/auto93.csv
- -seed I  | random number seed   | 10023
- -k I     | low frequency        | 1
- -m I     | low fro ; e.g.       | 2
-"""
+Option      |  Notes               | Default
+------------|:---------------------|:----------------------
+ -data S    | input data           | ../opt/data/auto93.csv
+ -seed I    | random number seed   | 10023
+ -cohen F   | small effect         | .35 
+ -k I       | low frequency        | 1
+ -m I       | low fro ; e.g.       | 2
+ """
 import functools, random, types, math, sys, re
 
 #-------------------------------------------------------------------------------
@@ -50,6 +51,7 @@ class Skip(Col):
 class Num(Col):
   def __init__(i, at=0, txt=""):
     i.txt, i.at, i.n, i.mu, i.m2, i.sd = txt, at, 0, 0, 0, 0
+    i.lo, i.hi, i.w = 1E32, -1E32, (-1 if txt[-1] == "-" else 1)
 
   def mid(i):
     "Return mid point"
@@ -61,6 +63,8 @@ class Num(Col):
     i.mu += d / i.n
     i.m2 += d * (x - i.mu)
     i.sd = (i.m2 / i.n)**0.5
+    i.lo = min(x, i.lo)
+    i.hi = max(x, i.hi)
     return x
 
   def like(i, x, *_):
@@ -70,6 +74,17 @@ class Num(Col):
     denom = (math.pi * 2 * var) ** .5
     num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
     return num / (denom + 1E-64)
+
+  def norm(i,x): return (x - i.lo)/(i.hi - i.lo + 1E-32)
+
+  def best(i,x, my):
+    "Is 'x' close to the best value?"
+    gap = i.sd*my.cohen
+    lo,hi =  round(i.lo + gap,2), round(i.hi - gap,2)
+    tag= (x < lo) if i.w<0 else (x > hi)
+    print(i.txt, i.w, i.lo, lo, "x=",x, hi, i.hi, tag)
+    return tag
+
 
 #-------------------------------------------------------------------------------
 class Sym(Col):
@@ -142,19 +157,48 @@ class Tab(obj):
         mostlike, out = tmp, t
     return mostlike, out
 
+  def better(i, row1, row2):
+    "Does row1 win over row2?"
+    s1, s2, n = 0, 0, len(i.ys)
+    for col in i.ys:
+      a   = col.norm(row1[col.at])
+      b   = col.norm(row2[col.at])
+      s1 -= math.e**(col.w * (a - b) / n)
+      s2 -= math.e**(col.w * (b - a) / n)
+    return s1 / n < s2 / n
+
+  def ordered(i):
+    "Return rows sorted by domination score."
+    gt= lambda a,b: 0 if id(a)==id(b) else (-1 if i.better(a,b) else 1)
+    return sorted(i.rows, key=functools.cmp_to_key(gt))
+
+  def best(i,my):
+    "Divide data into best and rest"
+    def bottom(row):
+      for col in i.ys: 
+        if col.best(row[col.at],my): return False
+      return True
+    top,rest,rows = [],[], i.ordered()
+    what = top
+    for row in rows:
+      if bottom(row): what = rest
+      what += [row]
+    return top,rest
+
 #-------------------------------------------------------------------------------
-def rows(src=None):
+def csv(src=None):
   "From files or standard input or a string, return an iterator for the lines."
-  def cells(src):
+  def lines(src):
     for line in src:
       line = re.sub(r'([\n\t\r ]|#.*)', '', line)
       if line: yield [coerce(x) for x in line.split(",")] 
   # ----------------------------
   if src and src[-4:] == ".csv":
     with open(src) as fp:  
-      for out in cells(fp): yield out
+      for out in lines(fp): yield out
   else:
-    for out in cells(src.split("\n") if src else sys.stdin):
+    src = src.split("\n") if src else sys.stdin
+    for out in lines(src):
       yield out
 
 def coerce(string):
@@ -182,27 +226,33 @@ class Yell:
   - For a list of functions `funs`, `-do S` will run all functions
     containing `S`, passing in the updated values.  
   """
-  def options(d):
+  def docString2Options():
+    d = {}
     for line in __doc__.split("\n\n")[-1].split("\n")[2:]:
+      line = line.strip()
       if line:
-        line    = [x.strip() for x in line.split("|")]
-        flag    = line[0].split(" ")[0][1:]
-        d[flag] = (line[1], coerce(line[-1]))
+        flag,help,default = [x.strip() for x in line.split("|")]
+        flag    =  flag.split(" ")[0][1:]
+        d[flag] = (help, coerce(default))
     return d
 
   def ing(funs):
     fun     = types.FunctionType
-    options = Yell.options({})
+    options = Yell.docString2Options()
     funs    = {k:v for k, v in funs.items() if type(v)== fun and "eg_"== k[:3]}
     d       = {k: v for k, (_,v) in options.items()}
     d["do"] =  "?"
     args = sys.argv
     while args:
       arg, *args = args
-      if   arg  == "-h"            : print(__doc__)
+      if   arg  == "-h"            : Yell.help(funs)
       elif ("eg_"+arg[1:]) in funs : d["do"] = "eg_"+arg[1:]
       elif arg[0]  in "+-"         : Yell.update(arg[0], arg[1:], args,d,funs)
     [eg(v,d) for k,v  in funs.items() if d["do"] and d["do"] in k]
+
+  def help(funs):
+    print(__doc__.strip())
+    [print(f" -{k[3:]:9} | {v.__doc__}") for k,v in funs.items()]
 
   def update(prefix, flag, after,d,funs):
     assert flag in d, f"{flag} not one of {list(d.keys())}"
@@ -217,7 +267,7 @@ class Yell:
     "table1"
     def r2(x): return round(x, 2)
     t = Tab()
-    [t.add(row) for row in rows(Yell.auto93)] #  if random.random< 0.1
+    [t.add(row) for row in csv(Yell.auto93)] #  if random.random< 0.1
     t.rows.sort(key=lambda r: t.like(r, my))
     n = 50
     t1 = t.clone(t.rows[: n])
@@ -230,6 +280,15 @@ class Yell:
     """function with  lots of comments lines"""
     print(my)
 
+  def eg_Three(my):
+    "table1"
+    def r2(x): return round(x, 2)
+    t = Tab()
+    [t.add(row) for row in csv(Yell.auto93)] #  if random.random< 0.1
+    a,b = t.best(my)
+    a,b = t.clone(a), t.clone(b)
+    print("a",len(a.rows))
+    print("b",len(b.rows))
 
   auto93="""
     Cylndrs, Dsplcemnt, Hp, Lbs-, Acc+,Model, origin, Mpg+
