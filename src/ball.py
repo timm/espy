@@ -267,11 +267,11 @@ class Yell:
       if pos:
         klass=row[all.klass.at]
         if pos > 20:
-           _,what = any.classify(row, my, others)
+           _,what = one.classify(row, my, others)
            results.tell(klass,what.txt)
         if klass not in tabs: 
           tabs[klass] = all.clone(txt=klass)
-          any,*others = list(tabs.values())
+          one,*others = list(tabs.values())
         tabs[klass].add(row)
       else:
         all= Tab(rows=[row])
