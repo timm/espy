@@ -76,7 +76,7 @@ class Num(Col):
     num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
     return num / (denom + 1E-64)
 
-  def norm(i,x): return (x - i.lo)/(i.hi - i.lo + 1E-32)
+  def norm(i,x): return max(0, min(1, (x - i.lo)/(i.hi - i.lo + 1E-32)))
 
 #-------------------------------------------------------------------------------
 class Sym(Col):
@@ -126,6 +126,11 @@ class Tab(obj):
     if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
     else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
+  def bStarBdivBplusR(i, j,row, my):
+    "score of row in better thing `i` than worse thing `j`"
+    b,r = i.like(row,my), j.like(row,my)
+    return b**2/(b+r) if b>r and b+r>0.001 else 0
+
   def like(i, row, my):
     "Report how much this table likes 'row'"
     return i.classify(row, my)[0]
@@ -159,10 +164,41 @@ class Tab(obj):
       s2 -= math.e**(col.w * (b - a) / n)
     return s1 / n < s2 / n
 
-  def betters(i):
+  def betters(i,rows=None):
     "Return rows sorted by domination score."
+    rows = rows or i.rows
     gt= lambda a,b: 0 if id(a)==id(b) else (-1 if i.better(a,b) else 1)
-    return sorted(i.rows, key=functools.cmp_to_key(gt))
+    return sorted(rows, key=functools.cmp_to_key(gt))
+
+#--------------------------------------
+def activeLearning(t,start,my):
+  def first(lst,n):
+    n1 = int(n*len(lst))
+    return [x for _,x in sorted(lst)[:n1]]
+  rows = t.rows
+  random.shuffle(rows)
+  seen, rest = rows[:start], rows[start:]
+  truth = {id(r): int(100*p/len(t.rows)) for p,r in enumerate(t.betters())}
+  out=[]
+  while rest:
+    t1 = t.clone(seen)
+    seen = sorted(seen, key=lambda row: t1.like(row,my)) # rarest ... most common
+    strange = first(seen,33) # the strangest items
+    m = max(int(len(seen)/2)
+    betters = t1.betters()
+    mid = - (len(betters) // 2) if len(seen)< 60 else 30
+    bottom,top  = t.clone(betters[:mid]), t.clone(betters[-mid:])
+    best= = sorted(betters, key=lambda row: top.bStarBdivBplusR(bottom,row))[-1]
+    out  += [truth[id(best)]]
+    rest.remove(best)
+    seen += [best]
+
+    
+
+"""
+
+"""
+    
 
 #--------------------------------------
 class Abcd(obj): 
@@ -349,9 +385,9 @@ class Yell:
   def eg_Two(my):
     """function with  lots of comments lines"""
     n=.75
-    def best(f,a,b,rows): 
-      most = int(n*len(rows))
-      return  [r for _,r in sorted((f(r,a,b),r)[most:] for r in rows)]
+    def most(f,rows,*l):
+      top = int(n*len(rows))
+      return [x for _,x in sorted([(f(x,*l),x) for x in rows])[top:]]
     def notbad(r,a,b)   :   b= b.like(r,my);              return 1/b
     def strangest(r,a,b): a,b= a.like(r,my),b.like(r,my); return (a+b)/abs(a-b)
     def uncertain(r,a,b): a,b= a.like(r,my),b.like(r,my); return (a+b)/abs(a-b)
@@ -361,14 +397,8 @@ class Yell:
     n = int(.25*n)
     truth = {id(row): int(100*p/n) for p,row in enumerate(t.betters())}  # worst ... best
     train = []
-    for j in range(m):
-      if j > 10:
-         train t.o
     rows = sorted(t.rows, key= lambda r: t.like(r,my)) # [-20... -9] = rare ... frequent
     rows = rows[:n] # 
-    rows = so
-
-    best(strsorted(t.rows, key=strangest)[:n]
     for row in rows[:20]: print(t.like(row,my))
     print("")
     best = t.clone(rows[-n:]) 
