@@ -15,15 +15,14 @@ Option      |  Notes               | Default
  -m I       | low fro ; e.g.       | 2
  """
 import functools, random, types, math, sys, re
-from abcd import Abcd
-
 
 class obj:
   """Simple base class that  pretty prints slots, that can be easy
   initialized with (e.g.) `x=obj(name='tim',age=21)`,
   with names slots we can get or set; e.g `x.age += 1`."""
   def __init__(i, **d): i.__dict__.update(d)
-  def __repr__(i): return "{" + ', '.join(
+  def __iter__(i) : return iter(i.__dict__)
+  def __repr__(i) : return "{" + ', '.join(
       [f":{k} {v}" for k, v in sorted(i.__dict__.items()) if k[0] != "_"]) + "}"
 
 #----------------------------------
@@ -136,15 +135,16 @@ class Tab(obj):
      Returns a tuple (mostlike,tab)"""
     tabs = [i] + tabs
     n = sum(len(t.rows) for t in tabs)
-    mostlike,out = -1,None
+    mostlike,out = -math.inf,None
     for t in tabs:
       out = out or t
-      tmp = prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
+      prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
+      tmp = math.log(prior)
       for col in t.xs:
         v = row[col.at]
         if v != "?":
           if inc := col.like(v, prior, my):
-            tmp *= inc
+            tmp += math.log(inc)
       if tmp > mostlike:
         mostlike, out = tmp, t
     return mostlike, out
@@ -164,6 +164,96 @@ class Tab(obj):
     gt= lambda a,b: 0 if id(a)==id(b) else (-1 if i.better(a,b) else 1)
     return sorted(i.rows, key=functools.cmp_to_key(gt))
 
+#--------------------------------------
+class Abcd(obj): 
+  def __init__(i,db="all",rx="all"):
+    i.db = db; i.rx=rx;
+    i.yes = i.no = 0
+    i.known = {}; i.a= {}; i.b= {}; i.c= {}; i.d= {}
+
+  def __call__(i,actual=None,predicted=None):
+    return i.keep(actual,predicted)
+
+  def tell(i,actual,predict):
+    i.knowns(actual)
+    i.knowns(predict)
+    if actual == predict: i.yes += 1 
+    else                :  i.no += 1
+    for x in  i.known:
+      if actual == x:
+        if  predict == actual: i.d[x] += 1 
+        else                 : i.b[x] += 1
+      else:
+        if  predict == x     : i.c[x] += 1 
+        else                 : i.a[x] += 1
+
+  def knowns(i,x):
+    if not x in i.known:
+      i.known[x]= i.a[x]= i.b[x]= i.c[x]= i.d[x]= 0.0
+    i.known[x] += 1
+    if (i.known[x] == 1):
+      i.a[x] = i.yes + i.no
+
+  def header(i):
+    print("#",('{0:20s} {1:11s}  {2:4s}  {3:4s} {4:4s} '+ \
+           '{5:4s}{6:4s} {7:3s} {8:3s} {9:3s} '+ \
+           '{10:3s} {11:3s}{12:3s}{13:10s}').format(
+      "db", "rx", 
+     "n", "a","b","c","d","acc","pd","pf","prec",
+      "f","g","class"))
+    print('-'*100)
+
+  def ask(i):
+    def p(y) : return int(100*y + 0.5)
+    def n(y) : return int(y)
+    pd = pf = pn = prec = g = f = acc = 0
+    for x in i.known:
+      a= i.a[x]; b= i.b[x]; c= i.c[x]; d= i.d[x]
+      if (b+d)    : pd   = d     / (b+d)
+      if (a+c)    : pf   = c     / (a+c)
+      if (a+c)    : pn   = (b+d) / (a+c)
+      if (c+d)    : prec = d     / (c+d)
+      if (1-pf+pd): g    = 2*(1-pf)*pd / (1-pf+pd)
+      if (prec+pd): f    = 2*prec*pd/(prec+pd)
+      if (i.yes + i.no): acc= i.yes/(i.yes+i.no)
+      print("#",('{0:20s} {1:10s} {2:4d} {3:4d} {4:4d} '+ \
+          '{5:4d} {6:4d} {7:4d} {8:3d} {9:3d} '+ \
+         '{10:3d} {11:3d} {12:3d} {13:10s}').format(i.db,
+          i.rx,  n(b + d), n(a), n(b),n(c), n(d), 
+          p(acc), p(pd), p(pf), p(prec), p(f), p(g),x))
+      #print x,p(pd),p(prec)
+
+"""
+output:
+ $ python abcd.py 
+# db                   rx           n     a    b    c   d    acc pd  pf  prec f  g  class     
+----------------------------------------------------------------------------------------------------
+# randomIn             jiggle       22    0    5    5   17   63  77 100  77  77   0 a         
+# randomIn             jiggle        5   17    5    5    0   63   0  23   0  77   0 b       
+"""
+
+
+
+def classify(row, my, tabs): return tabs[0].classify(row,my,tabs[1:])
+
+def classifier(src, my, wait=20):
+  all, tabs,seen, results = None, [], {}, Abcd()
+  for pos,row in enumerate(src):
+    if pos:
+      klass = row[all.klass.at]
+      if pos > wait:
+        _,what = classify(row,my,tabs)
+        results.tell(klass, what.txt)
+      if klass not in seen: 
+        new = all.clone(txt=klass)
+        tabs += [new]
+        seen[klass] = new
+      seen[klass].add(row)
+    else:
+      all= Tab(rows=[row])
+  results.header()
+  results.ask()
+  
 #-------------------------------------------------------------------------------
 def csv(src=None):
   "From files or standard input or a string, return an iterator for the lines."
@@ -244,6 +334,7 @@ class Yell:
 
   def eg_One(my):
     "table1"
+    return 1
     def r2(x): return round(x, 2)
     t = Tab()
     [t.add(row) for row in csv(Yell.auto93)] #  if random.random< 0.1
@@ -257,29 +348,52 @@ class Yell:
 
   def eg_Two(my):
     """function with  lots of comments lines"""
-    print(my)
+    n=.75
+    def best(f,a,b,rows): 
+      most = int(n*len(rows))
+      return  [r for _,r in sorted((f(r,a,b),r)[most:] for r in rows)]
+    def notbad(r,a,b)   :   b= b.like(r,my);              return 1/b
+    def strangest(r,a,b): a,b= a.like(r,my),b.like(r,my); return (a+b)/abs(a-b)
+    def uncertain(r,a,b): a,b= a.like(r,my),b.like(r,my); return (a+b)/abs(a-b)
+    def certain(  r,a,b): a,b= a.like(r,my),a.like(r,my); return max(a,b)
+    t= Tab(csv(Yell.auto93))
+    m=len(t.rows)
+    n = int(.25*n)
+    truth = {id(row): int(100*p/n) for p,row in enumerate(t.betters())}  # worst ... best
+    train = []
+    for j in range(m):
+      if j > 10:
+         train t.o
+    rows = sorted(t.rows, key= lambda r: t.like(r,my)) # [-20... -9] = rare ... frequent
+    rows = rows[:n] # 
+    rows = so
 
-  def eg_Diabetes(my):
-    tabs={}
-    results=Abcd()
-    all=None
-    for pos,row in enumerate(csv(Yell.soybean)):
-      if pos:
-        klass=row[all.klass.at]
-        if pos > 20:
-           _,what = one.classify(row, my, others)
-           results.tell(klass,what.txt)
-        if klass not in tabs: 
-          tabs[klass] = all.clone(txt=klass)
-          one,*others = list(tabs.values())
-        tabs[klass].add(row)
-      else:
-        all= Tab(rows=[row])
-    results.header()
-    results.ask()
-        
-      
-     
+    best(strsorted(t.rows, key=strangest)[:n]
+    for row in rows[:20]: print(t.like(row,my))
+    print("")
+    best = t.clone(rows[-n:]) 
+    best.rows
+
+
+  def eg_Soybean(my): 
+    "try soybean"
+    classifier(csv(Yell.soybean),my)     
+
+  def eg_Diabetes(my): 
+    "try diabtes"
+    classifier(csv(Yell.diabetes),my)     
+
+  def eg_Abcd(my):
+    "demo abcd"
+    abcd = Abcd(db='randomIn',rx='jiggle')
+    train = list('aaaaaaaaaaaaaaaaaaaaaabbbbb')
+    test  = train[:]
+    random.shuffle(test)
+    for actual, predicted in zip(train,test):
+      abcd.tell(actual,predicted)
+    abcd.header()
+    abcd.ask()
+
   def eg_Three(my):
     "table1"
     def r2(x): return round(x, 2)
