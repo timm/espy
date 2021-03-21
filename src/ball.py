@@ -126,10 +126,20 @@ class Tab(obj):
     if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
     else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
-  def bStarBdivBplusR(i, j,row, my):
-    "score of row in better thing `i` than worse thing `j`"
-    b,r = i.like(row,my), j.like(row,my)
-    return b**2/(b+r) if b>r and b+r>0.001 else 0
+
+  def good(best,worst,row,my):
+    "Things i like best"
+    b, w     = best.like(row,my), worst.like(row,my)
+    support  = b
+    goodness = b/(b+w)
+    return support * goodness 
+
+  def gray(best, worst,row, my):
+    "Things that most puzzle me"
+    b,w      = best.like(row,my), worst.like(row,my)
+    support  = b
+    grayness = 1/abs(b-w +1E-31)
+    return support * grayness 
 
   def like(i, row, my):
     "Report how much this table likes 'row'"
@@ -152,9 +162,9 @@ class Tab(obj):
             tmp += math.log(inc)
       if tmp > mostlike:
         mostlike, out = tmp, t
-    return mostlike, out
+    return math.e**mostlike, out
 
-  def better(i, row1, row2):
+  def dominate(i, row1, row2):
     "Does row1 win over row2?"
     s1, s2, n = 0, 0, len(i.ys)
     for col in i.ys:
@@ -164,40 +174,48 @@ class Tab(obj):
       s2 -= math.e**(col.w * (b - a) / n)
     return s1 / n < s2 / n
 
-  def betters(i,rows=None):
+  def frequents(i,my,rows=None):
+    "Return rows sorted by frequency in this space"
+    return sorted(rows or i.rows, key=lambda row: i.like(row,my))
+
+  def dominates(i,rows=None):
     "Return rows sorted by domination score."
-    rows = rows or i.rows
-    gt= lambda a,b: 0 if id(a)==id(b) else (-1 if i.better(a,b) else 1)
-    return sorted(rows, key=functools.cmp_to_key(gt))
+    gt= lambda a,b: 0 if id(a)==id(b) else (-1 if i.dominate(a,b) else 1)
+    return sorted(rows or i.rows, key=functools.cmp_to_key(gt))
 
 #--------------------------------------
-def activeLearning(t,start,my):
-  def first(lst,n):
-    n1 = int(n*len(lst))
-    return [x for _,x in sorted(lst)[:n1]]
-  rows = t.rows
-  random.shuffle(rows)
-  seen, rest = rows[:start], rows[start:]
-  truth = {id(r): int(100*p/len(t.rows)) for p,r in enumerate(t.betters())}
-  out=[]
-  while rest:
-    t1 = t.clone(seen)
-    seen = sorted(seen, key=lambda row: t1.like(row,my)) # rarest ... most common
-    strange = first(seen,33) # the strangest items
-    m = max(int(len(seen)/2)
-    betters = t1.betters()
-    mid = - (len(betters) // 2) if len(seen)< 60 else 30
-    bottom,top  = t.clone(betters[:mid]), t.clone(betters[-mid:])
-    best= = sorted(betters, key=lambda row: top.bStarBdivBplusR(bottom,row))[-1]
-    out  += [truth[id(best)]]
-    rest.remove(best)
-    seen += [best]
+def activeLearning(t0,my,start=20,stop=50,alpha=2, beta=30,bold=True):
+  truth = {id(r): int(100*(1-p/len(t0.rows))) for p,r in enumerate(t0.dominates())}
+  random.shuffle(t0.rows)
+  labeled, unlabeled = t0.rows[:start], t0.rows[start:]
+  results=[]
+  out = None
+  while len(labeled) < stop:
+    tlabeled      = t0.clone(labeled)
+    some          = len(labeled)//alpha
+    max30         = min(beta, len(labeled)//3)
 
-    
+    # divide labeled into (novel,frequent) vs (best,worst)
+    nf            = tlabeled.frequents(my)   # rows sorted least to most frequent
+    tnovel        = t0.clone(nf[:some])      # least frequent
+    tfrequent     = t0.clone(nf[some:])      # most frequent
+    wbnovel       = tnovel.dominates()    # sort novel via domination
+    wbfrequent    = tfrequent.dominates() # sort frequent via domination
+    bestf, worstf = t0.clone(wbfrequent[:max30]), t0.clone(wbfrequent[max30:])
+    bestn ,worstn = t0.clone(wbnovel[   :max30:]), t0.clone(wbnovel[  :max30])
 
-"""
+    # the best guess comes from the frequent region
+    found  = max(t0.rows, key = lambda r: bestf.good(worstf,r,my))
+    results += [truth[id(found)]]
+    out = out if out and tlabeled.dominate(out,found) else found
 
-"""
+
+    # the next thing to evaluate is picked via a bold (or other) strategy
+    best, worst = (bestn.good, worstn) if bold else (bestf.gray, worstf)
+    got = max(unlabeled, key= lambda r: best(worst,r,my))
+    unlabeled.remove(got)
+    labeled += [got]
+  return max(results), [out[col.at] for col in tlabeled.ys], results
     
 
 #--------------------------------------
@@ -269,7 +287,6 @@ output:
 """
 
 
-
 def classify(row, my, tabs): return tabs[0].classify(row,my,tabs[1:])
 
 def classifier(src, my, wait=20):
@@ -291,6 +308,7 @@ def classifier(src, my, wait=20):
   results.ask()
   
 #-------------------------------------------------------------------------------
+
 def csv(src=None):
   "From files or standard input or a string, return an iterator for the lines."
   def lines(src):
@@ -382,28 +400,13 @@ class Yell:
     print("hi  ", [r2(col.mid()) for col in t2.xs])
     print("mid ", [r2(col.mid()) for col in t.xs])
 
-  def eg_Two(my):
+  def eg_Gate(my):
     """function with  lots of comments lines"""
-    n=.75
-    def most(f,rows,*l):
-      top = int(n*len(rows))
-      return [x for _,x in sorted([(f(x,*l),x) for x in rows])[top:]]
-    def notbad(r,a,b)   :   b= b.like(r,my);              return 1/b
-    def strangest(r,a,b): a,b= a.like(r,my),b.like(r,my); return (a+b)/abs(a-b)
-    def uncertain(r,a,b): a,b= a.like(r,my),b.like(r,my); return (a+b)/abs(a-b)
-    def certain(  r,a,b): a,b= a.like(r,my),a.like(r,my); return max(a,b)
     t= Tab(csv(Yell.auto93))
-    m=len(t.rows)
-    n = int(.25*n)
-    truth = {id(row): int(100*p/n) for p,row in enumerate(t.betters())}  # worst ... best
-    train = []
-    rows = sorted(t.rows, key= lambda r: t.like(r,my)) # [-20... -9] = rare ... frequent
-    rows = rows[:n] # 
-    for row in rows[:20]: print(t.like(row,my))
-    print("")
-    best = t.clone(rows[-n:]) 
-    best.rows
-
+    all= t.dominates()
+    print("best",t.clone(all[:30]).y())
+    print("rest",t.clone(all[30:]).y())
+    for _ in range(20): print(activeLearning(t,my,start=15,stop=60,bold=False))
 
   def eg_Soybean(my): 
     "try soybean"
