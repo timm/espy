@@ -116,6 +116,8 @@ class Tab(obj):
     "Return mid values of the dependent variables"
     return [col.mid() for col in i.ys]
 
+  def rowy(i, row): return [row[col.at] for col in i.ys]
+
   def clone(i, lst=[],txt=""):
     "Return a new table with the same structure as this one."
     return Tab(txt=txt,rows=[[col.txt for col in i.cols]] + lst)
@@ -183,7 +185,26 @@ class Tab(obj):
     gt= lambda a,b: 0 if id(a)==id(b) else (-1 if i.dominate(a,b) else 1)
     return sorted(rows or i.rows, key=functools.cmp_to_key(gt))
 
-#--------------------------------------
+  
+def dumbGuess(t0,my,start=20,stop=50,alpha=2, beta=30,bold=True):
+  d2s = lambda lst: [round(x,2) for x in lst]
+  n = len(t0.rows)
+  q = lambda x: int(100*x)
+  order = t0.dominates()
+  truth = {id(r): q(1-p/n) for p,r in enumerate(order) }
+  all = []
+  best = random.choice(t0.rows)
+  all += [ (truth[ id(best) ],0) ]
+  for p in range(60):
+     one = random.choice(t0.rows)
+     if t0.dominate(one,best):
+       best = one
+       all += [ (truth[ id(best)],p+1)  ]
+  return truth[ id(best) ],  d2s( t0.rowy(best)), all
+  
+
+
+
 def activeLearning(t0,my,start=20,stop=50,alpha=2, beta=30,bold=True):
   truth = {id(r): int(100*(1-p/len(t0.rows))) for p,r in enumerate(t0.dominates())}
   random.shuffle(t0.rows)
@@ -399,6 +420,18 @@ class Yell:
     print("lo  ", [r2(col.mid()) for col in t1.xs])
     print("hi  ", [r2(col.mid()) for col in t2.xs])
     print("mid ", [r2(col.mid()) for col in t.xs])
+
+  def eg_Guess(my):
+    """function with  lots of comments lines"""
+    d2s = lambda lst: [round(x,2) for x in lst]
+    t= Tab(csv(Yell.auto93))
+    order = t.dominates()
+    print("first50",   d2s(t.clone(order[:50]).y()))
+    print("first  ",   d2s(t.rowy(order[0])))
+    print("\nlast50 ", d2s(t.clone(order[-50:]).y()))
+    print("last   ",   d2s(t.rowy(order[-1])))
+    for _ in range(20):
+      print(dumbGuess(t,my))
 
   def eg_Gate(my):
     """function with  lots of comments lines"""
