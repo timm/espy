@@ -200,7 +200,7 @@ def dumbGuess(t0,my,start=20,stop=50,alpha=2, beta=30,bold=True):
      if t0.dominate(one,best):
        best = one
        all += [ (truth[ id(best)],p+1)  ]
-  return truth[ id(best) ],  d2s( t0.rowy(best)), all
+  return truth[ id(best) ],  d2s( t0.rowy(best)), all,truth
   
 
 
@@ -426,12 +426,16 @@ class Yell:
     d2s = lambda lst: [round(x,2) for x in lst]
     t= Tab(csv(Yell.auto93))
     order = t.dominates()
-    print("first50",   d2s(t.clone(order[:50]).y()))
+    n =80
+    print(f"first{n}",   d2s(t.clone(order[:n]).y()))
     print("first  ",   d2s(t.rowy(order[0])))
-    print("\nlast50 ", d2s(t.clone(order[-50:]).y()))
+    print(f"{n:5}  ",   d2s(t.rowy(order[n])))
+    print(f"\nlast{n} ", d2s(t.clone(order[-n:]).y()))
+    print(f"-{n}   ",   d2s(t.rowy(order[-n])))
     print("last   ",   d2s(t.rowy(order[-1])))
     for _ in range(20):
-      print(dumbGuess(t,my))
+      a,b,c,d=dumbGuess(t,my)
+      print(a,b,c)
 
   def eg_Gate(my):
     """function with  lots of comments lines"""
