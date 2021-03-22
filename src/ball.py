@@ -195,7 +195,7 @@ def dumbGuess(t0,my,start=20,stop=50,alpha=2, beta=30,bold=True):
   all = []
   best = random.choice(t0.rows)
   all += [ (truth[ id(best) ],0) ]
-  for p in range(60):
+  for p in range(30):
      one = random.choice(t0.rows)
      if t0.dominate(one,best):
        best = one
