@@ -42,6 +42,10 @@ class Col(obj):
     i.n += 1
     return i.add1(x)
 
+  def norm(i, x):
+    "Skip missing values, increment counter, add `x`."
+    return x if x == "?" else i.norm1(x)
+
 #-------------------------------------------------------------------------------
 class Skip(Col):
   def __init__(i, at=0, txt=""): i.txt, i.at, i.n
@@ -76,7 +80,7 @@ class Num(Col):
     num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
     return num / (denom + 1E-64)
 
-  def norm(i,x): return max(0, min(1, (x - i.lo)/(i.hi - i.lo + 1E-32)))
+  def norm1(i,x): return max(0, min(1, (x - i.lo)/(i.hi - i.lo + 1E-32)))
 
 #-------------------------------------------------------------------------------
 class Sym(Col):
@@ -93,9 +97,12 @@ class Sym(Col):
 
   def add1(i, x):
     "Incrementally update symbol counts, and the mode."
+    
     tmp = i.seen[x] = i.seen.get(x, 0) + 1
     if tmp > i.most: i.most, i.mode = tmp, x
     return x
+
+  def norm1(i,x): return x
 
 #-------------------------------------------------------------------------------
 class Tab(obj):
@@ -125,8 +132,11 @@ class Tab(obj):
   def add(i, row):
     """If this is row0, create the headers. Else update the headers with 'row'
     then store the 'row' in 'rows'."""
-    if    i.cols : i.rows += [[col.add(x) for col, x in zip(i.cols, row)]]
-    else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
+    if    i.cols : 
+        row = [col.add(x) for col, x in zip(i.cols, row)]
+        i.rows += [row]
+    else: 
+       i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
 
   def good(best,worst,row,my):
@@ -335,7 +345,10 @@ def csv(src=None):
   def lines(src):
     for line in src:
       line = re.sub(r'([\n\t\r ]|#.*)', '', line)
-      if line: yield [coerce(x) for x in line.split(",")] 
+      if line: 
+        line = line.split(",")
+        line = [coerce(x) for x in line]
+        yield line
   # ----------------------------
   if src and src[-4:] == ".csv":
     with open(src) as fp:  
@@ -424,9 +437,10 @@ class Yell:
   def eg_Guess(my):
     """function with  lots of comments lines"""
     d2s = lambda lst: [round(x,2) for x in lst]
-    t= Tab(csv(Yell.auto93))
+    #t= Tab(csv(Yell.auto93))
+    t= Tab(csv("../opt/data/billing10k.csv")) #Yell.auto93))
     order = t.dominates()
-    n =80
+    n =10
     print(f"first{n}",   d2s(t.clone(order[:n]).y()))
     print("first  ",   d2s(t.rowy(order[0])))
     print(f"{n:5}  ",   d2s(t.rowy(order[n])))
