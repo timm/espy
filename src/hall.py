@@ -40,6 +40,10 @@ class Col(obj):
     if x == "?": return x
     i.n += 1; return i.add1(x)
 
+  def dist(i, x,y):
+    if x == "?" and y=="?": return 1
+    return i.dist1(x,y)
+
   @staticmethod
   def new(tab, at, txt):
     if "?" in txt: return Skip(at,txt)
@@ -65,6 +69,11 @@ class Num(Col):
 
   def mid(i)     : return i.mu
   def norm1(i,x) : return max(0, min(1, (x - i.lo)/(i.hi - i.lo + 1E-32)))
+  def dist1(i,x,y):
+    if   x=="?" : y   = i.norm1(y); x= 0 if y>.5 else 1
+    elif y=="?" : x   = i.norm1(x); y= 0 if x>.5 else 1
+    else        : x,y = i.norm1(x), i.norm1(y)
+    return abs(x-y)
 
   def add1(i, x):
     i._all += [x]
@@ -103,6 +112,7 @@ class Sym(Col):
   def mid(i)                : return i.mode
   def norm1(i,x)            : return x
   def like(i, x, prior, my) : return (i.seen.get(x,0) + my.m*prior) / (i.n+my.m)
+  def dist1(i,x,y)          : return 0 if x==y else 1
   def ent(i)                : 
     return sum(-v / i.n * math.log(v / i.n) for v in i.seen.values())
 
@@ -132,18 +142,53 @@ class Sym(Col):
 
 # -----------------------------------------------------------------------------
 class Row(obj):
-  def __init__(i,lst,t): 
-    i.tab, i.cells, i.cooked = t, lst, None
+  def __init__(i,lst): 
+    i.cells, i.cooked =  lst, None
     [col.add(x) for col, x in zip(t.cols, lst)]
 
-  def dominate(i, j):
-    s1, s2, n = 0, 0, len(i.tab.ys)
-    for col in i.tab.ys:
+  def dist(i,j,t,my):
+    d,n = 0.1E-31
+    for col in t.xs:
+      tmp = col.dist( i.cells[col.at], j.cells[col.at] )
+      d  += tmp**my.p
+      n  += 1
+    return (d/n)**(1/my.p)
+
+  def far(i,rows, t,my):
+    all = sorted([(i.dist(j,t,my),j) for j in rows])
+    return all[int(len(all)*my.far)][1]
+
+  def dominate(i, j, t):
+    s1, s2, n = 0, 0, len(t.ys)
+    for col in t.ys:
       a   = col.norm(i.cells[col.at])
       b   = col.norm(j.cells[col.at])
       s1 -= math.e**(col.w * (a - b) / n)
       s2 -= math.e**(col.w * (b - a) / n)
     return s1 / n < s2 / n
+
+# -----------------------------------------------------------------------------
+def dendogram(root, my):
+  def recurse(here,lvl=0):
+    if my.min <= 2*len(here.rows):
+      start   = random.choice(here.rows)
+      _, west = start.far(  here.rows, root, my )
+      c, east = west.far( here.rows, root, my )
+      all     = []
+      for row in here.rows:
+        a    = row.dist(west, root, my)
+        b    = row.dist(east, root, my)
+        x    = (a**2 + c**2 - b**2)/(2*c)
+        all += [(x,row)]
+      all = sorted(all)
+      mid = all[ len(all) // 2 ][0]
+      wests, easts = [], []
+      for x,row in all:
+        (wests if x < mid else easts).append(row)
+      return obj(c=c, here=here, mid=mid, east=east, west=west, 
+                 easts= recurse(t.clone(easts), lvl+1), 
+                 wests= recurse(t.cline(wests), lvl+1))
+  return recurse(root)
 
 # -----------------------------------------------------------------------------
 # - Given a rows of data, and row0 defines column name and type, store the 
