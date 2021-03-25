@@ -201,29 +201,55 @@ class Tab(obj):
 
 # -----------------------------------------------------------------------------
 class Bin(obj):
-  def __init__(i, down=-math.inf, up=math.inf): 
-     i.down, i.up, i.also = down, up, Sym()
+  def __init__(i, down=-math.inf, up=math.inf, col=None):
+     i.down, i.up, i.col, i.also = down, up, col, set()
 
-def div(xy, small=0.01, width=20):
+class SuperBin(obj):
+  def __init__(i, down=-math.inf, up=math.inf,col=None): 
+     i.down, i.up, i.col, i.also = down, up, col, Sym()
+
+def div(xy, epsilon=0.01, width=20, bin=Bin,col=None):
   while width < 4 and width < len(xy) / 2:
     width *= 1.2
   xy = sorted(xy)
-  now = Bin(down=xy[0][0], up=xy[0][0])
+  now = bin(down=xy[0][0], up=xy[0][0],col=col)
   out = [now]
   for j, (x, y) in enumerate(xy):
     if j < len(xy) - width:
       if now.also.n >= width:
         if x != xy[j + 1][0]:
-          if now.up - now.down > my.small:
-            now = Bin(down=now.up, up=x)
+          if now.up - now.down > epsilon:
+            now = bin(down=now.up, up=x,col=col)
             out += [now]
     now.up = x
     now.also.add(y)
-  out[0].down = LO
-  out[-1].up = HI
+  out[0].down = -math.inf
+  out[-1].up = math.inf
   return out
 
-def merge(b4):
+def split(t,rows=None,my=my):
+  bins=[]
+  rows = rows or t.rows
+  def half(z): return abs(0.5 - len(z/len(rows)))
+  def diff(x,y): return len(x & y)/len(y)
+  alien 
+  for c in t.xs:
+    xy, n= [],Num()
+    for row in rows or t.rows:
+       x= row.cells[c.at] 
+       if x!="?":
+         xy += [[x,row]]
+         n.add(x)
+    bins += div(xy, espilson=n.sd*my.cohen, width=len(xy)*my.width, bin=Bin)
+  bins = sorted(bins, key=lambda bin1: half(bin1))
+  bin1 = bins[0]
+  rest = sorted(bins[1:], key=lambda bin2: diff(bin1.also, bin2.also))
+  bin2 = rest[0]
+  overlap = bin2.also & bin1.also
+
+     
+
+def superMerge(b4):
   j, tmp, n = 0, [], len(b4)
   while j < n:
     a = b4[j]
@@ -235,7 +261,7 @@ def merge(b4):
         j += 1
     tmp += [a]
     j += 1
-  return merge(tmp) if len(tmp) < len(b4) else b4
+  return superMerge(tmp) if len(tmp) < len(b4) else b4
 
 # -----------------------------------------------------------------------------
 def classify(row, my, tabs): return tabs[0].classify(row,my,tabs[1:])

@@ -1,1 +1,9 @@
+clear; tput bold; tput setaf 32; cat<<'EOF'
+   .-.
+  (o o)   there is no escape...
+  | O \     ... from sh ELL !!!
+   \   \
+    `~~~'
+EOF
+tput sgr0
 bash --init-file opt/ional -i
