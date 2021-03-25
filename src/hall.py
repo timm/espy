@@ -154,10 +154,6 @@ class Row(obj):
       n  += 1
     return (d/n)**(1/my.p)
 
-  def far(i,rows, t,my):
-    all = sorted([(i.dist(j,t,my),j) for j in rows])
-    return all[int(len(all)*my.far)][1]
-
   def dominate(i, j, t):
     s1, s2, n = 0, 0, len(t.ys)
     for col in t.ys:
@@ -168,27 +164,22 @@ class Row(obj):
     return s1 / n < s2 / n
 
 # -----------------------------------------------------------------------------
-def dendogram(root, my):
-  def recurse(here,lvl=0):
-    if my.min <= 2*len(here.rows):
-      start   = random.choice(here.rows)
-      _, west = start.far(  here.rows, root, my )
-      c, east = west.far( here.rows, root, my )
-      all     = []
-      for row in here.rows:
-        a    = row.dist(west, root, my)
-        b    = row.dist(east, root, my)
-        x    = (a**2 + c**2 - b**2)/(2*c)
-        all += [(x,row)]
-      all = sorted(all)
-      mid = all[ len(all) // 2 ][0]
-      wests, easts = [], []
-      for x,row in all:
-        (wests if x < mid else easts).append(row)
-      return obj(c=c, here=here, mid=mid, east=east, west=west, 
-                 easts= recurse(t.clone(easts), lvl+1), 
-                 wests= recurse(t.cline(wests), lvl+1))
-  return recurse(root)
+def recursive2split(all, my):
+  def do(here,lvl=0):
+    if my.min <= 2*len(here.rows): return None
+    tmp=[]
+    for _ in range (my.picks):
+      r1,r2 = random.choce(here.rows), random.choice(here.row)
+      tmp += [(r1.dist(r2, *at), r1,r2)]
+    tmp.sort()
+    _,west,east = tmp[ int(len(tmp) * my.seperation)]
+    wests, easts = all.clone(), all.clone()
+    for r in here.rows:
+      (wests if r.dist(west, *at) < r.dist(east, *at) else easts).add(r)
+    return obj(here=here, mid=mid, east=east, west=west, 
+               easts= do(easts, lvl+1), wests= do(wests, lvl+1))
+  at = all,my
+  return do(all)
 
 # -----------------------------------------------------------------------------
 # - Given a rows of data, and row0 defines column name and type, store the 
@@ -246,10 +237,6 @@ class Tab(obj):
 
 # -----------------------------------------------------------------------------
 class Bin(obj):
-  def __init__(i, down=-math.inf, up=math.inf, col=None):
-     i.down, i.up, i.col, i.also = down, up, col, set()
-
-class SuperBin(obj):
   def __init__(i, down=-math.inf, up=math.inf,col=None): 
      i.down, i.up, i.col, i.also = down, up, col, Sym()
 
@@ -293,21 +280,6 @@ def split(t,rows=None,my=my):
   overlap = bin2.also & bin1.also
 
      
-
-def superMerge(b4):
-  j, tmp, n = 0, [], len(b4)
-  while j < n:
-    a = b4[j]
-    if j < n - 1:
-      b = b4[j + 1]
-      if c := a.also.simplified(b.also):
-        a = Bin(a.down, b.up)
-        a.also = c
-        j += 1
-    tmp += [a]
-    j += 1
-  return superMerge(tmp) if len(tmp) < len(b4) else b4
-
 # -----------------------------------------------------------------------------
 def classify(row, my, tabs): return tabs[0].classify(row,my,tabs[1:])
 
