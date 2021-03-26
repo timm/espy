@@ -6,16 +6,20 @@ hall: hierarhical active learning laboratory.
 
 usage: ./ball.py [OPTIONS]
 
-    Option      |  Notes               | Default
-    ----------- | -------------------- | ----------------------
-     -data S    | input data           | ../opt/data/auto93.csv
-     -seed I    | random number seed   | 10023
-     -cohen F   | small effect         | .35 
-     -k I       | low frequency        | 1
-     -cohen F   | min difference delta | .3
-     -size F    | min bin width        | .5
-     -k I       | low frequency        | 1
-     -m I       | low fro ; e.g.       | 2
+    Option      |  Notes                    | Default
+    ----------- | ------------------------- | ----------------------
+     -data S    | input data                | ../opt/data/auto93.csv
+     -seed I    | random number seed        | 10023
+     -cohen F   | small effect              | .35 
+     -k I       | low frequency             | 1
+     -cohen F   | min difference delta      | .3
+     -size F    | min bin width             | .5
+     -min I     | min cluster leaf size     | 80
+     -samples I | how samples to find poles | 20
+     -p       I | power for distance calcs  | 2
+     -far F     | distance for poles        | .75
+     -k I       | low frequency             | 1
+     -m I       | low fro ; e.g.            | 2
 """
 import functools, random,  math, sys, re
 
@@ -144,10 +148,9 @@ class Sym(Col):
 class Row(obj):
   def __init__(i,lst): 
     i.cells, i.cooked =  lst, None
-    [col.add(x) for col, x in zip(t.cols, lst)]
 
   def dist(i,j,t,my):
-    d,n = 0.1E-31
+    d,n = 0, 1E-31
     for col in t.xs:
       tmp = col.dist( i.cells[col.at], j.cells[col.at] )
       d  += tmp**my.p
@@ -164,22 +167,42 @@ class Row(obj):
     return s1 / n < s2 / n
 
 # -----------------------------------------------------------------------------
-def recursive2split(all, my):
-  def do(here,lvl=0):
-    if my.min <= 2*len(here.rows): return None
-    tmp=[]
-    for _ in range (my.picks):
-      r1,r2 = random.choce(here.rows), random.choice(here.row)
-      tmp += [(r1.dist(r2, *at), r1,r2)]
+def cluster(all, my):
+  def do(here, lvl=0):
+    if my.min > 2*len(here.rows): return None
+    print(f"{len(here.rows):>5}" + '|.. '*lvl)
+    poles=[]
+    for _ in range(my.samples):
+      r1, r2  = random.choice(here.rows), random.choice(here.rows)
+      poles  += [(r1.dist(r2, *at), r1,r2)]
+    poles.sort(key=functools.cmp_to_key(
+                    lambda a,b: 0 if a[0]==b[0] else (-1 if a[0]<b[0] else 1)))
+    c, l, r   = poles[ int(len(poles)*my.far) ]
+    tmp       = []
+    for row in here.rows:
+      a       = row.dist(r, *at)
+      b       = row.dist(l, *at)
+      x       = (a**2 + c**2 - b**2)/(2*c)
+      tmp    += [(x,row)]
     tmp.sort()
-    _,west,east = tmp[ int(len(tmp) * my.seperation)]
-    wests, easts = all.clone(), all.clone()
-    for r in here.rows:
-      (wests if r.dist(west, *at) < r.dist(east, *at) else easts).add(r)
-    return obj(here=here, mid=mid, east=east, west=west, 
-               easts= do(easts, lvl+1), wests= do(wests, lvl+1))
+    mid = tmp[ len(tmp) // 2 ][0]
+    rs, ls = all.clone(), all.clone()
+    for x,row in tmp:
+      (rs if x < mid else ls).add(row)
+    return obj(c=c, here=here, mid=mid, l=l, r=r, 
+               ls= do(ls, lvl+1), rs= do(rs, lvl+1))
   at = all,my
   return do(all)
+
+def nodes(here,lvl=0):
+  if here:
+    yield lvl, t
+    for y in nodes(here.ls, lvl+1): yield lvl,y
+    for y in nodes(here.rs, lvl+1): yield lvl,y
+
+def treep(here):
+  for lvl,node in nodes(here):
+    print(node.ys(), ("|.. " * lvl) + " " + len(node.rows))
 
 # -----------------------------------------------------------------------------
 # - Given a rows of data, and row0 defines column name and type, store the 
@@ -212,11 +235,11 @@ class Tab(obj):
   def like(i, row, my)    : return i.classify(row, my)[0]
   def add(i, row):
     row = row.cells if type(row)==Row else row
-    if    i.cols : i.rows += [Row(row,i)]
+    if    i.cols : i.rows += [Row([col.add(x) for col, x in zip(i.cols,row)])]
     else: i.cols = [Col.new(i, at, txt) for at, txt in enumerate(row)]
 
   def dominates(i,rows=None):
-    gt= lambda a,b: 0 if id(a)==id(b) else (-1 if a.dominate(b) else 1)
+    gt= lambda a,b: 0 if id(a)==id(b) else (-1 if a.dominate(b,i) else 1)
     return sorted(rows or i.rows, key=functools.cmp_to_key(gt))
 
   def classify(i, row, my, tabs=[]):
@@ -228,7 +251,7 @@ class Tab(obj):
       prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
       tmp = math.log(prior)
       for col in t.xs:
-        v = row.cell[col.at]
+        v = row[col.at]
         if v != "?":
           if inc := col.like(v, prior, my): tmp += math.log(inc)
       if tmp > mostlike:
@@ -259,26 +282,19 @@ def div(xy, epsilon=0.01, width=20, bin=Bin,col=None):
   out[-1].up = math.inf
   return out
 
-def split(t,rows=None,my=my):
-  bins=[]
-  rows = rows or t.rows
-  def half(z): return abs(0.5 - len(z/len(rows)))
-  def diff(x,y): return len(x & y)/len(y)
-  alien 
-  for c in t.xs:
-    xy, n= [],Num()
-    for row in rows or t.rows:
-       x= row.cells[c.at] 
-       if x!="?":
-         xy += [[x,row]]
-         n.add(x)
-    bins += div(xy, espilson=n.sd*my.cohen, width=len(xy)*my.width, bin=Bin)
-  bins = sorted(bins, key=lambda bin1: half(bin1))
-  bin1 = bins[0]
-  rest = sorted(bins[1:], key=lambda bin2: diff(bin1.also, bin2.also))
-  bin2 = rest[0]
-  overlap = bin2.also & bin1.also
-
+def merge(b4):
+  j, tmp, n = 0, [], len(b4)
+  while j < n:
+    a = b4[j]
+    if j < n - 1:
+      b = b4[j + 1]
+      if c := a.also.simplified(b.also):
+        a = Bin(a.down, b.up)
+        a.also = c
+        j += 1
+    tmp += [a]
+    j += 1
+  return merge(tmp) if len(tmp) < len(b4) else b4
      
 # -----------------------------------------------------------------------------
 def classify(row, my, tabs): return tabs[0].classify(row,my,tabs[1:])
@@ -287,7 +303,7 @@ def classifier(src, my, wait=20):
   all, tabs,seen, results = None, [], {}, Abcd()
   for pos,row in enumerate(src):
     if pos:
-      klass = row.cells[all.klass.at]
+      klass = row[all.klass.at]
       if pos > wait:
         _,what = classify(row,my,tabs)
         results.tell(klass, what.txt)

@@ -48,6 +48,9 @@ def coerce(string):
     except Exception: return string
 
 class Eg:
+  def eg_Split(my):
+    hall.cluster(hall.Tab(hall.csv(auto93)), my)   
+
   def eg_One(my):
     "table1"
     def r2(x): return round(x, 2)
