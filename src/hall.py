@@ -168,6 +168,10 @@ class Row(obj):
 
 # -----------------------------------------------------------------------------
 def cluster(all, my):
+  def ordered(lst):
+    return sorted(lst, key=functools.cmp_to_key(
+             lambda a,b: 0 if a[0]==b[0] else (-1 if a[0]<b[0] else 1)))
+
   def do(here, lvl=0):
     if my.min > 2*len(here.rows): return None
     print(f"{len(here.rows):>5}" + '|.. '*lvl)
@@ -175,8 +179,7 @@ def cluster(all, my):
     for _ in range(my.samples):
       r1, r2  = random.choice(here.rows), random.choice(here.rows)
       poles  += [(r1.dist(r2, *at), r1,r2)]
-    poles.sort(key=functools.cmp_to_key(
-                    lambda a,b: 0 if a[0]==b[0] else (-1 if a[0]<b[0] else 1)))
+    poles = ordered(poles)
     c, l, r   = poles[ int(len(poles)*my.far) ]
     tmp       = []
     for row in here.rows:
@@ -184,11 +187,11 @@ def cluster(all, my):
       b       = row.dist(l, *at)
       x       = (a**2 + c**2 - b**2)/(2*c)
       tmp    += [(x,row)]
-    tmp.sort()
+    tmp = ordered(tmp)
     mid = tmp[ len(tmp) // 2 ][0]
     rs, ls = all.clone(), all.clone()
-    for x,row in tmp:
-      (rs if x < mid else ls).add(row)
+    for z,row in tmp:
+      (rs if z < mid else ls).add(row)
     return obj(c=c, here=here, mid=mid, l=l, r=r, 
                ls= do(ls, lvl+1), rs= do(rs, lvl+1))
   at = all,my
