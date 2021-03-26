@@ -49,7 +49,12 @@ def coerce(string):
 
 class Eg:
   def eg_Split(my):
-    hall.treep(hall.cluster(hall.Tab(hall.csv(auto93)), my)) 
+    t= hall.Tab(hall.csv(auto93))
+    c= hall.cluster(t, my) 
+    hall.treep(c)
+    mids= [node.here.mid() for node in hall.leaves(c)]
+    for mid1 in mids:
+       print(sum(mid1.dominate(mid2,t) for mid2 in mids)/(len(mids)-1))
 
   def eg_One(my):
     "table1"

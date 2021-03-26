@@ -14,7 +14,7 @@ usage: ./ball.py [OPTIONS]
      -k I       | low frequency             | 1
      -cohen F   | min difference delta      | .3
      -size F    | min bin width             | .5
-     -min I     | min cluster leaf size     | 80
+     -min I     | min cluster leaf size     | 40
      -samples I | how samples to find poles | 20
      -p       I | power for distance calcs  | 2
      -far F     | distance for poles        | .75
@@ -195,15 +195,24 @@ def cluster(all, my):
   at = all,my
   return do(all)
 
-def nodes(here,lvl=0):
-  if here:
-    yield lvl, here
-    for y in nodes(here.ls, lvl+1): yield lvl,y
-    for y in nodes(here.rs, lvl+1): yield lvl,y
+def nodes(tree,lvl=0):
+  if tree:
+    yield lvl, tree
+    for x in nodes(tree.ls, lvl+1): yield x
+    for x in nodes(tree.rs, lvl+1): yield x
 
-def treep(here):
-  for lvl,node in nodes(here):
-    print(node.ys(), ("|.. " * lvl) + " " + len(node.rows))
+def leaves(tree):
+  for _,node in nodes(tree):
+    if not node.ls:
+      yield node
+
+def treep(tree):
+  def r(x):    return round(x,2)
+  def rs(lst): return ', '.join([f"{r(x):>8}" for x in lst])
+  for lvl,node in nodes(tree):
+    tab = node.here
+    n = len(tab.rows)
+    print(rs([n] + tab.y()), ("|.. " * lvl)) # + f" {len(tab.rows)}")
 
 # -----------------------------------------------------------------------------
 # - Given a rows of data, and row0 defines column name and type, store the 
@@ -231,6 +240,7 @@ class Tab(obj):
 
   def x(i)                : return [col.mid() for col in i.xs]
   def y(i)                : return [col.mid() for col in i.ys]
+  def mid(i)              : return Row([col.mid() for col in i.cols])
   def rowy(i, row)        : return [row.cells[col.at] for col in i.ys]
   def clone(i,a=[],txt=""): return Tab(txt=txt,rows=[[c.txt for c in i.cols]] + a)
   def like(i, row, my)    : return i.classify(row, my)[0]
