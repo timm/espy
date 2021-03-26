@@ -49,7 +49,7 @@ def coerce(string):
 
 class Eg:
   def eg_Split(my):
-    hall.cluster(hall.Tab(hall.csv(auto93)), my)   
+    hall.treep(hall.cluster(hall.Tab(hall.csv(auto93)), my)) 
 
   def eg_One(my):
     "table1"

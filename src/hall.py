@@ -172,9 +172,8 @@ def cluster(all, my):
     return sorted(lst, key=functools.cmp_to_key(
              lambda a,b: 0 if a[0]==b[0] else (-1 if a[0]<b[0] else 1)))
 
-  def do(here, lvl=0):
+  def do(here):
     if my.min > 2*len(here.rows): return None
-    print(f"{len(here.rows):>5}" + '|.. '*lvl)
     poles=[]
     for _ in range(my.samples):
       r1, r2  = random.choice(here.rows), random.choice(here.rows)
@@ -192,14 +191,13 @@ def cluster(all, my):
     rs, ls = all.clone(), all.clone()
     for z,row in tmp:
       (rs if z < mid else ls).add(row)
-    return obj(c=c, here=here, mid=mid, l=l, r=r, 
-               ls= do(ls, lvl+1), rs= do(rs, lvl+1))
+    return obj(c=c, here=here, mid=mid, l=l, r=r, ls= do(ls), rs= do(rs))
   at = all,my
   return do(all)
 
 def nodes(here,lvl=0):
   if here:
-    yield lvl, t
+    yield lvl, here
     for y in nodes(here.ls, lvl+1): yield lvl,y
     for y in nodes(here.rs, lvl+1): yield lvl,y
 
