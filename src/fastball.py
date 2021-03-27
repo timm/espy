@@ -18,18 +18,16 @@ def weight(s): return -1 if "<" in s  else 1
 def one(lst,n=1): return lst[int(n*random.randrange(len(lst)))]
 
 def csv(src=None):
-  def cells(line):
-    if line := re.sub(r'([\n\t\r ]|#.*)', '', line):
-      line= [x for x in line.split(",")]
-  #------------------------------
   if src and src[-4:] == ".csv":
     with open(src) as fp:  
       for str in fp: 
-        if lst := cells(str): yield lst
+       if line := re.sub(r'([\n\t\r ]|#.*)', '', str):
+         yield  [x for x in line.split(",")]
   else:
     src = src.split("\n") if src else sys.stdin
     for str in src: 
-      if lst := cells(str): yield lst
+      if line := re.sub(r'([\n\t\r ]|#.*)', '', str):
+        yield  [x for x in line.split(",")]
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
@@ -49,7 +47,7 @@ class Sym(Col):
     return x
 
 class Some(Col):
-  def __init__(i,at,s): i.txt,i.at,i.all,i.w=s,at,[],weight(s)
+  def __init__(i,at,s): i.n,i.txt,i.at,i.all,i.w = 0,s,at,[],weight(s)
   def add1(i,x,my,_):
     x=float(x)
     if len(i.all) < my.some.max: i.all += [x]
@@ -64,7 +62,7 @@ class Table(obj):
   def add(i,x,my):
     if    i.cols: i.rows+= [[col.add(x,my) for col in i.cols]]
     else: 
-          i.cols= [(Num(j,s) if nump(s) else Sym(j,s)) for j,s in enumerate(row)]
+          i.cols= [(Some(j,s) if nump(s) else Sym(j,s)) for j,s in enumerate(x)]
           for col in i.cols:
             (i.y if goalp(col.txt) else i.x).append(col)
 
@@ -78,6 +76,5 @@ def main(d):
   for s,f in d.items():
     if type(f)==fun and s[:3] == "eg_": f(obj(**MY))
 
-#main(locals())
+main(locals())
 
-for row in csv("../etc/data/auto93.csv"): print(row)
