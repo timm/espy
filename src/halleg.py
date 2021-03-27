@@ -47,14 +47,19 @@ def coerce(string):
     try: return float(string)
     except Exception: return string
 
+
 class Eg:
   def eg_Split(my):
-    t= hall.Tab(hall.csv(auto93))
-    c= hall.cluster(t, my) 
-    hall.treep(c)
-    mids= [node.here.mid() for node in hall.leaves(c)]
-    for mid1 in mids:
-       print(sum(mid1.dominate(mid2,t) for mid2 in mids)/(len(mids)-1))
+    t= hall.Tab(hall.csv(auto93)) #"../etc/data/billing10k.csv"))
+    #t= hall.Tab(hall.csv("../etc/data/billing10k.csv"))
+    #t= hall.Tab(hall.csv("../etc/data/Scrum100k.csv"))
+    #t= hall.Tab(hall.csv("../etc/data/CART1.csv"))
+    with hall.watch():
+       c= hall.cluster(t, my) 
+    hall.treep(c, t)
+    #mids= [node.ere.mid() for node in hall.leaves(c)]
+    #for mid1 in mids:
+     #  print(sum(mid1.dominate(mid2,t) for mid2 in mids)/(len(mids)-1))
 
   def eg_One(my):
     "table1"

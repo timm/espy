@@ -1,0 +1,89 @@
+#!/usr/bin/env  bash
+
+Ell=$(cd $( dirname "${BASH_SOURCE[0]}" ) && pwd )
+
+############# assert dirs exist
+mkdir -p $Ell/etc
+mkdir -p $Ell/docs
+mkdir -p $Ell/src
+
+############# ensure files exist
+f=etc/tmux-conf; [ -f "$Ell/$f"  ] || wget -q -O $Ell/$f $web/$f
+f=etc/vimrc;     [ -f "$Ell/$f"  ] || wget -q -O $Ell/$f $web/$f
+f=etc/pics;      [ -f "$Ell/$f"  ] || wget -q -O $Ell/$f $web/$f
+f=etc/gitignore; [ -f "$Ell/$f"  ] || wget -q -O $Ell/$f $web/$f
+f=gitignore;     [ -f "$Ell/.$f" ] || cp $Ell/etc/$f $Ell/.$f
+
+git add $Ell/etc/* $Ell/.gitignore
+
+############## aliases
+alias gp="git add *;git commit -am save;git push git status"
+alias ls="ls -G"
+alias repl="rlwrap sbcl --noinform "
+alias tmux="$(which tmux) -f $Ell/etc/tmux-conf "
+alias vi="vim -u $Ell/etc/vimrc "
+alias vims="vim +PluginInstall +qall"         
+
+html() {
+  pdoc3 --config sort_identifiers=True        \
+        --config show_inherited_members=False   \
+        --force --template-dir $Ell/docs --html \
+        -o $Ell/docs $Ell/src/*.py
+  git add $Ell/docs/*.html
+}
+
+here() { cd $1; basename `pwd`; }
+
+hi() {
+  clear
+  tput bold; tput setaf 32; cat <<-'EOF'
+        __
+     ."`  `".
+    /   /\   \
+   |    \/    |
+    \   ()   /
+     '.____.'
+      {_.="}
+  jgs {_.="}
+      `-..-`
+EOF
+  tput sgr0
+  tput bold; tput setaf 0
+  awk '/^alias/ {print $0}' $Ell/on
+  echo ""
+  tput sgr0
+}
+
+mytmux() {
+  session=$RANDOM
+  Tmux=$(which tmux)
+  $Tmux start-server
+  sleep 1
+  $Tmux new-session -d -s $session  
+  $Tmux send-keys "bash --init-file $Ell/on -i"  C-m  "sleep 0.5; clear;"  C-m
+
+  $Tmux splitw -h -p 20
+  $Tmux selectp -t 1
+  $Tmux send-keys "bash --init-file $Ell/on -i"  C-m  "clear; hi" C-m
+
+  $Tmux splitw -v  -p 5
+  $Tmux selectp -t 2
+  $Tmux send-keys "bash --init-file$Ell/on -i"  C-m  "htop"  C-m
+
+  $Tmux attach-session -t $session
+}
+
+startup() {
+  if [ ! -d "$HOME/.vim/bundle" ]; then
+     git clone https://github.com/VundleVim/Vundle.vim.git \
+           ~/.vim/bundle/Vundle.vim
+     vims
+  fi
+  [ -z "$TMUX" ] && mytmux
+}
+############### prompt
+PROMPT_COMMAND='echo -ne "👻  $(git branch 2>/dev/null | grep '^*' | colrm 1 2):";PS1="$(here ..)/$(here .):\!\e[m ▶ "'
+
+[[ $1 == "es" ]] && startup
+[[ $1 == "e" ]] && bash --init-file $Ell/on -i
+

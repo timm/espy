@@ -8,16 +8,17 @@ usage: ./ball.py [OPTIONS]
 
     Option      |  Notes                    | Default
     ----------- | ------------------------- | ----------------------
-     -data S    | input data                | ../opt/data/auto93.csv
+     -data S    | input data                | ../etc/data/auto93.csv
      -seed I    | random number seed        | 10023
      -cohen F   | small effect              | .35 
      -k I       | low frequency             | 1
      -cohen F   | min difference delta      | .3
      -size F    | min bin width             | .5
-     -min I     | min cluster leaf size     | 40
-     -samples I | how samples to find poles | 20
+     -min I     | min cluster leaf size     | 10
+     -samples I | how samples to find poles | 2
      -p       I | power for distance calcs  | 2
-     -far F     | distance for poles        | .75
+     -far F     | distance for poles        | .9
+     -top I     | max number of ranges      | 7
      -k I       | low frequency             | 1
      -m I       | low fro ; e.g.            | 2
 """
@@ -40,9 +41,9 @@ class obj:
 class Col(obj):
   def norm(i, x): return x if x == "?" else i.norm1(x)
 
-  def add(i, x):
+  def add(i, x, n=1):
     if x == "?": return x
-    i.n += 1; return i.add1(x)
+    i.n += n; return i.add1(x,n)
 
   def dist(i, x,y):
     if x == "?" and y=="?": return 1
@@ -54,12 +55,13 @@ class Col(obj):
     x = (Num if txt[0].isupper() else Sym)(at, txt)
     (tab.ys if "+" in txt or "!" in txt or "-" in txt else tab.xs).append(x)
     if "!" in txt: tab.klass =x
+    tab.names[txt]=at
     return x
 
 # -----------------------------------------------------------------------------
 class Skip(Col):
   def __init__(i, at=0, txt="") : i.txt, i.at, i.n
-  def add1(i,x)                 : return x
+  def add1(i,x,_)                 : return x
   def mid(i)                    : return "?"
 
 # -----------------------------------------------------------------------------
@@ -79,7 +81,7 @@ class Num(Col):
     else        : x,y = i.norm1(x), i.norm1(y)
     return abs(x-y)
 
-  def add1(i, x):
+  def add1(i, x, _):
     i._all += [x]
     d = x - i.mu
     i.mu += d / i.n
@@ -99,11 +101,10 @@ class Num(Col):
   def discretize(i, j, my):
     xy = [(better, True)  for better in i._all] + [
           (bad,    False) for bad    in j._all]
-    tmp = div(xy, small=i.sd * my.cohen, width=len(xy)**my.size)
+    tmp = div(xy, i.sd * my.cohen, len(xy)**my.size)
     for bin in merge(tmp):
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
-
 
 # -----------------------------------------------------------------------------
 # - `sym.mid` : return mid point
@@ -134,7 +135,7 @@ class Sym(Col):
       return k
 
   def merge(i, j):
-    k = Sym(pos=i.pos, txt=i.txt)
+    k = Sym(at=i.at, txt=i.txt)
     for seen in [i.seen, j.seen]:
       for x, n in seen.items(): k.add(x, n)
     return k
@@ -166,36 +167,61 @@ class Row(obj):
       s2 -= math.e**(col.w * (b - a) / n)
     return s1 / n < s2 / n
 
+def ordered(lst):
+  return sorted(lst, key=functools.cmp_to_key(
+         lambda a,b: 0 if a[0]==b[0] else (-1 if a[0]<b[0] else 1)))
+
+
 # -----------------------------------------------------------------------------
 def cluster(all, my):
-  def ordered(lst):
-    return sorted(lst, key=functools.cmp_to_key(
-             lambda a,b: 0 if a[0]==b[0] else (-1 if a[0]<b[0] else 1)))
-
-  def do(here):
-    if my.min > 2*len(here.rows): return None
+  def do(tab,lvl=0):
+    if stop > 2*len(tab.rows): return None
+    if  len(tab.rows) > 1024:
+      tab = all.clone(random.sample(tab.rows, 1024))
+    print("|.. " * lvl)
     poles=[]
     for _ in range(my.samples):
-      r1, r2  = random.choice(here.rows), random.choice(here.rows)
-      poles  += [(r1.dist(r2, *at), r1,r2)]
+      l0,r0 = random.choice(tab.rows),random.choice(tab.rows)
+      poles += [(l0.dist(r0, *at), l0,r0)]
     poles = ordered(poles)
     c, l, r   = poles[ int(len(poles)*my.far) ]
     tmp       = []
-    for row in here.rows:
+    rs, ls = all.clone(), all.clone()
+    for row in tab.rows:
       a       = row.dist(r, *at)
       b       = row.dist(l, *at)
       x       = (a**2 + c**2 - b**2)/(2*c)
       tmp    += [(x,row)]
     tmp = ordered(tmp)
     mid = tmp[ len(tmp) // 2 ][0]
-    rs, ls = all.clone(), all.clone()
-    for z,row in tmp:
-      (rs if z < mid else ls).add(row)
-    return obj(c=c, here=here, mid=mid, l=l, r=r, ls= do(ls), rs= do(rs))
+    for z,row in tmp: (rs if z < mid else ls).add(row)
+    out=  obj(c=c,here=tab,mid=mid,l=l,r=r,ls=None,rs=None)
+    print(len(rs.rows), len(ls.rows))
+    report=[]
+    for rule in contrast(rs,ls,my):
+      n, effect, txt = canonical(all, rule)
+      if effect[0] != None:
+        report += [[txt, n] + effect]
+    printm(report)
+    print("")
+    if r.dominate(l,all): out.rs = do(rs, lvl+1)
+    else:                 out.ls = do(ls, lvl+1)
+    return out
+
   at = all,my
+  stop = max(my.min, len(all.rows)**0.5)
+  print(1)
   return do(all)
 
-def nodes(tree,lvl=0):
+def printm(matrix):
+  s = [[str(e) for e in row] for row in matrix]
+  lens = [max(map(len, col)) for col in zip(*s)]
+  fmt = ' | '.join('{{:>{}}}'.format(x) for x in lens)
+  for row in [fmt.format(*row) for row in s]:
+    print(row)
+
+
+def nodes(tree, lvl=0):
   if tree:
     yield lvl, tree
     for x in nodes(tree.ls, lvl+1): yield x
@@ -206,13 +232,14 @@ def leaves(tree):
     if not node.ls:
       yield node
 
-def treep(tree):
+def treep(tree, tab):
   def r(x):    return round(x,2)
   def rs(lst): return ', '.join([f"{r(x):>8}" for x in lst])
   for lvl,node in nodes(tree):
     tab = node.here
     n = len(tab.rows)
-    print(rs([n] + tab.y()), ("|.. " * lvl)) # + f" {len(tab.rows)}")
+    mid = tab.y()
+    print(rs([n]+ mid), ("|.. " * lvl)) # + f" {len(tab.rows)}")
 
 # -----------------------------------------------------------------------------
 # - Given a rows of data, and row0 defines column name and type, store the 
@@ -235,7 +262,7 @@ def treep(tree):
 # - `tab.domianates` : Return rows sorted by domination score."
 class Tab(obj):
   def __init__(i, rows=[],txt=""):
-    i.txt, i.rows, i.cols, i.xs, i.ys, i.klass=txt, [], [], [], [], None
+    i.names,i.txt, i.rows, i.cols, i.xs, i.ys, i.klass={}, txt, [], [], [], [], None
     [i.add(lst) for lst in rows]
 
   def x(i)                : return [col.mid() for col in i.xs]
@@ -271,21 +298,21 @@ class Tab(obj):
 
 # -----------------------------------------------------------------------------
 class Bin(obj):
-  def __init__(i, down=-math.inf, up=math.inf,col=None): 
-     i.down, i.up, i.col, i.also = down, up, col, Sym()
+  def __init__(i, down=-math.inf, up=math.inf): 
+     i.down, i.up, i.also = down, up, Sym()
 
-def div(xy, epsilon=0.01, width=20, bin=Bin,col=None):
+def div(xy, epsilon, width):
   while width < 4 and width < len(xy) / 2:
     width *= 1.2
   xy = sorted(xy)
-  now = bin(down=xy[0][0], up=xy[0][0],col=col)
+  now = Bin(down=xy[0][0], up=xy[0][0])
   out = [now]
   for j, (x, y) in enumerate(xy):
     if j < len(xy) - width:
       if now.also.n >= width:
         if x != xy[j + 1][0]:
           if now.up - now.down > epsilon:
-            now = bin(down=now.up, up=x,col=col)
+            now = Bin(down=now.up, up=x)
             out += [now]
     now.up = x
     now.also.add(y)
@@ -328,6 +355,103 @@ def classifier(src, my, wait=20):
   results.header()
   results.ask()
   
+def contrast(here, there, my):
+  def seen():
+    return {(kl, (col1.txt, col1.at, span)): f
+            for col1, col2 in zip(here.xs, there.xs)
+            for f, kl, span in col1.discretize(col2, my)}
+
+  def like(lst, kl):
+    prod = math.prod
+    prior = (hs[kl] + my.k) / (n + my.k * 2)
+    fs = {}
+    for txt, pos, span in lst:
+      fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
+    like = prior
+    for val in fs.values(): 
+      like *= (val + my.m*prior) / (hs[kl] + my.m)
+    return like
+
+  def value(lst):
+    b = like(lst, True)
+    r = like(lst, False)
+    return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
+
+  def solos():
+    pairs=[]
+    for kl, x in f:
+      if kl == True:
+        if s := value([x]):  # if zero, then skip x
+          pairs += [(s, x)]
+    return pairs
+
+  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:1]] #my.top]]
+
+  f = seen()
+  n = len(here.rows) + len(there.rows)
+  hs = {True: len(here.rows), False: len(there.rows)}
+  return top([(value(lst), lst) for lst in subsets(top(solos()))])
+
+def subsets(l):
+  out = [[]]
+  for x in l:
+    out += [sub + [x] for sub in out]
+  return out[1:]
+
+def selects(tab, d):
+  def any(val, span):
+    for lo, hi in span:
+      if lo == hi:
+        if lo == val:
+          return True
+      elif lo <= val < hi:
+        return True
+    return False
+
+  def all(d, row):
+    for col in d:
+      val = row.cells[tab.names[col]]
+      if val != "?":
+        if not any(val, d[col]):
+          return False
+    return True
+  return tab.clone([row for row in tab.rows if all(d, row)])
+
+
+def canonical(tab, rule):
+  def showSpan(x):
+    return (f"={x[0]}" if x[0] == x[1] else (
+        f"<={x[1]}"if x[0] == -math.inf else (
+            f">={x[0]}"if x[1] == math.inf else (f"[{x[0]}..{x[1]})"))))
+
+  def showRule(d):
+    return ' and '.join([k + ' (' + (' or '.join(map(showSpan, v)) + ')')
+                         for k, v in d.items()])
+
+  def combineRanges(b4):
+    if len(b4) == 1 and b4 == [(-math.inf, math.inf)]:
+      return None
+    j, tmp = 0, []
+    while j < len(b4):
+      a = b4[j]
+      if j < len(b4)-1:
+        b = b4[j+1]
+        if a[1] == b[0]:
+          a = (a[0], b[1])
+          j += 1
+      tmp += [a]
+      j += 1
+    return tmp if len(tmp) == len(b4) else combineRanges(tmp)
+  cols = {}
+  for col, _, span in rule:
+    cols[col] = cols.get(col, []) + [span]
+  d = {}
+  for k, v in cols.items():
+    s = f"{k}"
+    if v1 := combineRanges(sorted(v)):
+      d[k] = v1
+  found = selects(tab, d)
+  return len(found.rows), found.y(), showRule(d)
 # --------------------------------------
 # Throw actual and predicted at an Abcd, accumulating
 # precision, recall, etc
@@ -405,6 +529,36 @@ def coerce(string):
     try: return float(string)
     except Exception: return string
   
+import cProfile
+import io
+import  pstats 
+from pstats import SortKey
+
+def profile(func):
+    def wrapper(*args, **kwargs):
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = func(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = SortKey.CUMULATIVE  # 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+    return wrapper
+
+from contextlib import contextmanager
+import time
+
+
+@contextmanager
+def watch():
+  start = time.perf_counter()
+  yield
+  print(time.perf_counter() - start)
+
+
 # Run an example.
 def eg(f,d):
   print(d)
@@ -413,3 +567,6 @@ def eg(f,d):
   my=obj(**d)
   random.seed(my.seed)
   f(my)
+
+
+    
