@@ -162,16 +162,21 @@ def descending(lst):
   return sorted(lst, key=functools.cmp_to_key(
          lambda a,b: 0 if a[0]==b[0] else (1 if a[0]<b[0] else -1)))
 
-def fastball(tab,my,n,lvl=0):
-  if(len(tab.rows) < n):
-    print(lvl, "!",tab.y())
-  else:
+def fastball(tab,my,n):
+  lvl = 0
+  print(lvl,tab.y())
+  if len(tab.rows) > 1024:
+     tab = tab.clone(random.sample(tab.rows, 1024))
+  print(len(tab.rows),n)
+  while len(tab.rows) > n:
     a= tab.frequent(my)
     t1,t2= tab.clone(), tab.clone()
     for x in a[:n]: t1.add(x[1])
     for x in a[n:]: t2.add(x[1])
-    print(lvl,tab.y())
-    fastball(t2,my,n,lvl+1)
+    print(lvl,t1.y())
+    tab= t2
+    lvl + 1
+  print(lvl, "!",tab.y())
 
 # --------------------------------------------------
 @contextmanager
