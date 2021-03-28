@@ -23,30 +23,38 @@ def weight(s): return -1 if "<" in s  else 1
 def what(s)  : return Skip if skip(s) else (Num if nump(s) else Sym)
 
 def csv(src=None):
+  wants=None
+  def cells(s):
+    if s := re.sub(r'([\n\t\r ]|#.*)', '', s):
+      if wants: 
+        lst  = [(x if x=="?" else want(x)) for want,x in zip(wants,s.split(','))]
+      else:  
+        lst  = s.split(",")
+        wants= [(float if nump(x) else str) for x in lst]
+      return lst 
+  #----------------------------
   if src and src[-4:] == ".csv":
     with open(src) as fp:  
       for str in fp: 
-       if line := re.sub(r'([\n\t\r ]|#.*)', '', str):
-         yield  [x for x in line.split(",")]
+        if row := cells(line):
+          yield row
   else:
     src = src.split("\n") if src else sys.stdin
     for str in src: 
-      if line := re.sub(r'([\n\t\r ]|#.*)', '', str):
-        yield  [x for x in line.split(",")]
+      if row := cells(line):
+        yield row
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i) : return "{" + ', '.join(
     [f":{k} {v}" for k,v in i.__dict__.items() if k[0] != "_"]) + "}"
 
-class Col(obj):  pass
-
-class Skip(Col):
+class Skip(obj):
   def __init__(i, at=0, txt=""): i.txt,i.at = txt,at
   def add(i,x,n=1): return x
   def mid(i): return "?"
 
-class Sym(Col):
+class Sym(obj):
   def __init__(i,at=0,txt="",inits=[]): 
     i.txt,i.at,i.n,i.seen,i.most,i.mode = txt,at,0,{},0,None
     [i.add(x) for x in inits]
@@ -79,7 +87,7 @@ class Sym(Col):
       for x, n in seen.items(): k.add(x, n)
     return k
 
-class Num(Col):
+class Num(obj):
   def __init__(i,at=0,txt="",inits=[]): 
     i.n,i._all,i.ok,i.txt,i.at,i.w=0,[],True,txt,at,weight(txt)
     i.mu =i.m2=i.sd=0
