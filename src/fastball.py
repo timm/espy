@@ -182,23 +182,22 @@ def watch(txt):
   yield; 
   print(f"{txt:>10}: {time.perf_counter() - start:.4f}")
 
-def cli(xpect,args):
-  def coerce(x):
-    try: return int(x)
-    except Exception:
-      try: return float(x)
-      except Exception: return x
-  out = {k:v for k,v in xpect.items()}
+def cli(opt,args):
+  def cli1(flag,new):
+    assert flag in opt,"undefined flag"
+    old = opt[flag]
+    new = type(old)(new)
+    assert type(new) == type(old), "bad type"
+    return new
+  #---------------------
   while args:
     arg, *args = args
     pre,flag = arg[0], arg[1:]
-    if pre in "+-":
-      assert flag in xpect
-      if pre=="-": new = coerce(args[0])
-      if pre=="+": new = True
-      assert type(new) == type(xpect[flag])
-      out[flag] = new
-  return out
+    if pre=="+": opt[flag] = cli1(flag, True)
+    if pre=="-": 
+      assert args, f"missing argument for -{flag}"
+      opt[flag] = cli1(flag, args[0])
+  return opt
 
 def main(d):
   def do(f,my): 
@@ -207,10 +206,12 @@ def main(d):
   [do(f,my) for s,f in d.items() if type(f)==fun and s[:3] == "eg_"] 
 
 # --------------------------------------------------
+def eg_show(my): 
+  print(my)
 def eeg_csv(my): 
   for row in csv(my.dir + my.data): 1 #print(row)
 
-def eg_table(my): 
+def eeg_table(my): 
   t= Tab(csv(my.dir + my.data))
   fastball(t, my)
 
