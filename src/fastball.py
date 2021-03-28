@@ -162,21 +162,18 @@ def descending(lst):
   return sorted(lst, key=functools.cmp_to_key(
          lambda a,b: 0 if a[0]==b[0] else (1 if a[0]<b[0] else -1)))
 
-def fastball(tab,my,n):
-  lvl = 0
-  print(lvl,tab.y())
+def fastball(tab,my): return fastball1(tab,my, len(tab.rows)**.5,0)
+
+def fastball1(tab,my,stop,lvl):
+  print(lvl,len(tab.rows), ', '.join([str(x) for x in tab.y()]))
   if len(tab.rows) > 1024:
      tab = tab.clone(random.sample(tab.rows, 1024))
-  print(len(tab.rows),n)
-  while len(tab.rows) > n:
+  if len(tab.rows) > stop:
     a= tab.frequent(my)
     t1,t2= tab.clone(), tab.clone()
-    for x in a[:n]: t1.add(x[1])
-    for x in a[n:]: t2.add(x[1])
-    print(lvl,t1.y())
-    tab= t2
-    lvl + 1
-  print(lvl, "!",tab.y())
+    m = 1*len(tab.rows)//3
+    fastball1(tab.clone([x[1] for x in a[:m]]),my,stop,lvl+1)
+    fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
 @contextmanager
@@ -215,6 +212,6 @@ def eeg_csv(my):
 
 def eg_table(my): 
   t= Tab(csv(my.dir + my.data))
-  fastball(t, my, int(len(t.rows)**.5))
+  fastball(t, my)
 
 main(locals())

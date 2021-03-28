@@ -176,8 +176,8 @@ def ordered(lst):
 def cluster(all, my):
   def do(tab,lvl=0):
     if stop > 2*len(tab.rows): return None
-    if  len(tab.rows) > 1024:
-      tab = all.clone(random.sample(tab.rows, 1024))
+    #if  len(tab.rows) > 2048:
+     # tab = all.clone(random.sample(tab.rows, 2048))
     print("|.. " * lvl)
     poles=[]
     for _ in range(my.samples):
