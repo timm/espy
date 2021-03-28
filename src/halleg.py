@@ -50,8 +50,8 @@ def coerce(string):
 
 class Eg:
   def eg_Split(my):
-    t= hall.Tab(hall.csv(auto93)) #"../etc/data/billing10k.csv"))
-    #t= hall.Tab(hall.csv("../etc/data/billing10k.csv"))
+    #t= hall.Tab(hall.csv(auto93)) #"../etc/data/billing10k.csv"))
+    t= hall.Tab(hall.csv("../etc/data/billing10k.csv"))
     #t= hall.Tab(hall.csv("../etc/data/Scrum100k.csv"))
     #t= hall.Tab(hall.csv("../etc/data/CART1.csv"))
     with hall.watch():

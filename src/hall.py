@@ -199,9 +199,9 @@ def cluster(all, my):
     print(len(rs.rows), len(ls.rows))
     report=[]
     for rule in contrast(rs,ls,my):
-      n, effect, txt = canonical(all, rule)
+      selected, n, effect, txt = canonical(tab, rule)
       if effect[0] != None:
-        report += [[txt, n] + effect]
+        report += [[txt, n] + [round(x,2) for x in effect]]
     printm(report)
     print("")
     if r.dominate(l,all): out.rs = do(rs, lvl+1)
@@ -385,12 +385,13 @@ def contrast(here, there, my):
           pairs += [(s, x)]
     return pairs
 
-  def top(pairs): return [x for _, x in sorted(pairs, reverse=True)[:1]] #my.top]]
+  def top(n,pairs): 
+     return [x for _, x in sorted(pairs, reverse=True)[:n]] #my.top]]
 
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top([(value(lst), lst) for lst in subsets(top(solos()))])
+  return top(1,[(value(lst), lst) for lst in subsets(top(my.top,solos()))])
 
 def subsets(l):
   out = [[]]
@@ -451,7 +452,7 @@ def canonical(tab, rule):
     if v1 := combineRanges(sorted(v)):
       d[k] = v1
   found = selects(tab, d)
-  return len(found.rows), found.y(), showRule(d)
+  return found, len(found.rows), found.y(), showRule(d)
 # --------------------------------------
 # Throw actual and predicted at an Abcd, accumulating
 # precision, recall, etc
