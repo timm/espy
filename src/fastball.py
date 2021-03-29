@@ -8,14 +8,14 @@ author    = "Tim Menzies",
 copyright = "(c) 2021, MIT license",
 version   = 0.2,
 options   = dict(
-    dir   = "../etc/data/",
-    data  = "auto93.csv",
-    k     = 1,
-    m     = 2,
-    seed  = 1,
-    cohen = .35,
-    size  = .5,
-    some  = 1024))
+    dir   = "../etc/data/",   # where to find data
+    data  = "auto93.csv",     # data file
+    k     = 1,              # naive bayes low frequency var
+    m     = 2,              # naive bayes low frequency control
+    seed  = 1,              # random number seed
+    cohen = .35,            # defines small effects
+    size  = .5,             # min cluster size control
+    some  = 1024))           # sub-sampling control
 
 # ----------------------------------------------
 import functools, random, math, time, sys, re
@@ -195,7 +195,8 @@ def cli(file,opt,args):
   while args:
     arg, *args = args
     pre,flag = arg[0], arg[1:]
-    if arg=="-h": print("\n"+open(file).read().split("\n\n")[1]); sys.exit(1)
+    if arg=="-h": print(re.sub(r"[\"',=#()]","",
+                  "\n"+open(file).read().split("\n\n")[1])); sys.exit(1)
     elif pre=="+" : opt[flag] = cli1(flag, True)
     elif pre=="-" : 
       assert args, f"missing argument for -{flag}"
@@ -208,11 +209,11 @@ def main(file,d):
     random.seed(my.seed)
     f(my)
     sys.stderr.write(f"{f.__name__:>10}: {time.perf_counter() - start:.4f} secs\n")
-  egs = {s:f for s,f in d.items() if type(f)==fun and s[:3] == "eg_" } 
   try:
     tmp  = cli(file, ABOUT["options"], sys.argv)
   except Exception as e:
     sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
+  egs = {s:f for s,f in d.items() if type(f)==fun and s[:3] == "eg_" } 
   [do(f,obj(**tmp)) for f in egs.values()]
 
 # --------------------------------------------------
