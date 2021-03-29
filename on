@@ -17,7 +17,7 @@ f=gitignore;     [ -f "$Ell/.$f" ] || cp $Ell/etc/$f $Ell/.$f
 git add $Ell/etc/* $Ell/.gitignore
 
 ############## aliases
-alias gp="git add *;git commit -am save;git push git status"
+alias gp="git add *;git commit -am save;git push;git status"
 alias ls="ls -G"
 alias repl="rlwrap sbcl --noinform "
 alias tmux="$(which tmux) -f $Ell/etc/tmux-conf "
