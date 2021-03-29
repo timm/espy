@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
-THIS=dict(
-  about     = dict(what="fast hierarchical active learning",
-                   author    = "Tim Menzies",
-                   copyright = "(c) 2021, MIT license",
-                   version   = 0.2),
-  dir       = "../etc/data/",
-  data      = "auto93.csv",
-  k         = 1,
-  m         = 2,
-  seed      = 1,
-  cohen     = .35,
-  size      = .5,
-  some      = 1024)
+ABOUT=dict(
+
+usage     = "./fastball.py -[OPTION]",
+synposis  = "fast hierarchical active learning",
+author    = "Tim Menzies",
+copyright = "(c) 2021, MIT license",
+version   = 0.2,
+options   = dict(
+    dir   = "../etc/data/",
+    data  = "auto93.csv",
+    k     = 1,
+    m     = 2,
+    seed  = 1,
+    cohen = .35,
+    size  = .5,
+    some  = 1024))
 
 # ----------------------------------------------
 import functools, random, math, time, sys, re
@@ -176,34 +179,41 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-@contextmanager
-def watch(txt):
-  start = time.perf_counter(); 
-  yield; 
-  print(f"{txt:>10}: {time.perf_counter() - start:.4f}")
-
-def cli(opt,args):
+def cli(file,opt,args):
+  def coerce(s):
+    try: return int(s)
+    except Exception:
+      try: return float(s)
+      except Exception: return s
   def cli1(flag,new):
-    assert flag in opt,"undefined flag"
+    assert flag in opt,f"unknown flag -{flag}"
     old = opt[flag]
-    new = type(old)(new)
-    assert type(new) == type(old), "bad type"
+    new = coerce(new)
+    assert type(new) == type(old), f"-{flag} needs {type(old).__name__}s"
     return new
   # --------------------
   while args:
     arg, *args = args
     pre,flag = arg[0], arg[1:]
-    if pre=="+": opt[flag] = cli1(flag, True)
-    if pre=="-": 
+    if arg=="-h": print("\n"+open(file).read().split("\n\n")[1]); sys.exit(1)
+    elif pre=="+" : opt[flag] = cli1(flag, True)
+    elif pre=="-" : 
       assert args, f"missing argument for -{flag}"
       opt[flag] = cli1(flag, args[0])
   return opt
 
-def main(d):
+def main(file,d):
   def do(f,my): 
-    with watch(f.__name__): random.seed(my.seed);f(my)
-  my= obj(**cli(THIS, sys.argv))
-  [do(f,my) for s,f in d.items() if type(f)==fun and s[:3] == "eg_"] 
+    start = time.perf_counter(); 
+    random.seed(my.seed)
+    f(my)
+    sys.stderr.write(f"{f.__name__:>10}: {time.perf_counter() - start:.4f} secs\n")
+  egs = {s:f for s,f in d.items() if type(f)==fun and s[:3] == "eg_" } 
+  try:
+    tmp  = cli(file, ABOUT["options"], sys.argv)
+  except Exception as e:
+    sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
+  [do(f,obj(**tmp)) for f in egs.values()]
 
 # --------------------------------------------------
 def eeg_show(my): print(my)
@@ -217,4 +227,4 @@ def eg_table(my):
   #for r in t.rows: print(r)
   for c in t.xs: print(c.bins(t,my))
 
-main(locals())
+main(__file__,locals())
