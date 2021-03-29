@@ -213,10 +213,8 @@ def main(file,funs, reckless=False):
   if reckless: 
      return do()
   else:
-    try:
-      do()
-    except Exception as e:
-      sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
+    try: do()
+    except Exception as e: sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
 
 # --------------------------------------------------
 def eeg_show(my): print(my)
