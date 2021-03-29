@@ -10,6 +10,8 @@ THIS=dict(
   k         = 1,
   m         = 2,
   seed      = 1,
+  cohen     = .35,
+  size      = .5,
   some      = 1024)
 
 # ----------------------------------------------
@@ -70,7 +72,7 @@ class Sym(obj):
       tmp = i.seen[x] = i.seen.get(x,0) + n
       if tmp>i.most: i.most, i.mid = tmp,x
 
-  def discretize(i, j, _):
+  def bins(i, t,my):
     for k in (i.seen | j.seen):  # a 23 b 50
       yield i.seen.get(k, 0), True, (k, k)
       yield j.seen.get(k, 0), False, (k, k)
@@ -105,35 +107,40 @@ class Num(obj):
       i.sd   = (i.m2 / i.n)**0.5
       i.lo   = min(x, i.lo)
       i.hi   = max(x, i.hi)
-      i.n   += 1;  i.all += [x] 
   
-  def div(i, t, my):
+  def bins(i, t, my):
     epsilon = i.sd * my.cohen
     width   = len(t.rows)**my.size
     while width < 4 and width < len(t.rows) / 2:
       width *= 1.2
-    a = sorted((r for r in t.rows if r[i.at] != "?"), key=lambda r: r[col])
+    a = sorted((r for r in t.rows if r[i.at] != "?"), key=lambda r: r[i.at])
     x = a[0][i.at]
-    now = obj(lo=x, n=0,at=i.at, hi=x, _seen=set())
+    n=0
+    now = obj(at=i.at, n=n, lo=x, hi=x,  _seen=set())
     out = [now]
     for j,row in enumerate(a):
       x = row[i.at]
       if j < len(a) - width:
-        if len(now.seen) >= width:
+        if len(now._seen) >= width:
           if x != a[j+1][i.at]:
-            if now.up - now.down > epsilon:
+            if now.hi - now.lo > epsilon:
               n +=1
-              now  = obj(lo=now.up, n=n, hi=x, at=i.at, _seen=set())
+              now  = obj(at=i.at, n=n,lo=now.hi, hi=x,  _seen=set())
               out += [now]
-      now.up = x
+      now.hi = x
       now._seen.add(row)
     out[ 0].lo = -math.inf
     out[-1].hi =  math.inf
     return out
 
-class Rule(obj):
-  def __init__(i):
-    i.used=set()
+# -----------------------------------------------
+class Row(obj):
+  def __init__(i,cells)   : i.cells=cells
+  def __getitem__(i,k)    : return  i.cells[k]
+  def __setitem__(i,k,v)  : i.cells[k]=v
+  def __iter__(i)         : return iter(i.cells)
+  def __len__(i)          : return len(i.cells)
+
 # ----------------------------------------------
 class Tab(obj):
   def __init__(i, rows=[],txt=""):
@@ -146,9 +153,10 @@ class Tab(obj):
   def y(i): return [col.mid() for col in i.ys]
 
   def add(i,row):
+    row = row.cells if type(row)==Row else row
     if i.cols: 
       [col.add(x) for col,x in zip(i.cols,row)]
-      i.rows += [row]
+      i.rows += [Row(row)]
     else: 
       i.cols= [what(s)(j,s) for j,s in enumerate(row)]
       [(i.ys if goalp(col.txt) else i.xs).append(col) for col in i.cols]
@@ -200,12 +208,13 @@ def main(d):
 # --------------------------------------------------
 def eeg_show(my): print(my)
 
-def eg_csv(my): 
+def eeg_csv(my): 
   for row in csv(my.dir + my.data): print(row)
   #print(row)
 
-def eeg_table(my): 
+def eg_table(my): 
   t= Tab(csv(my.dir + my.data))
-  fastball(t, my)
+  #for r in t.rows: print(r)
+  for c in t.xs: print(c.bins(t,my))
 
 main(locals())
