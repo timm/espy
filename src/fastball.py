@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 THIS=dict(
-  about     = "fast hierarchical active learning",
-  author    = "Tim Menzies",
-  copyright = "(c) 2021, MIT license",
-  version   = 0.2,
+  about     = dict(what="fast hierarchical active learning",
+                   author    = "Tim Menzies",
+                   copyright = "(c) 2021, MIT license",
+                   version   = 0.2),
   dir       = "../etc/data/",
   data      = "auto93.csv",
   k         = 1,
