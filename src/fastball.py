@@ -179,42 +179,41 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-def cli(file,opt,args):
+def main(file,funs):
   def coerce(s):
     try: return int(s)
     except Exception:
       try: return float(s)
       except Exception: return s
-  def cli1(flag,new):
-    assert flag in opt,f"unknown flag -{flag}"
-    old = opt[flag]
+  def cli1(xpect, flag,new):
+    assert flag in xpect,f"unknown flag -{flag}"
+    old = xpect[flag]
     new = coerce(new)
     assert type(new) == type(old), f"-{flag} needs {type(old).__name__}s"
     return new
-  # --------------------
-  while args:
-    arg, *args = args
-    pre,flag = arg[0], arg[1:]
-    if arg=="-h": print(re.sub(r"[\"',=#()]","",
-                  "\n"+open(file).read().split("\n\n")[1])); sys.exit(1)
-    elif pre=="+" : opt[flag] = cli1(flag, True)
-    elif pre=="-" : 
-      assert args, f"missing argument for -{flag}"
-      opt[flag] = cli1(flag, args[0])
-  return opt
-
-def main(file,d):
+  def cli(tmp,args):
+    while args:
+      arg, *args = args
+      pre,flag = arg[0], arg[1:]
+      if arg=="-h": print(re.sub(r"[\"',=#()]","",
+                    "\n"+open(file).read().split("\n\n")[1])); sys.exit(1)
+      elif pre=="+" : tmp[flag] = cli1(tmp,flag, True)
+      elif pre=="-" : 
+        assert args, f"missing argument for -{flag}"
+        tmp[flag] = cli1(tmp,flag, args[0])
+    return tmp
   def do(f,my): 
     start = time.perf_counter(); 
     random.seed(my.seed)
     f(my)
     sys.stderr.write(f"{f.__name__:>10}: {time.perf_counter() - start:.4f} secs\n")
+  # ------------------------------------
   try:
-    tmp  = cli(file, ABOUT["options"], sys.argv)
+    tmp  = cli(ABOUT["options"], sys.argv)
   except Exception as e:
     sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
-  egs = {s:f for s,f in d.items() if type(f)==fun and s[:3] == "eg_" } 
-  [do(f,obj(**tmp)) for f in egs.values()]
+  funs = {s:f for s,f in funs.items() if type(f)==fun and s[:3] == "eg_" } 
+  [do(f,obj(**tmp)) for f in funs.values()]
 
 # --------------------------------------------------
 def eeg_show(my): print(my)
