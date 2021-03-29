@@ -2,11 +2,10 @@
 # vim: filetype=python ts=2 sw=2 sts=2 et :
 ABOUT=dict(
 
-usage     = "./fastball.py -[OPTION]",
 synposis  = "fast hierarchical active learning",
-author    = "Tim Menzies",
-copyright = "(c) 2021, MIT license",
+copyright = "(c) 2021, Tim Menzies, MIT license",
 version   = 0.2,
+usage     = "./fastball.py -[option]",
 options   = dict(
     dir   = "../etc/data/",   # where to find data
     data  = "auto93.csv",     # data file
@@ -15,7 +14,7 @@ options   = dict(
     seed  = 1,              # random number seed
     cohen = .35,            # defines small effects
     size  = .5,             # min cluster size control
-    some  = 1024))           # sub-sampling control
+    some  = 1024))         # sub-sampling control
 
 # ----------------------------------------------
 import functools, random, math, time, sys, re
@@ -195,8 +194,8 @@ def main(file,funs, reckless=False):
     while args:
       arg, *args = args
       pre,flag = arg[0], arg[1:]
-      if arg=="-h": print(re.sub(r"[\"',=#()]","",
-                    "\n"+open(file).read().split("\n\n")[1])); sys.exit(1)
+      if arg=="-h": sys.exit(print(re.sub(r"[\"',=#]","",
+                                      "\n"+open(file).read().split("\n\n")[1])))
       elif pre=="+" : tmp[flag] = cli1(tmp,flag, True)
       elif pre=="-" : 
         assert args, f"missing argument for -{flag}"
