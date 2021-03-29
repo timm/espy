@@ -1,72 +1,74 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
-"""
-fastball: hierarchical active learning laboratory.     
-(c) 2021 Tim Menzies timm@ieee.org, MIT license.     
-"""
+THIS=dict(
+  about     = "fast hierarchical active learning",
+  author    = "Tim Menzies",
+  copyright = "(c) 2021, MIT license",
+  version   = 0.2,
+  dir       = "../etc/data/",
+  data      = "auto93.csv",
+  k         = 1,
+  m         = 2,
+  seed      = 1,
+  some      = 1024)
+
+# ----------------------------------------------
 import functools, random, math, time, sys, re
 from random import random as r
 from contextlib import contextmanager
 from types import FunctionType as fun
 
-MY = dict(dir  = "../etc/data/",
-          data = "auto93.csv",
-          k    = 1,
-          m    = 2,
-          seed = 1,
-          some = 1024)
-
+# ----------------------------------------------
 def skip(s)  : return "?" in s
 def nump(s)  : return s[0].isupper()
 def goalp(s) : return "+" in s or "-" in s or "!" in s
 def weight(s): return -1 if "<" in s  else 1
 def what(s)  : return Skip if skip(s) else (Num if nump(s) else Sym)
+def same(s)  : return s
 
 def csv(src=None):
-  wants=None
-  def cells(s):
+  def cells(s, fs):
     if s := re.sub(r'([\n\t\r ]|#.*)', '', s):
-      if wants: 
-        lst  = [(x if x=="?" else want(x)) for want,x in zip(wants,s.split(','))]
-      else:  
-        lst  = s.split(",")
-        wants= [(float if nump(x) else str) for x in lst]
+      lst = s.split(',')
+      if fs:
+        lst = [(x if x=="?" else f(x)) for f,x in zip(fs,s.split(','))]
+      else:
+        for x in lst: fs += [float if nump(x) else same]
       return lst 
-  #----------------------------
+  fs=[]
   if src and src[-4:] == ".csv":
     with open(src) as fp:  
       for str in fp: 
-        if row := cells(line):
-          yield row
+        if row := cells(str,fs): yield row
   else:
     src = src.split("\n") if src else sys.stdin
     for str in src: 
-      if row := cells(line):
-        yield row
+      if row := cells(str,fs): yield row
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i) : return "{" + ', '.join(
     [f":{k} {v}" for k,v in i.__dict__.items() if k[0] != "_"]) + "}"
 
+# ----------------------------------------------
 class Skip(obj):
   def __init__(i, at=0, txt=""): i.txt,i.at = txt,at
   def add(i,x,n=1): return x
   def mid(i): return "?"
 
+# ----------------------------------------------
 class Sym(obj):
   def __init__(i,at=0,txt="",inits=[]): 
-    i.txt,i.at,i.n,i.seen,i.most,i.mode = txt,at,0,{},0,None
+    i.txt,i.at,i.n,i.seen,i.most,i.mid = txt,at,0,{},0,None
     [i.add(x) for x in inits]
-  def mid(i): return i.mode
+
   def ent(i): return sum(-v/i.n*math.log(v/i.n) for v in i.seen.values())
-  def norm1(i,x)            : return x
-  def like(i, x, prior, my) : return (i.seen.get(x,0) + my.m*prior) / (i.n+my.m)
+
   def add(i,x,n=1):
     if x!="?":
-      i.n += n; tmp = i.seen[x] = i.seen.get(x,0) + n
-      if tmp>i.most: i.most, i.mode=tmp,x
-    return x
+      i.n += n
+      tmp = i.seen[x] = i.seen.get(x,0) + n
+      if tmp>i.most: i.most, i.mid = tmp,x
 
   def discretize(i, j, _):
     for k in (i.seen | j.seen):  # a 23 b 50
@@ -87,47 +89,52 @@ class Sym(obj):
       for x, n in seen.items(): k.add(x, n)
     return k
 
+# ----------------------------------------------
 class Num(obj):
   def __init__(i,at=0,txt="",inits=[]): 
-    i.n,i._all,i.ok,i.txt,i.at,i.w=0,[],True,txt,at,weight(txt)
-    i.mu =i.m2=i.sd=0
-    i.hi = -math.inf
-    i.lo =  math.inf
+    i.txt, i.at, i.w, i.lo, i.hi  = txt, at, weight(txt), math.inf, -math.inf
+    i.n, i.mid, i.sd, i.m2 = 0, 0, 0, 0
     [i.add(x) for x in inits]
-  def mid(i): a=i.all(); return a[len(a)//2]
-  def sd(i) : a=i.all(); return (a[9*len(a)//10] - a[len(a)//10])/2.54
 
   def add(i,x,n=1):
     if x!="?": 
-      x=float(x); i.n += 1; i.ok = False; i._all += [x] 
-      d = x - i.mu
-      i.mu += d / i.n
-      i.m2 += d * (x - i.mu)
-      i.sd = (i.m2 / i.n)**0.5
-      i.lo = min(x, i.lo)
-      i.hi = max(x, i.hi)
-    return x
+      i.n   += 1
+      d      = x - i.mid
+      i.mid += d / i.n
+      i.m2  += d * (x - i.mid)
+      i.sd   = (i.m2 / i.n)**0.5
+      i.lo   = min(x, i.lo)
+      i.hi   = max(x, i.hi)
+      i.n   += 1;  i.all += [x] 
+  
+  def div(i, t, my):
+    epsilon = i.sd * my.cohen
+    width   = len(t.rows)**my.size
+    while width < 4 and width < len(t.rows) / 2:
+      width *= 1.2
+    a = sorted((r for r in t.rows if r[i.at] != "?"), key=lambda r: r[col])
+    x = a[0][i.at]
+    now = obj(lo=x, n=0,at=i.at, hi=x, _seen=set())
+    out = [now]
+    for j,row in enumerate(a):
+      x = row[i.at]
+      if j < len(a) - width:
+        if len(now.seen) >= width:
+          if x != a[j+1][i.at]:
+            if now.up - now.down > epsilon:
+              n +=1
+              now  = obj(lo=now.up, n=n, hi=x, at=i.at, _seen=set())
+              out += [now]
+      now.up = x
+      now._seen.add(row)
+    out[ 0].lo = -math.inf
+    out[-1].hi =  math.inf
+    return out
 
-  def all(i): 
-    if not i.ok: i._all.sort()
-    i.ok=True
-    return i._all
-
-  def like(i, x, *_):
-    if not((i.mu - 4 * i.sd) < x < (i.mu + 4 * i.sd)): return 0
-    var = i.sd ** 2
-    denom = (math.pi * 2 * var) ** .5
-    num = math.e ** (-(x - i.mu)**2 / (2 * var + 0.0001))
-    return num / (denom + 1E-64)
-
-  def discretize(i, j, my):
-    xy = [(better, True)  for better in i._all] + [
-          (bad,    False) for bad    in j._all]
-    tmp = div(xy, i.sd() * my.cohen, len(xy)**my.size)
-    for bin in merge(tmp):
-      for klass, n in bin.also.seen.items():
-        yield n, klass, (bin.down, bin.up)
-
+class Rule(obj):
+  def __init__(i):
+    i.used=set()
+# ----------------------------------------------
 class Tab(obj):
   def __init__(i, rows=[],txt=""):
     i.txt, i.cols,i.xs, i.ys, i.rows = txt,[],[],[],[]
@@ -138,38 +145,15 @@ class Tab(obj):
 
   def y(i): return [col.mid() for col in i.ys]
 
-  def add(i,x):
+  def add(i,row):
     if i.cols: 
-      i.rows += [[col.add(x0) for col,x0 in zip(i.cols,x)]]
+      [col.add(x) for col,x in zip(i.cols,row)]
+      i.rows += [row]
     else: 
-      i.cols= [what(s)(j,s) for j,s in enumerate(x)]
+      i.cols= [what(s)(j,s) for j,s in enumerate(row)]
       [(i.ys if goalp(col.txt) else i.xs).append(col) for col in i.cols]
 
-  def frequent(i,my):
-    return descending([(i.like(r,my),r) for r in i.rows])
-
-  def like(i, row, my): return i.classify(row, my)[0]
-
-  def classify(i, row, my, tabs=[]):
-    tabs = [i] + tabs
-    n = sum(len(t.rows) for t in tabs)
-    mostlike,out = -math.inf,None
-    for t in tabs:
-      out = out or t
-      prior = (len(t.rows) + my.k) / (n + my.k * len(tabs))
-      tmp = math.log(prior)
-      for col in t.xs:
-        v = row[col.at]
-        if v != "?":
-          if inc := col.like(v, prior, my): tmp += math.log(inc)
-      if tmp > mostlike:
-        mostlike, out = tmp, t
-    return math.e**mostlike, out
-
-def descending(lst):
-  return sorted(lst, key=functools.cmp_to_key(
-         lambda a,b: 0 if a[0]==b[0] else (1 if a[0]<b[0] else -1)))
-
+# ----------------------------------------------
 def fastball(tab,my): return fastball1(tab,my, len(tab.rows)**.5,0)
 
 def fastball1(tab,my,stop,lvl):
@@ -197,7 +181,7 @@ def cli(opt,args):
     new = type(old)(new)
     assert type(new) == type(old), "bad type"
     return new
-  #---------------------
+  # --------------------
   while args:
     arg, *args = args
     pre,flag = arg[0], arg[1:]
@@ -210,14 +194,15 @@ def cli(opt,args):
 def main(d):
   def do(f,my): 
     with watch(f.__name__): random.seed(my.seed);f(my)
-  my= obj(**cli(MY,sys.argv))
+  my= obj(**cli(THIS, sys.argv))
   [do(f,my) for s,f in d.items() if type(f)==fun and s[:3] == "eg_"] 
 
 # --------------------------------------------------
-def eg_show(my): 
-  print(my)
-def eeg_csv(my): 
-  for row in csv(my.dir + my.data): 1 #print(row)
+def eeg_show(my): print(my)
+
+def eg_csv(my): 
+  for row in csv(my.dir + my.data): print(row)
+  #print(row)
 
 def eeg_table(my): 
   t= Tab(csv(my.dir + my.data))
