@@ -179,7 +179,7 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-def main(file,funs):
+def main(file,funs, reckless=False):
   def coerce(s):
     try: return int(s)
     except Exception:
@@ -207,13 +207,17 @@ def main(file,funs):
     random.seed(my.seed)
     f(my)
     sys.stderr.write(f"{f.__name__:>10}: {time.perf_counter() - start:.4f} secs\n")
-  # ------------------------------------
-  try:
+  def do():
     tmp  = cli(ABOUT["options"], sys.argv)
-  except Exception as e:
-    sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
-  funs = {s:f for s,f in funs.items() if type(f)==fun and s[:3] == "eg_" } 
-  [do(f,obj(**tmp)) for f in funs.values()]
+    funs = {s:f for s,f in funs.items() if type(f)==fun and s[:3] == "eg_" } 
+    [do(f,obj(**tmp)) for f in funs.values()]
+  if reckless: 
+     return do()
+  else:
+    try:
+      do()
+    except Exception as e:
+      sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
 
 # --------------------------------------------------
 def eeg_show(my): print(my)
@@ -227,4 +231,4 @@ def eg_table(my):
   #for r in t.rows: print(r)
   for c in t.xs: print(c.bins(t,my))
 
-main(__file__,locals())
+main(__file__,locals(),reckless=True)
