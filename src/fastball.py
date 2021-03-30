@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
-ABOUT=dict(
-
-synposis  = "fast hierarchical active learning",
+"""
+dict(
+synopsis  = "fast hierarchical active learning",
 copyright = "(c) 2021, Tim Menzies, MIT license",
 version   = 0.2,
 usage     = "./fastball.py -[option]",
@@ -15,6 +15,7 @@ options   = dict(
     cohen = .35,            # defines small effects
     size  = .5,             # min cluster size control
     some  = 1024))         # sub-sampling control
+"""
 
 # ----------------------------------------------
 import functools, random, math, time, sys, re
@@ -178,27 +179,28 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-def main(file,funs, reckless=False):
+def main(doc, funs, nervous=True):
   def coerce(s):
     try: return int(s)
     except Exception:
       try: return float(s)
       except Exception: return s
   def cli1(xpect, flag,new):
-    assert flag in xpect,f"unknown flag -{flag}"
     old = xpect[flag]
     new = coerce(new)
-    assert type(new) == type(old), f"-{flag} needs {type(old).__name__}s"
+    assert type(new) == type(old), f"-{flag} expects {type(old).__name__}s"
     return new
   def cli(tmp,args):
     while args:
       arg, *args = args
       pre,flag = arg[0], arg[1:]
-      if arg=="-h": sys.exit(print(re.sub(r"[\"',=#]","",
-                                      "\n"+open(file).read().split("\n\n")[1])))
-      elif pre=="+" : tmp[flag] = cli1(tmp,flag, True)
+      if   arg=="-h": 
+        sys.exit(print(re.sub(r"[\"',=#]","",doc)))
+      elif pre=="+" : 
+        tmp[flag] = cli1(tmp,flag, True)
       elif pre=="-" : 
-        assert args, f"missing argument for -{flag}"
+        assert flag in tmp, f"unknown flag -{flag}"
+        assert args,        f"missing argument for -{flag}"
         tmp[flag] = cli1(tmp,flag, args[0])
     return tmp
   def do(f,my): 
@@ -206,15 +208,12 @@ def main(file,funs, reckless=False):
     random.seed(my.seed)
     f(my)
     sys.stderr.write(f"{f.__name__:>10}: {time.perf_counter() - start:.4f} secs\n")
-  def do():
-    tmp  = cli(ABOUT["options"], sys.argv)
-    funs = {s:f for s,f in funs.items() if type(f)==fun and s[:3] == "eg_" } 
-    [do(f,obj(**tmp)) for f in funs.values()]
-  if reckless: 
-     return do()
-  else:
-    try: do()
-    except Exception as e: sys.stderr.write("E>"+str(e)+"\n"); sys,exit(0)
+  funs = [f for s,f in funs.items() if type(f)==fun and s[:3] == "eg_" ] 
+  try:
+    tmp  = cli(eval(doc)["options"], sys.argv)
+  except Exception as e:
+    print("E>",str(e)); sys.exit(1)
+  [do(f,obj(**tmp)) for f in funs]
 
 # --------------------------------------------------
 def eeg_show(my): print(my)
@@ -228,4 +227,4 @@ def eg_table(my):
   #for r in t.rows: print(r)
   for c in t.xs: print(c.bins(t,my))
 
-main(__file__,locals(),reckless=True)
+main(__doc__, locals())
