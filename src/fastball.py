@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: filetype=python ts=2 sw=2 sts=2 et :
-"""
-dict(
+
+ABOUT= dict(
 synopsis  = "fast hierarchical active learning",
 copyright = "(c) 2021, Tim Menzies, MIT license",
 version   = 0.2,
@@ -15,10 +15,9 @@ options   = dict(
     cohen = .35,            # defines small effects
     size  = .5,             # min cluster size control
     some  = 1024))         # sub-sampling control
-"""
 
 # ----------------------------------------------
-import functools, random, math, time, sys, re
+import functools, random, copy, math, time, sys, re
 from random import random as r
 from contextlib import contextmanager
 from types import FunctionType as fun
@@ -54,6 +53,7 @@ class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i) : return "{" + ', '.join(
     [f":{k} {v}" for k,v in i.__dict__.items() if k[0] != "_"]) + "}"
+  def __hash__(i): return id(i)
 
 # ----------------------------------------------
 class Skip(obj):
@@ -75,67 +75,73 @@ class Sym(obj):
       tmp = i.seen[x] = i.seen.get(x,0) + n
       if tmp>i.most: i.most, i.mid = tmp,x
 
-  def bins(i, t,my):
+  def div(i, t,my):
     for k in (i.seen | j.seen):  # a 23 b 50
       yield i.seen.get(k, 0), True, (k, k)
       yield j.seen.get(k, 0), False, (k, k)
-
-  def simplified(i, j):
-    k = i.merge(j)
-    e1, n1 = i.ent(), i.n
-    e2, n2 = j.ent(), j.n
-    e, n = k.ent(), k.n
-    if e1 + e2 < 0.01 or e * .95 < n1 / n * e1 + n2 / n * e2:
-      return k
-
-  def merge(i, j):
-    k = Sym(at=i.at, txt=i.txt)
-    for seen in [i.seen, j.seen]:
-      for x, n in seen.items(): k.add(x, n)
-    return k
 
 # ----------------------------------------------
 class Num(obj):
   def __init__(i,at=0,txt="",inits=[]): 
     i.txt, i.at, i.w, i.lo, i.hi  = txt, at, weight(txt), math.inf, -math.inf
     i.n, i.mid, i.sd, i.m2 = 0, 0, 0, 0
+    i._all = []
     [i.add(x) for x in inits]
 
   def add(i,x,n=1):
     if x!="?": 
-      i.n   += 1
-      d      = x - i.mid
-      i.mid += d / i.n
-      i.m2  += d * (x - i.mid)
-      i.sd   = (i.m2 / i.n)**0.5
-      i.lo   = min(x, i.lo)
-      i.hi   = max(x, i.hi)
-  
-  def bins(i, t, my):
+      i.n    += 1
+      d       = x - i.mid
+      i.mid  += d / i.n
+      i.m2   += d * (x - i.mid)
+      i.sd    = (i.m2 / i.n)**0.5
+      i.lo    = min(x, i.lo)
+      i.hi    = max(x, i.hi)
+      i._all += [x]
+
+  def div(i, t, my):
     epsilon = i.sd * my.cohen
     width   = len(t.rows)**my.size
     while width < 4 and width < len(t.rows) / 2:
       width *= 1.2
-    a = sorted((r for r in t.rows if r[i.at] != "?"), key=lambda r: r[i.at])
-    x = a[0][i.at]
-    n=0
-    now = obj(at=i.at, n=n, lo=x, hi=x,  _seen=set())
+    a = sorted((r for r in t.rows if r[i.at] != "?"), 
+                key=lambda r: r[i.at])
+    now = obj(at=i.at, x=Num(),  _y=set())
     out = [now]
     for j,row in enumerate(a):
       x = row[i.at]
       if j < len(a) - width:
-        if len(now._seen) >= width:
+        if now.x.n >= width:
           if x != a[j+1][i.at]:
-            if now.hi - now.lo > epsilon:
-              n +=1
-              now  = obj(at=i.at, n=n,lo=now.hi, hi=x,  _seen=set())
+            if now.x.hi - now.x.lo > epsilon:
+              now  = obj(at=i.at, x=Num(), _y=set())
               out += [now]
-      now.hi = x
-      now._seen.add(row)
+      now.x.add(x)
+      now._y.add(row)
     out[ 0].lo = -math.inf
     out[-1].hi =  math.inf
     return out
 
+  def merge(i,b4):
+    j, tmp, n = 0, [], len(b4)
+    while j < n:
+      a = b4[j]
+      if j < n - 1:
+        b = b4[j + 1]
+        if c := i.simpler(a,b): a,j = c,j+1
+      tmp += [a]
+      j += 1
+    return i.merge(tmp) if len(tmp) < len(b4) else b4
+
+  def simpler(i,a ,b):
+    at      = a.at
+    yab     = a._y | b._y
+    xab     = Num(inits=[row[at] for row in yab if row[at] != "?"])
+    n,n1,n2 = xab.n,  a.x.n,  b.x.n
+    s,s1,s2 = xab.sd, a.x.sd, b.x.sd
+    if s1+s2 < 0.01 or s*.95 < n1/n*s1 + n2/n*s2:
+      return obj(at=a.at, x=xab, y=yab)
+ 
 # -----------------------------------------------
 class Row(obj):
   def __init__(i,cells)   : i.cells=cells
@@ -179,52 +185,62 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-def main(doc, funs, nervous=True):
+class Main:
   def coerce(s):
     try: return int(s)
     except Exception:
       try: return float(s)
       except Exception: return s
-  def cli1(xpect, flag,new):
-    old = xpect[flag]
-    new = coerce(new)
+
+  def option(opt,flag,new):
+    old = opt[flag]
+    new = Main.coerce(new)
     assert type(new) == type(old), f"-{flag} expects {type(old).__name__}s"
     return new
-  def cli(tmp,args):
+  
+  def cli(help, opt, args):
     while args:
       arg, *args = args
       pre,flag = arg[0], arg[1:]
-      if   arg=="-h": 
-        sys.exit(print(re.sub(r"[\"',=#]","",doc)))
-      elif pre=="+" : 
-        tmp[flag] = cli1(tmp,flag, True)
+      if   arg=="-h": sys.exit(print("usage:",help,"\n\nOPTIONS:\n"+\
+                       '\n'.join(str(f" {'-'+x:>8} {opt[x]}") for x in opt)))
+      elif pre=="+" : opt[flag] = Main.option(opt,flag, True)
       elif pre=="-" : 
         assert flag in tmp, f"unknown flag -{flag}"
         assert args,        f"missing argument for -{flag}"
-        tmp[flag] = cli1(tmp,flag, args[0])
-    return tmp
+        opt[flag] = Main.option(opt,flag, args[0])
+    return opt
+  
   def do(f,my): 
     start = time.perf_counter(); 
     random.seed(my.seed)
     f(my)
     sys.stderr.write(f"{f.__name__:>10}: {time.perf_counter() - start:.4f} secs\n")
-  funs = [f for s,f in funs.items() if type(f)==fun and s[:3] == "eg_" ] 
-  try:
-    tmp  = cli(eval(doc)["options"], sys.argv)
-  except Exception as e:
-    print("E>",str(e)); sys.exit(1)
-  [do(f,obj(**tmp)) for f in funs]
+
+  def go(help, opt,args,funs):
+    tmp = obj(**Main.cli(help,opt,args))
+    [Main.do(f, tmp) for s,f in funs.items() if type(f)==fun and s[:3] == "eg_"] 
 
 # --------------------------------------------------
 def eeg_show(my): print(my)
 
 def eeg_csv(my): 
   for row in csv(my.dir + my.data): print(row)
-  #print(row)
 
 def eg_table(my): 
   t= Tab(csv(my.dir + my.data))
-  #for r in t.rows: print(r)
-  for c in t.xs: print(c.bins(t,my))
+  for c in t.xs: 
+    if type(c) == Num:
+       print("")
+       for x in c.div(t,my):
+         print("\t",x.x.n)
+#       lst2 = c.merge(lst1)
+     #  print(len(lst1))
+      # f
+      # print(sum(x.x.n for x in lst2))
 
-main(__doc__, locals())
+Main.go("./fastball.py -[OPTIONS]", ABOUT["options"],sys.argv, locals())
+
+# try: Main.go("./fastball.py -[OPTIONS]", ABOUT["options"],sys.argv, locals())
+# except Exception as e: 
+#   print("E>",str(e)); sys.exit(1)
