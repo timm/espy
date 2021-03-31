@@ -185,7 +185,7 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-def main(funs):
+def main(doc,about,funs):
   def option(flag,new):
     assert flag in opt, f"unknown flag -{flag}"
     old = opt[flag]
@@ -193,15 +193,15 @@ def main(funs):
     assert type(new) == type(old), f"-{flag} expects {type(old).__name__}s"
     return new
   
-  opt = {k:v for k,(v,_) in ABOUT.items()}
   try:
+    opt = {k:v for k,(v,_) in about.items()}
     args= sys.argv
     while args:
       arg, *args = args
       pre,flag = arg[0], arg[1:]
-      if  arg=="-h": sys.exit(print(__doc__+'\nOPTIONS:\n'+ '\n'.join(
+      if  arg=="-h": sys.exit(print(doc+'\nOPTIONS:\n'+ '\n'.join(
                        f" {'-'+k:8} {h:<30} = {v}" 
-                       for k,(v,h) in ABOUT.items())))
+                       for k,(v,h) in about.items())))
       if pre=="-"  : assert args, f"missing argument for -{flag}"
       if pre=="-"  : opt[flag] = option(flag, args[0])
       if pre=="+"  : opt[flag] = option(flag, True)
@@ -229,5 +229,5 @@ def eg_table(my):
        for x in c.div(t,my):
          print("\t",x.x.n)
 
-main(locals())
+main(__doc__, ABOUT, locals())
 
