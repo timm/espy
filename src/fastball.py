@@ -186,24 +186,24 @@ def fastball1(tab,my,stop,lvl):
 
 # --------------------------------------------------
 def main(doc,want,funs):
-  try:
-    d = {k:v for k,(v,_) in want.items()}
-    cli= sys.argv
-    while cli:
-      arg, *cli = cli
-      b4,k = arg[0], arg[1:]
-      if b4 not in "+-": continue
-      if arg== "-h": sys.exit(print(doc+'\nOPTIONS:\n'+ '\n'.join(
-                      f" {'-'+k:8} {h:<30} = {v}" for k,(v,h) in want.items())))
+  d= {k:v for k,(v,_) in want.items()}
+  cli= sys.argv
+  while cli:
+    arg, *cli = cli
+    b4,k = arg[0], arg[1:]
+    if b4 not in "+-": continue
+    if arg== "-h": sys.exit(print(doc+'\nOPTIONS:\n'+ '\n'.join(
+                    f" {'-'+k:8} {h:<30} = {v}" for k,(v,h) in want.items())))
+    try:
       if b4=="-"   : assert cli, f"missing arg for -{k}"
       assert k in d, f"unknown k -{k}"
       new = True if b4=="+" else cli[0]
       old = d[k]
       new = type(old)(new)
       assert type(new) == type(old), f"-{k} expects {type(old).__name__}s"
-      d[k] = new
-    my = obj(**d)
-  except Exception as err: sys.exit(sys.stderr.write("E> "+str(err)+"\n"))
+    except Exception as err: sys.exit(sys.stderr.write("E> "+str(err)+"\n"))
+    d[k] = new
+  my = obj(**d)
   for s,f in funs.items():
     if type(f)==fun and s[:3] == "eg_":
       start = time.perf_counter(); 
