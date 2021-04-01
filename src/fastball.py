@@ -30,9 +30,9 @@ def weight(s): return -1 if "<" in s  else 1
 def what(s)  : return Skip if "?" in s else (Num if nump(s) else Sym)
 def same(s)  : return s
 
-def csv(src=None):
+def csv(src=None): #<a name=a1>
   def cells(s, fs):
-    if s := re.sub(r'([\n\t\r ]|#.*)', '', s):
+    if s := re.sub(r'([\n\t\r ]|#.*)', '', s): #<a name=aaa>
       lst = s.split(',')
       if fs:
         lst = [(x if x=="?" else f(x)) for f,x in zip(fs,s.split(','))]
@@ -185,27 +185,23 @@ def fastball1(tab,my,stop,lvl):
     fastball1(tab.clone([x[1] for x in a[m:]]),my,stop,lvl+1)
 
 # --------------------------------------------------
-def main(doc,about,funs):
-  def option(flag,new):
-    assert flag in opt, f"unknown flag -{flag}"
-    old = opt[flag]
-    new = type(old)(new)
-    assert type(new) == type(old), f"-{flag} expects {type(old).__name__}s"
-    return new
-  
+def main(doc,want,funs):
   try:
-    opt = {k:v for k,(v,_) in about.items()}
-    args= sys.argv
-    while args:
-      arg, *args = args
-      pre,flag = arg[0], arg[1:]
-      if  arg=="-h": sys.exit(print(doc+'\nOPTIONS:\n'+ '\n'.join(
-                       f" {'-'+k:8} {h:<30} = {v}" 
-                       for k,(v,h) in about.items())))
-      if pre=="-"  : assert args, f"missing argument for -{flag}"
-      if pre=="-"  : opt[flag] = option(flag, args[0])
-      if pre=="+"  : opt[flag] = option(flag, True)
-      my = obj(**opt)
+    d = {k:v for k,(v,_) in want.items()}
+    cli= sys.argv
+    while cli:
+      arg, *cli = cli
+      b4,k = arg[0], arg[1:]
+      if b4 not in "+-": continue
+      if arg== "-h": sys.exit(print(doc+'\nOPTIONS:\n'+ '\n'.join(
+                      f" {'-'+k:8} {h:<30} = {v}" for k,(v,h) in want.items())))
+      if b4=="-"   : assert cli, f"missing arg for -{k}"
+      assert k in d, f"unknown k -{k}"
+      new = True if b4=="+" else cli[0]
+      new = type(old)(new)
+      assert type(new) == type(old), f"-{k} expects {type(old).__name__}s"
+      d[k] = new
+    my = obj(**d)
   except Exception as err: sys.exit(sys.stderr.write("E> "+str(err)+"\n"))
   for s,f in funs.items():
     if type(f)==fun and s[:3] == "eg_":
@@ -229,5 +225,5 @@ def eg_table(my):
        for x in c.div(t,my):
          print("\t",x.x.n)
 
-main(__doc__, ABOUT, locals())
+if __name__ == "__main__" : main(__doc__, ABOUT, locals())
 

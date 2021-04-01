@@ -204,8 +204,10 @@ def cluster(all, my):
         report += [[txt, n] + [round(x,2) for x in effect]]
     printm(report)
     print("")
-    if r.dominate(l,all): out.rs = do(rs, lvl+1)
-    else:                 out.ls = do(ls, lvl+1)
+    out.rs = do(rs, lvl+1)
+    out.ls = do(ls, lvl+1)
+    #if r.dominate(l,all): out.rs = do(rs, lvl+1)
+    #else:                 out.ls = do(ls, lvl+1)
     return out
 
   at = all,my
