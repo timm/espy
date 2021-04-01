@@ -198,6 +198,7 @@ def main(doc,want,funs):
       if b4=="-"   : assert cli, f"missing arg for -{k}"
       assert k in d, f"unknown k -{k}"
       new = True if b4=="+" else cli[0]
+      old = d[k]
       new = type(old)(new)
       assert type(new) == type(old), f"-{k} expects {type(old).__name__}s"
       d[k] = new
