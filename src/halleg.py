@@ -42,11 +42,12 @@ def update(prefix, flag, after,d,funs):
   d[flag] = now
 
 def coerce(string):
-  try: return int(string)
-  except Exception:
+ try: return int(string)
+ except Exception:
     try: return float(string)
-    except Exception: return string
-
+    except Exception:  
+       return string
+  
 def printm(matrix):
   s = [[str(e) for e in row] for row in matrix]
   lens = [max(map(len, col)) for col in zip(*s)]
@@ -54,9 +55,10 @@ def printm(matrix):
   for row in [fmt.format(*row) for row in s]:
     print(row)
 
-
+# vars(Eg)
 class Eg:
   def eg_Contrast(my):
+    "doc string"
     t= hall.Tab(hall.csv(auto93)) 
     rows=t.dominates()
     stop=len(rows)//5
@@ -1972,3 +1974,6 @@ soybean="""
   june,ltnormal,?,ltnorm,?,samelstyr,wholefield,?,?,?,abnorm,abnorm,noyellowhalos,nowsmarg,gt1/8,absent,present,?,abnorm,?,?,?,?,?,?,?,?,dna,?,?,?,?,?,?,rotted,herbicideinjury """
  
 ing(hall.__doc__, vars(Eg))
+
+
+

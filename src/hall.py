@@ -19,8 +19,10 @@ usage: ./ball.py [OPTIONS]
      -p       I | power for distance calcs  | 2
      -far F     | distance for poles        | .9
      -top I     | max number of ranges      | 7
+     -show I    | how many rules to report  | 1
      -k I       | low frequency             | 1
      -m I       | low fro ; e.g.            | 2
+     -act I     | 1=optimize,2=monitor,3=safety | 1
 """
 import functools, random,  math, sys, re
 
@@ -356,7 +358,47 @@ def classifier(src, my, wait=20):
       all= Tab(rows=[row])
   results.header()
   results.ask()
-  
+ 
+"""
+
+Sym   Num
+happy age   alive
+y     0     y
+y     1     y
+y     2     y
+y     3     y
+y     8     y
+n     19    n
+n     40    y
+n     50    y
+y     80    n
+y     90    y
+y     110   n
+y     120   y
+n     130 n
+n     140 n
+n     150 n 
+n     2000 n
+
+Bins for Nums
+lo <= x < hi
+
+1. bin.lo =   0  bin.hi = 19      
+2  bin.lo =  19  bin.hi=130      
+3. bin.lo = 130, bin.hi = 2000 
+
+1. bin.lo = -inf  bin.hi = 19    also: #y=5 #n=0
+2  bin.lo =  19  bin.hi=130      also: #y=4 #n=3
+3. bin.lo = 130, bin.hi = inf    also: #y=0 #n=4
+
+Bins for Sym
+lo = x = hi
+
+4. bin.lo = n  bin.hi = n    also: #y=2 #n=5
+5  bin.lo = y  bin.hi=y      also: #y=7 #n=2
+
+
+"""
 def contrast(here, there, my):
   def seen():
     return {(kl, (col1.txt, col1.at, span)): f
@@ -377,7 +419,12 @@ def contrast(here, there, my):
   def value(lst):
     b = like(lst, True)
     r = like(lst, False)
-    return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
+    if my.act ==3:
+      return 1/(b+r)
+    if my.act ==2:
+      return r**2 / (b + r) if (b+r) > 0.01 and r > b else 0
+    else: 
+      return b**2 / (b + r) if (b+r) > 0.01 and b > r else 0
 
   def solos():
     pairs=[]
@@ -393,7 +440,7 @@ def contrast(here, there, my):
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top(1,[(value(lst), lst) for lst in subsets(top(my.top,solos()))])
+  return top(my.show,[(value(lst), lst) for lst in subsets(top(my.top,solos()))])
 
 def subsets(l):
   out = [[]]
@@ -569,6 +616,7 @@ def eg(f,d):
   if f.__doc__: print("# " + re.sub(r"\n[\t ]*", "\n# ", f.__doc__))
   my=obj(**d)
   random.seed(my.seed)
+  print(my)
   f(my)
 
 
