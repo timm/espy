@@ -47,8 +47,28 @@ def coerce(string):
     try: return float(string)
     except Exception: return string
 
+def printm(matrix):
+  s = [[str(e) for e in row] for row in matrix]
+  lens = [max(map(len, col)) for col in zip(*s)]
+  fmt = ' | '.join('{{:>{}}}'.format(x) for x in lens)
+  for row in [fmt.format(*row) for row in s]:
+    print(row)
+
 
 class Eg:
+  def eg_Contrast(my):
+    t= hall.Tab(hall.csv(auto93)) 
+    rows=t.dominates()
+    stop=len(rows)//5
+    a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
+    print(a.y())
+    print(b.y())
+    report =[]
+    for rule in hall.contrast(a,b,my):
+      _,n,effect,txt = hall.canonical(t,rule)
+      report += [[txt,n] + effect]
+    printm(report)
+    
   def eg_Split(my):
     #t= hall.Tab(hall.csv(auto93)) #"../etc/data/billing10k.csv"))
     t= hall.Tab(hall.csv("../etc/data/billing10k.csv"))
