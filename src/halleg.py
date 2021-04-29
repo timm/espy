@@ -68,6 +68,8 @@ def rules(m,cut,sofar,t,my):
 class Eg:
   def eg_Random(my,cut=10):
     t= hall.Tab(hall.csv(auto93)) 
+    col=t.names["Hp"]
+    print("HP",col.lo,col.hi)
     rows=t.dominates()
     stop= len(rows)//cut
     a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
