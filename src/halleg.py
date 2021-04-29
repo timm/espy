@@ -18,7 +18,6 @@ def ing(doc,funs):
   options = docString2Options(doc)
   funs    = {k:v for k, v in funs.items() if type(v)== fun and "eg_"== k[:3]}
   d       = {k: v for k, (_,v) in options.items()}
-  print("d",d)
   d["do"] =  "?"
   args = sys.argv
   while args:
@@ -89,16 +88,31 @@ class Eg:
       if len(sofar.rows) % 16 ==0: rules(len(sofar.rows),cut,sofar,t,my)
 
   def eg_Contrast(my):
-    "doc string"
-    t= hall.Tab(hall.csv(auto93)) 
+    "Learn ways to select for best"
+    t= hall.Tab(hall.csv(my.data)) 
     rows=t.dominates()
-    stop=len(rows)//5
+    stop=len(rows)//my.elite
     a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
-    print(a.y())
-    print(b.y())
+    print("")
+    for n,c in enumerate(t.xs): 
+       status=[str(round(y,1)) for y in [c.lo,c.hi]]
+       print("x", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
+
+    print("")
+    for n,c in enumerate(t.ys): 
+       status=[str(round(y,1)) for y in [c.lo,c.hi]]
+       print("y", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
+
+    b4   = [round(y,1) for y in t.y()]
+    best = [round(y,1) for y in a.y()]
+    rest = [round(y,1) for y in b.y()]
+    print("\n==================== \nbefore  :", b4)
+    print("best    :", best)
+    print("rest    :", rest, end="\n\n")
     report =[]
     for rule in hall.contrast(a,b,my):
       _,n,effect,txt = hall.canonical(t,rule)
+      effect   = [round(y,1) for y in effect]
       report += [[txt,n] + effect]
     printm(report)
     

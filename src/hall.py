@@ -23,6 +23,7 @@ usage: ./ball.py [OPTIONS]
      -k I       | low frequency             | 1
      -m I       | low fro ; e.g.            | 2
      -act I     | 1=optimize,2=monitor,3=safety | 1
+     -elite     |  fraction of best         | 2
 """
 import functools, random,  math, sys, re
 
@@ -62,7 +63,7 @@ class Col(obj):
 
 # -----------------------------------------------------------------------------
 class Skip(Col):
-  def __init__(i, at=0, txt="") : i.txt, i.at, i.n
+  def __init__(i, at=0, txt="") : i.txt, i.at, i.n = txt,at,0
   def add1(i,x,_)                 : return x
   def mid(i)                    : return "?"
 
@@ -611,12 +612,10 @@ def watch():
 
 # Run an example.
 def eg(f,d):
-  print(d)
   print("\n### " + f.__name__)
   if f.__doc__: print("# " + re.sub(r"\n[\t ]*", "\n# ", f.__doc__))
   my=obj(**d)
   random.seed(my.seed)
-  print(my)
   f(my)
 
 
