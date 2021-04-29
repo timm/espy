@@ -1,4 +1,4 @@
-Ascend_angle,Descend_angle_1,Descend_angle_2,Cruise_speed_m_per_s,Trip_distance_m,Cruise_altitude_m,Payload,Wind,Direction,?T-,Long_accel-,Lat_accel-,Jerk-
+Ascend_angle,Descend_angle_1,Descend_angle_2,Cruise_speed_m_per_s,Trip_distance_m,Cruise_altitude_m,Payload,Wind,Direction,T-,Long_accel-,Lat_accel-,Jerk-
 9,27,24,88,27000,200,0,30,90,0,2,3,2
 24,21,18,22,27000,1000,1000,10,180,1,0,0,0
 30,30,27,110,30000,800,0,20,0,0,3,3,3
