@@ -55,8 +55,37 @@ def printm(matrix):
   for row in [fmt.format(*row) for row in s]:
     print(row)
 
+def rules(m,cut,sofar,t,my):
+  rows=sofar.dominates()
+  stop= len(sofar.rows)//cut
+  a,b = sofar.clone(rows[:stop]), sofar.clone(rows[stop:])
+  for rule in hall.contrast(a,b,my):
+    _,n,effect,txt = hall.canonical(t,rule)
+    print(m,[round(y,1) for y in effect],txt)
+    return 1
+   
 # vars(Eg)
 class Eg:
+  def eg_Random(my,cut=10):
+    t= hall.Tab(hall.csv(auto93)) 
+    rows=t.dominates()
+    stop= len(rows)//cut
+    a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
+    b4   = [round(y,1) for y in t.y()]
+    best = [round(y,1) for y in a.y()]
+    rest = [round(y,1) for y in b.y()]
+    print("b4",   b4)
+    print("best", best)
+    print("rest", rest,end="\n\n")
+    random.shuffle(t.rows)
+    sofar= t.clone()
+    for row in t.rows:
+      sofar.add(row)
+      if   len(sofar.rows) < 40: cut = 4 # quarters
+      elif len(sofar.rows) < 80: cut = 7 #eights
+      else: cut = 10
+      if len(sofar.rows) % 16 ==0: rules(len(sofar.rows),cut,sofar,t,my)
+
   def eg_Contrast(my):
     "doc string"
     t= hall.Tab(hall.csv(auto93)) 
