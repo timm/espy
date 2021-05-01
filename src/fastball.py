@@ -28,6 +28,7 @@ def nump(s)  : return s[0].isupper()
 def goalp(s) : return "+" in s or "-" in s or "!" in s
 def weight(s): return -1 if "<" in s  else 1
 def what(s)  : return Skip if "?" in s else (Num if nump(s) else Sym)
+
 def same(s)  : return s
 
 def csv(src=None): #<a name=a1>

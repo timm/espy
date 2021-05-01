@@ -54,19 +54,19 @@ def printm(matrix):
   for row in [fmt.format(*row) for row in s]:
     print(row)
 
-def rules(m,cut,sofar,t,my):
+def rules(m,cut,sofar,t,best,my):
   rows=sofar.dominates()
   stop= len(sofar.rows)//cut
   a,b = sofar.clone(rows[:stop]), sofar.clone(rows[stop:])
   for rule in hall.contrast(a,b,my):
     _,n,effect,txt = hall.canonical(t,rule)
-    print(m,[round(y,1) for y in effect],txt)
+    print(m,[int(100*abs(y-want)/(want+0.0001)) for y,want in zip(effect,best)],txt)
     return 1
    
 # vars(Eg)
 class Eg:
   def eg_Random(my,cut=10):
-    t= hall.Tab(hall.csv(auto93)) 
+    t= hall.Tab(hall.csv(my.data)) 
     col=t.cols[2]
     print(col.txt,col.lo,col.hi)
     rows=t.dominates()
@@ -85,7 +85,7 @@ class Eg:
       if   len(sofar.rows) < 40: cut = 4 # quarters
       elif len(sofar.rows) < 80: cut = 7 #eights
       else: cut = 10
-      if len(sofar.rows) % 16 ==0: rules(len(sofar.rows),cut,sofar,t,my)
+      if len(sofar.rows) % 1000 ==0: rules(len(sofar.rows),cut,sofar,t,best,my)
 
   def eg_Contrast(my):
     "Learn ways to select for best"

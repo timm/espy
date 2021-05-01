@@ -105,7 +105,10 @@ class Num(Col):
     xy = [(better, True)  for better in i._all] + [
           (bad,    False) for bad    in j._all]
     tmp = div(xy, i.sd * my.cohen, len(xy)**my.size)
-    for bin in merge(tmp):
+    print(i.txt,len(tmp),i.sd*my.cohen)
+    tmp=merge(tmp)
+    print(i.txt,len(tmp))
+    for bin in tmp:
       for klass, n in bin.also.seen.items():
         yield n, klass, (bin.down, bin.up)
 
@@ -326,6 +329,7 @@ def div(xy, epsilon, width):
   return out
 
 def merge(b4):
+  print("\nmerge", len(b4),[x.also.seen for x in b4])
   j, tmp, n = 0, [], len(b4)
   while j < n:
     a = b4[j]
