@@ -93,27 +93,35 @@ class Eg:
     rows=t.dominates()
     stop=len(rows)//my.elite
     a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
+    print("\nSource : ",my.data)
+    print("N      : ",len(t.rows))
     print("")
     for n,c in enumerate(t.xs): 
-       status=[str(round(y,1)) for y in [c.lo,c.hi]]
-       print("x", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
-
+       if type(c) == hall.Num:
+         status=[str(round(y,1)) for y in [c.lo,c.hi]]
+         print("x", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
+       else:
+         status=[str(x) for x in list(c.seen.keys())]
+         print("x", n+1,f"{c.txt:>20} :", ','.join(status))
+          
+    #
     print("")
     for n,c in enumerate(t.ys): 
        status=[str(round(y,1)) for y in [c.lo,c.hi]]
        print("y", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
-
+    #
     b4   = [round(y,1) for y in t.y()]
     best = [round(y,1) for y in a.y()]
     rest = [round(y,1) for y in b.y()]
     print("\n==================== \nbefore  :", b4)
     print("best    :", best)
     print("rest    :", rest, end="\n\n")
-    report =[]
+    report =[["","N"] + [f"y{n+1}" for n,_ in enumerate(t.y())]] 
     for rule in hall.contrast(a,b,my):
-      _,n,effect,txt = hall.canonical(t,rule)
-      effect   = [round(y,1) for y in effect]
-      report += [[txt,n] + effect]
+      if rule:
+        _,n,effect,txt = hall.canonical(t,rule)
+        effect   = [round(y,1) for y in effect]
+        report += [[txt,n] + effect]
     printm(report)
     
   def eg_Split(my):

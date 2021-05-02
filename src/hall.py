@@ -104,13 +104,15 @@ class Num(Col):
   def discretize(i, j, my):
     xy = [(better, True)  for better in i._all] + [
           (bad,    False) for bad    in j._all]
-    tmp = div(xy, i.sd * my.cohen, len(xy)**my.size)
-    print(i.txt,len(tmp),i.sd*my.cohen)
+    sd = (i.sd*i.n + j.sd*j.n)/(i.n+j.n)
+    tmp = div(xy, sd * my.cohen, len(xy)**my.size)
+    #print(i.txt,len(tmp),sd*my.cohen)
     tmp=merge(tmp)
-    print(i.txt,len(tmp))
+    #print(i.txt,len(tmp))
     for bin in tmp:
       for klass, n in bin.also.seen.items():
-        yield n, klass, (bin.down, bin.up)
+        if not (bin.down == -math.inf and bin.up == math.inf):
+          yield n, klass, (bin.down, bin.up)
 
 # -----------------------------------------------------------------------------
 # - `sym.mid` : return mid point
@@ -329,7 +331,7 @@ def div(xy, epsilon, width):
   return out
 
 def merge(b4):
-  print("\nmerge", len(b4),[x.also.seen for x in b4])
+  #print("\nmerge", len(b4),[x.also.seen for x in b4])
   j, tmp, n = 0, [], len(b4)
   while j < n:
     a = b4[j]
