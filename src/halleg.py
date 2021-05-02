@@ -54,21 +54,24 @@ def printm(matrix):
   for row in [fmt.format(*row) for row in s]:
     print(row)
 
-def rules(m,cut,sofar,t,best,my):
+def rules(m,cut,sofar,t,all,my):
   rows=sofar.dominates()
   stop= len(sofar.rows)//cut
   a,b = sofar.clone(rows[:stop]), sofar.clone(rows[stop:])
+  best = None
   for rule in hall.contrast(a,b,my):
-    _,n,effect,txt = hall.canonical(t,rule)
-    print(m,[int(100*abs(y-want)/(want+0.0001)) for y,want in zip(effect,best)],txt)
-    return 1
+    found,n,effect,txt = hall.canonical(t,rule)
+    if not best or found.mid().dominate(best): 
+      best=found.mid()
+      #print(best.cells, found.ys())
+      pretty = [round(y,1) for y in effect]
+      print(m,pretty,[int(100*abs(y-want)/(want+0.0001)) for y,want in zip(effect,all)],txt)
+      return 1
    
 # vars(Eg)
 class Eg:
   def eg_Random(my,cut=10):
     t= hall.Tab(hall.csv(my.data)) 
-    col=t.cols[2]
-    print(col.txt,col.lo,col.hi)
     rows=t.dominates()
     stop= len(rows)//cut
     a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
@@ -82,10 +85,10 @@ class Eg:
     sofar= t.clone()
     for row in t.rows:
       sofar.add(row)
-      if   len(sofar.rows) < 40: cut = 4 # quarters
-      elif len(sofar.rows) < 80: cut = 7 #eights
-      else: cut = 10
-      if len(sofar.rows) % 1000 ==0: rules(len(sofar.rows),cut,sofar,t,best,my)
+      if   len(sofar.rows) < 40: cut = 2 # quarters
+      elif len(sofar.rows) < 80: cut = 5 #eights
+      else: cut = 7
+      if len(sofar.rows) % 25 ==0: rules(len(sofar.rows),cut,sofar,t,best,my)
 
   def eg_Contrast(my):
     "Learn ways to select for best"
