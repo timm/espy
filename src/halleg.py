@@ -54,19 +54,22 @@ def printm(matrix):
   for row in [fmt.format(*row) for row in s]:
     print(row)
 
-def rules(m,cut,sofar,t,all,my):
+def rules(m,cut,sofar,wants,rows,my):
   rows=sofar.dominates()
+  rest = sofar.clone(rows)
   stop= len(sofar.rows)//cut
   a,b = sofar.clone(rows[:stop]), sofar.clone(rows[stop:])
   best = None
-  for rule in hall.contrast(a,b,my):
-    found,n,effect,txt = hall.canonical(t,rule)
-    if not best or found.mid().dominate(best): 
-      best=found.mid()
-      #print(best.cells, found.ys())
-      pretty = [round(y,1) for y in effect]
-      print(m,pretty,[int(100*abs(y-want)/(want+0.0001)) for y,want in zip(effect,all)],txt)
-      return 1
+  rules = hall.contrast(a,b,my)
+  for rule in rules:
+    found0,n0,gots0,txt0 = hall.canonical(a,rule)
+    gots01 = [round(y,1) for y in gots0]
+    print("known  ",m,wants,gots01,[int(100*abs(got-want)/(want+0.0001)) for got,want in zip(gots0,wants)],txt0)
+
+    found0,n0,gots0,txt0 = hall.canonical(rest,rule)
+    gots01 = [round(y,1) for y in gots0]
+    print("unknown",m,wants,gots01,[int(100*abs(got-want)/(want+0.0001)) for got,want in zip(gots0,wants)])
+    return 1
    
 # vars(Eg)
 class Eg:
@@ -78,17 +81,23 @@ class Eg:
     b4   = [round(y,1) for y in t.y()]
     best = [round(y,1) for y in a.y()]
     rest = [round(y,1) for y in b.y()]
-    print("b4",   b4)
-    print("best", best)
-    print("rest", rest,end="\n\n")
+    print("b4",   b4, len(t.rows))
+    print("best", best, len(a.rows))
+    print("rest", rest,len(b.rows), end="\n\n")
     random.shuffle(t.rows)
     sofar= t.clone()
-    for row in t.rows:
+    rows = t.rows
+    while rows:
+      row = rows.pop(0)
       sofar.add(row)
-      if   len(sofar.rows) < 40: cut = 2 # quarters
-      elif len(sofar.rows) < 80: cut = 5 #eights
-      else: cut = 7
-      if len(sofar.rows) % 25 ==0: rules(len(sofar.rows),cut,sofar,t,best,my)
+      cut=2
+      #if   len(sofar.rows) < 40: cut = 2 # quarters
+      #elif len(sofar.rows) < 80: cut = 5 #eights
+      #else: cut = 7
+      if len(sofar.rows) % 10 ==0: rules(len(sofar.rows),cut,sofar,best,rows,my)
+
+  def eg_China(my):
+    Eg.eg_Random(my,cut=3)
 
   def eg_Contrast(my):
     "Learn ways to select for best"
@@ -102,16 +111,16 @@ class Eg:
     for n,c in enumerate(t.xs): 
        if type(c) == hall.Num:
          status=[str(round(y,1)) for y in [c.lo,c.hi]]
-         print("x", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
+         print("x", n+1,f"{c.txt:>20} :", status[0]+".."+status[1],f"({round(c.mid(),1)})")
        else:
          status=[str(x) for x in list(c.seen.keys())]
-         print("x", n+1,f"{c.txt:>20} :", ','.join(status))
+         print("x", n+1,f"{c.txt:>20} :", ','.join(status),f"({round(c.mid(),1)})")
           
     #
     print("")
     for n,c in enumerate(t.ys): 
        status=[str(round(y,1)) for y in [c.lo,c.hi]]
-       print("y", n+1,f"{c.txt:>20} :", status[0]+".."+status[1])
+       print("y", n+1,f"{c.txt:>20} :", status[0]+".."+status[1], f"({round(c.mid(),1)})")
     #
     b4   = [round(y,1) for y in t.y()]
     best = [round(y,1) for y in a.y()]
