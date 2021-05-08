@@ -48,11 +48,11 @@ def coerce(string):
        return string
   
 def printm(matrix):
+  "right  align all put last column"
   s = [[str(e) for e in row] for row in matrix]
   lens = [max(map(len, col)) for col in zip(*s)]
-  fmt = ' | '.join('{{:>{}}}'.format(x) for x in lens)
-  for row in [fmt.format(*row) for row in s]:
-    print(row)
+  fmt = ' | '.join('{{:>{}}}'.format(x) for x in lens[:-1])
+  [print(fmt.format(*row[:-1])+ ' | '+row[-1]) for row in s]
 
 def rules(m,cut,sofar,wants,rows,my):
   rows=sofar.dominates()
@@ -100,42 +100,48 @@ class Eg:
     Eg.eg_Random(my,cut=3)
 
   def eg_Contrast(my):
-    "Learn ways to select for best"
     t= hall.Tab(hall.csv(my.data)) 
     rows=t.dominates()
     stop=len(rows)//my.elite
     a,b = t.clone(rows[:stop]), t.clone(rows[stop:])
     print("\nSource : ",my.data)
-    print("N      : ",len(t.rows))
+    print("Goal   : ",("Optimize" if my.act==1 else (
+                         "Monitor"  if my.act==2 else "Safety")))
     print("")
     for n,c in enumerate(t.xs): 
        if type(c) == hall.Num:
          status=[str(round(y,1)) for y in [c.lo,c.hi]]
-         print("x", n+1,f"{c.txt:>20} :", status[0]+".."+status[1],f"({round(c.mid(),1)})")
+         print(f"x{n+1}", f"{c.txt:>10} :", status[0]+".."+status[1],f"({round(c.mid(),1)})")
        else:
          status=[str(x) for x in list(c.seen.keys())]
-         print("x", n+1,f"{c.txt:>20} :", ','.join(status),f"({round(c.mid(),1)})")
+         print(f"x{n+1}",f"{c.txt:>10} :", ','.join(status),f"({round(c.mid(),1)})")
           
     #
     print("")
     for n,c in enumerate(t.ys): 
        status=[str(round(y,1)) for y in [c.lo,c.hi]]
-       print("y", n+1,f"{c.txt:>20} :", status[0]+".."+status[1], f"({round(c.mid(),1)})")
+       print(f"y{n+1}", f"{c.txt:>10} :", status[0]+".."+status[1], f"({round(c.mid(),1)})")
     #
-    b4   = [round(y,1) for y in t.y()]
-    best = [round(y,1) for y in a.y()]
-    rest = [round(y,1) for y in b.y()]
-    print("\n==================== \nbefore  :", b4)
-    print("best    :", best)
-    print("rest    :", rest, end="\n\n")
-    report =[["","N"] + [f"y{n+1}" for n,_ in enumerate(t.y())]] 
+    print("")
+    report =[["N"] + [f"{t.ys[n].txt}" for n,_ in enumerate(t.y())] + ["Treatment\n"]] 
+    report += [[len(t.rows)] +  [round(y,1) for y in t.y()] + ["all data"]]
+    report += [[len(a.rows)] +  [round(y,1) for y in a.y()] + [f"best {(100//my.elite)//1}%"]]
+    report += [[len(b.rows)] +  [round(y,1) for y in b.y()] + ["rest\n"]]
+    seen={}
+    ranges=set()
     for rule in hall.contrast(a,b,my):
       if rule:
         _,n,effect,txt = hall.canonical(t,rule)
-        effect   = [round(y,1) for y in effect]
-        report += [[txt,n] + effect]
+        if n  != len(t.rows) and txt not in seen:
+          seen[txt]=txt
+          effect   = [round(y,1) for y in effect]
+          report += [[n] + effect +[txt]]
+          print(rule)
+          for x in  hall.parts(rule): ranges.add(x)
     printm(report)
-    
+    print("\nUsed:",end="\n\t")
+    print("\n\t".join(ranges))
+
   def eg_Split(my):
     #t= hall.Tab(hall.csv(auto93)) #"../etc/data/billing10k.csv"))
     t= hall.Tab(hall.csv("../etc/data/billing10k.csv"))

@@ -455,6 +455,10 @@ def subsets(l):
     out += [sub + [x] for sub in out]
   return out[1:]
 
+def parts(d):
+  for col,_,span in d:
+    yield f"{col} {showSpan(span)}"
+
 def selects(tab, d):
   def any(val, span):
     for lo, hi in span:
@@ -474,13 +478,13 @@ def selects(tab, d):
     return True
   return tab.clone([row for row in tab.rows if all(d, row)])
 
-
-def canonical(tab, rule):
-  def showSpan(x):
+def showSpan(x):
     return (f"={x[0]}" if x[0] == x[1] else (
         f"<={x[1]}"if x[0] == -math.inf else (
             f">={x[0]}"if x[1] == math.inf else (f"[{x[0]}..{x[1]})"))))
 
+
+def canonical(tab, rule):
   def showRule(d):
     return ' and '.join([k + ' (' + (' or '.join(map(showSpan, v)) + ')')
                          for k, v in d.items()])
