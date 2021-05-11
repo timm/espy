@@ -1,0 +1,52 @@
+variables:
+    - v1:
+        name: ascend_angle
+        min_value: 3
+        max_value: 30
+    - v2:
+        name: descend_angle_1
+        min_value: 6
+        max_value: 30
+    - v3:
+        name: descend_angle_2
+        min_value: 3
+        max_value: 27
+    - v4:
+        name: cruise_speed
+        min_value: 25
+        max_value: 300
+    - v5:
+        name: trip_distance
+        min_value: 5000
+        max_value: 30000
+    - v6:
+        name: cruise_altitude
+        min_value: 200
+        max_value: 1000
+    - v7:
+        name: payload
+        min_value: 0
+        max_value: 2000
+    - v8:
+        name: wind
+        min_value: 0
+        max_value: 30
+    - v9:
+        name: direction
+        min_value: 0
+        max_value: 180
+
+threshold:
+    taxi:
+        t: 0
+        long_accel: 1
+        lat_accel: 1
+        jerk: 0.3
+        charging: 0.25
+    package:
+        t: 0
+    scout:
+        t: 0
+
+control:
+    repeat: 20
