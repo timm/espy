@@ -129,17 +129,20 @@ class Eg:
     report += [[len(b.rows)] +  [round(y,1) for y in b.y()] + ["rest\n"]]
     seen={}
     ranges=set()
-    for rule in hall.contrast(a,b,my):
+    print("-" * 60,end="\nPromising ranges:\n\n")
+    rules = hall.contrast(a,b,my)
+    print("-" * 60,end="\nPromising combinations:\n\n")
+    for rule in rules:
       if rule:
+        print(hall.tidy(rule))
         _,n,effect,txt = hall.canonical(t,rule)
         if n  != len(t.rows) and txt not in seen:
           seen[txt]=txt
           effect   = [round(y,1) for y in effect]
           report += [[n] + effect +[txt]]
-          print(rule)
           for x in  hall.parts(rule): ranges.add(x)
     printm(report)
-    print("\nUsed:",end="\n\t")
+    print(""); print("-" * 60,end="\nUsed ranges:\n\t")
     print("\n\t".join(ranges))
 
   def eg_Split(my):

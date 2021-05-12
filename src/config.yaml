@@ -49,4 +49,4 @@ threshold:
         t: 0
 
 control:
-    repeat: 20
+    repeat: 100

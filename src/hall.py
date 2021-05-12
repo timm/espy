@@ -447,7 +447,17 @@ def contrast(here, there, my):
   f = seen()
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
-  return top(my.show,[(value(lst), lst) for lst in subsets(top(my.top,solos()))])
+  ranges= sorted(solos(),reverse=True)
+  for val, (col,_,(lo,hi)) in ranges:
+    most,least= ranges[0][0], ranges[-1][0]
+    val= int(100*(val-least)/(most-least))
+    print(f"{1 if val==0 else val:>3}", col, showSpan((lo,hi)))
+  print("")
+  goodRanges = top(my.top, ranges)
+  combos     = subsets(goodRanges)
+  scores     = [(value(combo),combo) for combo in combos]
+  rules      = top(my.show,scores)
+  return [tidy(rule) for rule in rules]
 
 def subsets(l):
   out = [[]]
@@ -483,13 +493,7 @@ def showSpan(x):
         f"<={x[1]}"if x[0] == -math.inf else (
             f">={x[0]}"if x[1] == math.inf else (f"[{x[0]}..{x[1]})"))))
 
-
-def canonical(tab, rule):
-  def showRule(d):
-    return ' and '.join([k + ' (' + (' or '.join(map(showSpan, v)) + ')')
-                         for k, v in d.items()])
-
-  def combineRanges(b4):
+def combineRanges(b4):
     if len(b4) == 1 and b4 == [(-math.inf, math.inf)]:
       return None
     j, tmp = 0, []
@@ -503,6 +507,27 @@ def canonical(tab, rule):
       tmp += [a]
       j += 1
     return tmp if len(tmp) == len(b4) else combineRanges(tmp)
+
+def showRule(d):
+    return ' and '.join([k + ' (' + (' or '.join(map(showSpan, v)) + ')')
+                         for k, v in d.items()])
+
+# XXX recreate the rule with culled ranges
+def tidy(rule):
+  cols = {}
+  where={}
+  for col, at, span in rule:
+    where[col]=at
+    cols[col] = cols.get(col, []) + [span]
+  d = {}
+  for k, v in cols.items():
+    s = f"{k}"
+    if v1 := combineRanges(sorted(v)):
+      d[k] = v1
+  #return [len(found.rules)] +  found.y() + [showRule(d)]
+  return d
+
+def canonical(tab, rule):
   cols = {}
   for col, _, span in rule:
     cols[col] = cols.get(col, []) + [span]
@@ -512,6 +537,7 @@ def canonical(tab, rule):
     if v1 := combineRanges(sorted(v)):
       d[k] = v1
   found = selects(tab, d)
+  #return [len(found.rules)] +  found.y() + [showRule(d)]
   return found, len(found.rows), found.y(), showRule(d)
 # --------------------------------------
 # Throw actual and predicted at an Abcd, accumulating
