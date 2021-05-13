@@ -453,11 +453,20 @@ def contrast(here, there, my):
     val= int(100*(val-least)/(most-least))
     print(f"{1 if val==0 else val:>3}", col, showSpan((lo,hi)))
   print("")
+  # ignore dull ranges
   goodRanges = top(my.top, ranges)
+  # find all combinations of good ranges
   combos     = subsets(goodRanges)
+  # score those combinations
   scores     = [(value(combo),combo) for combo in combos]
+  # grad the top scoring ranges
   rules      = top(my.show,scores)
-  return [tidy(rule) for rule in rules]
+  # look for ranges taht can be pruned e.g. (-inf,n) and  (n,inf)
+  tidied     = [tidy(rule) for rule in rules]
+  # with pruned ranges removed, now we must prune repeated rules.
+  uniques    = {str(rule): rule for rule in tidied}
+  # from the dictionary of uniques, return the unique rules
+  return list(uniques.values())
 
 def subsets(l):
   out = [[]]
@@ -466,12 +475,13 @@ def subsets(l):
   return out[1:]
 
 def parts(d):
-  for col,_,span in d:
-    yield f"{col} {showSpan(span)}"
+  for col,_,spans in d:
+    spans = [showSpan(span) for span in spans]
+    yield f"{col} {spans}"
 
-def selects(tab, d):
-  def any(val, span):
-    for lo, hi in span:
+def selects(tab, rule):
+  def any(val, spans):
+    for lo, hi in spans:
       if lo == hi:
         if lo == val:
           return True
@@ -479,14 +489,15 @@ def selects(tab, d):
         return True
     return False
 
-  def all(d, row):
-    for col in d:
-      val = row.cells[tab.names[col]]
+  def all(rule, row):
+    print(">>>",rule)
+    for _,col,spans in rule:
+      val = row.cells[col]
       if val != "?":
-        if not any(val, d[col]):
+        if not any(val, spans):
           return False
     return True
-  return tab.clone([row for row in tab.rows if all(d, row)])
+  return tab.clone([row for row in tab.rows if all(rule, row)])
 
 def showSpan(x):
     return (f"={x[0]}" if x[0] == x[1] else (
@@ -525,7 +536,8 @@ def tidy(rule):
     if v1 := combineRanges(sorted(v)):
       d[k] = v1
   #return [len(found.rules)] +  found.y() + [showRule(d)]
-  return d
+  return [(k,where[k],d[k])  for k in d]
+
 
 def canonical(tab, rule):
   cols = {}

@@ -127,20 +127,18 @@ class Eg:
     report += [[len(t.rows)] +  [round(y,1) for y in t.y()] + ["all data"]]
     report += [[len(a.rows)] +  [round(y,1) for y in a.y()] + [f"best {(100//my.elite)//1}%"]]
     report += [[len(b.rows)] +  [round(y,1) for y in b.y()] + ["rest\n"]]
-    seen={}
     ranges=set()
     print("-" * 60,end="\nPromising ranges:\n\n")
     rules = hall.contrast(a,b,my)
     print("-" * 60,end="\nPromising combinations:\n\n")
     for rule in rules:
       if rule:
-        print(hall.tidy(rule))
-        _,n,effect,txt = hall.canonical(t,rule)
-        if n  != len(t.rows) and txt not in seen:
-          seen[txt]=txt
-          effect   = [round(y,1) for y in effect]
-          report += [[n] + effect +[txt]]
-          for x in  hall.parts(rule): ranges.add(x)
+        picks = hall.selects(t,rules)
+        n= len(picks.rows)
+        txt = str(rule)
+        effect   = [round(y,1) for y in picks.y()]
+        report += [[n] + effect +[txt]]
+        for x in  hall.parts(rule): ranges.add(x)
     printm(report)
     print(""); print("-" * 60,end="\nUsed ranges:\n\t")
     print("\n\t".join(ranges))
