@@ -16,6 +16,8 @@ f=gitignore;     [ -f "$Ell/.$f" ] || cp $Ell/etc/$f $Ell/.$f
 
 git add $Ell/etc/* $Ell/.gitignore
 
+export PYTHONPATH="$PYTHONPATH:/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site-packages"
+
 ############## aliases
 alias gp="git add *;git commit -am save;git push;git status"
 alias ls="ls -G"

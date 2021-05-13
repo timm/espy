@@ -107,39 +107,27 @@ class Eg:
     print("\nSource : ",my.data)
     print("Goal   : ",("Optimize" if my.act==1 else (
                          "Monitor"  if my.act==2 else "Safety")))
-    print("")
-    for n,c in enumerate(t.xs): 
-       if type(c) == hall.Num:
-         status=[str(round(y,1)) for y in [c.lo,c.hi]]
-         print(f"x{n+1}", f"{c.txt:>10} :", status[0]+".."+status[1],f"({round(c.mid(),1)})")
-       else:
-         status=[str(x) for x in list(c.seen.keys())]
-         print(f"x{n+1}",f"{c.txt:>10} :", ','.join(status),f"({round(c.mid(),1)})")
-          
-    #
-    print("")
-    for n,c in enumerate(t.ys): 
-       status=[str(round(y,1)) for y in [c.lo,c.hi]]
-       print(f"y{n+1}", f"{c.txt:>10} :", status[0]+".."+status[1], f"({round(c.mid(),1)})")
-    #
+    t.summary()
     print("")
     report =[["N"] + [f"{t.ys[n].txt}" for n,_ in enumerate(t.y())] + ["Treatment\n"]] 
-    report += [[len(t.rows)] +  [round(y,1) for y in t.y()] + ["all data"]]
-    report += [[len(a.rows)] +  [round(y,1) for y in a.y()] + [f"best {(100//my.elite)//1}%"]]
-    report += [[len(b.rows)] +  [round(y,1) for y in b.y()] + ["rest\n"]]
+    report += [[len(t.rows)] +  t.y(1)  + ["all data"]]
+    report += [[len(a.rows)] +  a.y(1)  + [f"best {(100//my.elite)//1}%"]]
+    report += [[len(b.rows)] +  b.y(1)  + ["rest\n"]]
     ranges=set()
     print("-" * 60,end="\nPromising ranges:\n\n")
     rules = hall.contrast(a,b,my)
     print("-" * 60,end="\nPromising combinations:\n\n")
     for rule in rules:
       if rule:
-        picks = hall.selects(t,rules)
+        picks = hall.selects(t,rule)
         n= len(picks.rows)
-        txt = str(rule)
         effect   = [round(y,1) for y in picks.y()]
-        report += [[n] + effect +[txt]]
+        report += [[n] + effect +[hall.showRule(rule)]]
         for x in  hall.parts(rule): ranges.add(x)
     printm(report)
+    if  best := hall.bestTreatment(t, rules,stop,my):
+      print("\nRecommended rule:",best)
+
     print(""); print("-" * 60,end="\nUsed ranges:\n\t")
     print("\n\t".join(ranges))
 

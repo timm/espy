@@ -18,12 +18,13 @@ usage: ./ball.py [OPTIONS]
      -samples I | how samples to find poles | 2
      -p       I | power for distance calcs  | 2
      -far F     | distance for poles        | .9
-     -top I     | max number of ranges      | 7
-     -show I    | how many rules to report  | 1
+     -top I     | max number of ranges      | 10
+     -show I    | how many rules to report  | 10
      -k I       | low frequency             | 1
      -m I       | low fro ; e.g.            | 2
      -act I     | 1=optimize,2=monitor,3=safety | 1
      -elite     |  fraction of best         | 2
+     -minSupport| how must of best must  be in a rule | 0.4
 """
 import functools, random,  math, sys, re
 
@@ -66,6 +67,8 @@ class Skip(Col):
   def __init__(i, at=0, txt="") : i.txt, i.at, i.n = txt,at,0
   def add1(i,x,_)                 : return x
   def mid(i)                    : return "?"
+  def summary(i,r=1)              : return f"{i.txt:>10} :"
+
 
 # -----------------------------------------------------------------------------
 # - `num.mid` : return mid point
@@ -77,6 +80,10 @@ class Num(Col):
     i.lo, i.hi, i.w = 1E32, -1E32, (-1 if txt[-1] == "-" else 1)
 
   def mid(i)     : return i.mu
+  def summary(i,r=1): 
+    lo,hi,mu = round(i.lo, r), round(i.hi,r), round(i.mu,r)
+    return  f"{i.txt:>10} : {lo}..{hi} ({mu})"
+
   def norm1(i,x) : return max(0, min(1, (x - i.lo)/(i.hi - i.lo + 1E-32)))
   def dist1(i,x,y):
     if   x=="?" : y   = i.norm1(y); x= 0 if y>.5 else 1
@@ -123,6 +130,9 @@ class Sym(Col):
     i.txt, i.at, i.n, i.seen, i.most, i.mode = txt, at, 0, {}, 0, None
 
   def mid(i)                : return i.mode
+  def summary(i,r=1): 
+    return  f"{i.txt:>10} : {list(i.seen.keys())} ({i.mode})"
+
   def norm1(i,x)            : return x
   def like(i, x, prior, my) : return (i.seen.get(x,0) + my.m*prior) / (i.n+my.m)
   def dist1(i,x,y)          : return 0 if x==y else 1
@@ -276,8 +286,17 @@ class Tab(obj):
     [i.add(lst) for lst in rows]
 
   def x(i)                : return [col.mid() for col in i.xs]
-  def y(i)                : return [col.mid() for col in i.ys]
-  def mid(i)              : return Row([col.mid() for col in i.cols])
+  def y(i,r=None)         : 
+    out = [col.mid() for col in i.ys]
+    return  [round(x,r) for x in out] if r else out
+
+  def mid(i): return Row([col.mid() for col in i.cols])
+  def summary(i,r=1):
+    print("")
+    for n,col in enumerate(i.xs): print(f"x{n+1} {col.summary(r)}")
+    print("")
+    for n,col in enumerate(i.ys): print(f"y{n+1} {col.summary(r)}")
+
   def rowy(i, row)        : return [row.cells[col.at] for col in i.ys]
   def clone(i,a=[],txt=""): return Tab(txt=txt,rows=[[c.txt for c in i.cols]] + a)
   def like(i, row, my)    : return i.classify(row, my)[0]
@@ -450,8 +469,8 @@ def contrast(here, there, my):
   ranges= sorted(solos(),reverse=True)
   for val, (col,_,(lo,hi)) in ranges:
     most,least= ranges[0][0], ranges[-1][0]
-    val= int(100*(val-least)/(most-least))
-    print(f"{1 if val==0 else val:>3}", col, showSpan((lo,hi)))
+    val= int(100*(val-least)/(most-least + 1E-32))
+    print(f"{1 if val<1 else val:>3} : ", col, showSpan((lo,hi)))
   print("")
   # ignore dull ranges
   goodRanges = top(my.top, ranges)
@@ -490,7 +509,6 @@ def selects(tab, rule):
     return False
 
   def all(rule, row):
-    print(">>>",rule)
     for _,col,spans in rule:
       val = row.cells[col]
       if val != "?":
@@ -519,11 +537,10 @@ def combineRanges(b4):
       j += 1
     return tmp if len(tmp) == len(b4) else combineRanges(tmp)
 
-def showRule(d):
-    return ' and '.join([k + ' (' + (' or '.join(map(showSpan, v)) + ')')
-                         for k, v in d.items()])
+def showRule(rule):
+    return ' and '.join([txt + ' (' + (' or '.join(map(showSpan, spans)) + ')')
+                         for txt,_,spans in rule])
 
-# XXX recreate the rule with culled ranges
 def tidy(rule):
   cols = {}
   where={}
@@ -537,6 +554,19 @@ def tidy(rule):
       d[k] = v1
   #return [len(found.rules)] +  found.y() + [showRule(d)]
   return [(k,where[k],d[k])  for k in d]
+
+def bestTreatment(t,rules,min,my):
+  header=[["N+"]+[col.txt for col in t.ys] + ["rule?"]]
+  tmp=Tab(header)
+  for rule in rules:
+     picks = selects(t,rule)
+     n= len(picks.rows)
+     if n > my.minSupport*min:
+       effect = picks.y()
+       row=[n]+ picks.y()+ [rule]
+       tmp.add(row)
+  if tmp.rows:
+    return showRule(tmp.dominates()[0].cells[-1])
 
 
 def canonical(tab, rule):
