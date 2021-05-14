@@ -31,6 +31,7 @@ def gen_sim(config, n, test):
         # iterate n sims
         while progress_count < n:
             temp_sim = []
+          
             
             # iterate through dependent variables and generate random number for each of them
             for key, item in enumerate(config):
@@ -281,19 +282,29 @@ def goal_generate(sims_violation, choice):
 
 def main(option = None, test = None):
     # define vehicle type (taxi, package, scout)
-    vehicle_type = "taxi"
     
     # read configuration
     config = read_config(option)
+    worker(config,test)
+
+def worker(config, test):
+  for _ in range(config["control"]["generations"]):
+    suggestions = useit(config,test)
+    config = updateOptions(suggestions, config)
+
+def updateOptions(config,test):
+  return config
+
+def useit(config,test):
     variable = config["variables"]
     threshold = config["threshold"]
-    repeat = config["control"]["repeat"]
+    repeat = config["control"]["samples"]
     
     # generate n sims
     sims = gen_sim(variable, repeat, test)    
     
     # generate violation
-    sims_vio = violation(sims, threshold, vehicle_type)
+    sims_vio = violation(sims, threshold, config["control"]["vehicle_type"])
     
     # generate violation learner table
     ##############################################################################
@@ -305,32 +316,41 @@ def main(option = None, test = None):
     choice = 1 
     sims_final = goal_generate(sims_vio, choice)
 
+def showResults(sims_final):
     # pretty print
-    header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
+    header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
+                  'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
+                   'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
     print("")
     [print(', '.join(x for x in header_row))]
     [print(', '.join([str(x) for x in lst])) for lst in sims_final]
 
 
-if __name__ == "__main__":
-    print("usage:")
-    print("-c [config file name]: run simulations from specific configuration file")
-    print("-t: run tests")
 
-    option = "config.yaml"
-    test = False
+def cli():
+  print("usage:")
+  print("-c [config file name]: run simulations from specific configuration file")
+  print("-t: run tests")
 
-    if len(sys.argv) == 4 and sys.argv[1] == "-c" and sys.argv[3] == "-t":
+  option = "config.yaml"
+  test = False
+
+  if len(sys.argv) == 4 and sys.argv[1] == "-c" and sys.argv[3] == "-t":
         option = sys.argv[2]
         test = True
         main(option, test)
-    elif len(sys.argv) > 1 and sys.argv[1] == "-c":
+  elif len(sys.argv) > 1 and sys.argv[1] == "-c":
         if len(sys.argv) == 2:
             print("")
             print("ERROR: please specify the configuration file!")
         else:
             option = sys.argv[2]
             main(option, test)
-    elif len(sys.argv) > 1 and sys.argv[1] == "-t":
+  elif len(sys.argv) > 1 and sys.argv[1] == "-t":
         test = True
         main(option, test)
+
+
+if __name__ == "__main__": cli()
+
+

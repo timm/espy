@@ -33,6 +33,7 @@ import functools, random,  math, sys, re
 # - pretty prints slots, can be easy
 # - easily initialized with (e.g.) `x=obj(name='tim',age=21)`,
 # - offers get/set slot access; e.g `x.age += 1`.
+   
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
   def __repr__(i) : return "{" + ', '.join(

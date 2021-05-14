@@ -1,52 +1,60 @@
 variables:
-    - v1:
-        name: ascend_angle
+    - x1:
+        name: Ascend_angle
         min_value: 3
         max_value: 30
-    - v2:
-        name: descend_angle_1
+    - x2:
+        name: Descend_angle_1
         min_value: 6
         max_value: 30
-    - v3:
-        name: descend_angle_2
+    - x3:
+        name: Descend_angle_2
         min_value: 3
         max_value: 27
-    - v4:
-        name: cruise_speed
+    - x4:
+        name: Cruise_speed
         min_value: 25
         max_value: 300
-    - v5:
-        name: trip_distance
+    - x5:
+        name: Trip_distance
         min_value: 5000
         max_value: 30000
-    - v6:
-        name: cruise_altitude
+    - x6:
+        name: Cruise_altitude
         min_value: 200
         max_value: 1000
-    - v7:
-        name: payload
+    - x7:
+        name: Payload
         min_value: 0
         max_value: 2000
-    - v8:
-        name: wind
+    - x8:
+        name: Wind
         min_value: 0
         max_value: 30
-    - v9:
-        name: direction
+    - x9:
+        name: Direction
         min_value: 0
         max_value: 180
 
-threshold:
-    taxi:
-        t: 0
-        long_accel: 1
-        lat_accel: 1
-        jerk: 0.3
-        charging: 0.25
-    package:
-        t: 0
-    scout:
-        t: 0
+products:
+    - y1:
+       name: taxi
+       rules:
+          t: 0
+          long_accel: 1
+          lat_accel: 1
+          jerk: 0.3
+          charging: 0.25
+    - y2:
+        name: package
+        rules:
+         t: 0
+    - y3:
+        name: scout
+        rules:
+          t: 0
 
 control:
-    repeat: 100
+    vehicle_type: taxi
+    generations: 10
+    samples: 100
