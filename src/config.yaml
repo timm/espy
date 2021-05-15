@@ -56,5 +56,5 @@ products:
 
 control:
     vehicle_type: taxi
-    generations: 10
-    samples: 100
+    generations: 5
+    samples: 10

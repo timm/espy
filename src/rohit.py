@@ -35,18 +35,18 @@ def gen_sim(config, n, test):
             
             # iterate through dependent variables and generate random number for each of them
             for key, item in enumerate(config):
-                temp_id = "v" + str(key+1)
+                temp_id = "x" + str(key+1)
                 temp_name = item[temp_id]['name']
                 temp_min_value = item[temp_id]['min_value']
                 temp_max_value = item[temp_id]['max_value']
                 
                 # descend angle 2 is always 3 less than descend angle 1, handle this
-                if temp_name == "descend_angle_1":
+                if temp_name == "Descend_angle_1":
                     temp_angle_1 = random.randint(temp_min_value, temp_max_value)
                     temp_angle_2 = temp_angle_1 - 3
                     temp_sim.append(temp_angle_1)
                     temp_sim.append(temp_angle_2)
-                elif temp_name == "descend_angle_2":
+                elif temp_name == "Descend_angle_2":
                     continue
                 else:
                     temp_sim.append(random.randint(temp_min_value, temp_max_value))
@@ -185,7 +185,7 @@ def goal_cal(sim):
 def violation(sims_goal, threshold, vehicle_type):
     sims_violation = []
     
-    temp_threshold = threshold[vehicle_type]
+    temp_threshold = threshold[vehicle_type-1]
     
     for row in sims_goal:
         # copy the first list, which is dependent variables
@@ -194,7 +194,7 @@ def violation(sims_goal, threshold, vehicle_type):
         # the second list - t, criteria: > 0
         t_violation = []
         for item in row[1]:
-            if item > temp_threshold['t']:
+            if item > temp_threshold['y'+str(vehicle_type)]['rules']['t']:
                 t_violation.append(0)
             else:
                 t_violation.append(1)
@@ -203,7 +203,7 @@ def violation(sims_goal, threshold, vehicle_type):
         long_accel_violation = []
         for i, item in enumerate(row[2]):
             if i == 2 or i == 3 or i == 4 or i == 5:
-                if abs(item) >= temp_threshold['long_accel']:
+                if abs(item) >= temp_threshold['y'+str(vehicle_type)]['rules']['long_accel']:
                     long_accel_violation.append(1)
                 else:
                     long_accel_violation.append(0)
@@ -214,7 +214,7 @@ def violation(sims_goal, threshold, vehicle_type):
         lat_accel_violation = []
         for i, item in enumerate(row[3]):
             if i == 2 or i == 3 or i == 4 or i == 5:
-                if abs(item) >= temp_threshold['lat_accel']:
+                if abs(item) >= temp_threshold['y'+str(vehicle_type)]['rules']['lat_accel']:
                     lat_accel_violation.append(1)
                 else:
                     lat_accel_violation.append(0)
@@ -225,7 +225,7 @@ def violation(sims_goal, threshold, vehicle_type):
         jerk_violation = []
         for i, item in enumerate(row[4]):
             if i == 2 or i == 3 or i == 4 or i == 5:
-                if item >= temp_threshold['jerk']:
+                if item >= temp_threshold['y'+str(vehicle_type)]['rules']['jerk']:
                     jerk_violation.append(1)
                 else:
                     jerk_violation.append(0)
@@ -233,7 +233,7 @@ def violation(sims_goal, threshold, vehicle_type):
                 jerk_violation.append(0)
         
         # the sixth list - charging, criteria: < 25%
-        if row[5][0] >= temp_threshold['charging']:
+        if row[5][0] >= temp_threshold['y'+str(vehicle_type)]['rules']['charging']:
             charging_violation = [1]
         else:
             charging_violation = [0]
@@ -279,32 +279,51 @@ def goal_generate(sims_violation, choice):
     
     return sims_final
 
-
-def main(option = None, test = None):
-    # define vehicle type (taxi, package, scout)
-    
-    # read configuration
-    config = read_config(option)
-    worker(config,test)
-
 def worker(config, test):
-  for _ in range(config["control"]["generations"]):
-    suggestions = useit(config,test)
-    config = updateOptions(suggestions, config)
+    if test == False:
+        for _ in range(config["control"]["generations"]):
+            suggestions = useit(config, test)
+            print("current configuration")
+            print(config)
+            showResults(suggestions)
+            config = updateOptions(suggestions, config)
+    else:
+        suggestions = useit(config, test)
+        showResults(suggestions)
 
-def updateOptions(config,test):
-  return config
+def updateOptions(suggestions, config):
+    for idx, item in enumerate(suggestions):
+        if idx == 0:
+            lowest = sum(item[-5:])
+            lowest_idx = 0
+        else:
+            if sum(item[-5:]) < lowest:
+                lowest = sum(item[-5:])
+                lowest_idx = idx
+    
+    for i in range(len(config['variables'])):
+        config['variables'][i]['x'+str(i+1)]['min_value'] = suggestions[lowest_idx][i]
+    
+    return config
 
-def useit(config,test):
+
+def useit(config, test):
     variable = config["variables"]
-    threshold = config["threshold"]
+    threshold = config["products"]
     repeat = config["control"]["samples"]
     
     # generate n sims
     sims = gen_sim(variable, repeat, test)    
     
     # generate violation
-    sims_vio = violation(sims, threshold, config["control"]["vehicle_type"])
+    if config["control"]["vehicle_type"] == "taxi":
+        vehicle_type = 1
+    elif config["control"]["vehicle_type"] == "package":
+        vehicle_type = 2
+    else:
+        vehicle_type = 3
+        
+    sims_vio = violation(sims, threshold, vehicle_type)
     
     # generate violation learner table
     ##############################################################################
@@ -316,6 +335,8 @@ def useit(config,test):
     choice = 1 
     sims_final = goal_generate(sims_vio, choice)
 
+    return sims_final
+
 def showResults(sims_final):
     # pretty print
     header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
@@ -324,13 +345,20 @@ def showResults(sims_final):
     print("")
     [print(', '.join(x for x in header_row))]
     [print(', '.join([str(x) for x in lst])) for lst in sims_final]
+    print("")
 
-
+def main(option = None, test = None):
+    # define vehicle type (taxi, package, scout)
+    
+    # read configuration
+    config = read_config(option)
+    worker(config,test)
 
 def cli():
   print("usage:")
   print("-c [config file name]: run simulations from specific configuration file")
   print("-t: run tests")
+  print("")
 
   option = "config.yaml"
   test = False
