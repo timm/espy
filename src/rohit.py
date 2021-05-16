@@ -2,7 +2,11 @@ import yaml
 import random
 import math
 import sys
+import hall
 
+header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
+                  'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
+                   'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
 
 ### fun: read configuration ###
 ### - input:                ###
@@ -112,7 +116,7 @@ def goal_cal(sim):
     p3x = p2x + (p3z - p2z) / math.tan(math.radians(sim[0]))
     v3x = sim[3] + sim[7] * math.cos(math.radians(sim[8]))
     v3y = 0
-    p3t = (p3x - p2x) * 2 / (v3x + v2x)
+    p3t = (p3x - p2x) * 2 / (v3x + v2x + 1E-32)
     v3z = (p3z - p2z) / p3t
     p3long = (p3z - p2z) * 2 / (p3t**2)
     p3lat = ((v3x**2) - (v2x**2)) / (2 * (p3x - p2x))
@@ -280,19 +284,58 @@ def goal_generate(sims_violation, choice):
     return sims_final
 
 def worker(config, test):
-    if test == False:
-        for _ in range(config["control"]["generations"]):
-            suggestions = useit(config, test)
-            print("current configuration")
-            print(config)
-            showResults(suggestions)
-            config = updateOptions(suggestions, config)
-    else:
+    if test:
         suggestions = useit(config, test)
         showResults(suggestions)
+    else:
+        for _ in range(config["control"]["generations"]):
+            simulationResults = useit(config, test)
+            #print("current configuration")
+            #print(config)
+            #showResults(simulationResults)
+            config = updateOptions(simulationResults, config)
 
-def updateOptions(suggestions, config):
-    for idx, item in enumerate(suggestions):
+class obj:
+  def __init__(i, **d): i.__dict__.update(d)
+  def __repr__(i) : return "{" + ', '.join(
+      [f":{k} {v}" for k, v in sorted(i.__dict__.items()) if k[0] != "_"]) + "}"
+
+def rounds(lst,r=1): return [round(x,r) for x in lst]
+
+def updateOptions(simulationResults, config):
+  t= hall.Tab([header_row] + simulationResults)
+  print("LEN", len(t.rows))
+  rows=t.dominates()
+  my = obj(**config["hall"])
+  my.data = "simuations"
+  print("my",my)
+  stop=len(rows)//my.elite
+  best,rest = t.clone(rows[:stop]), t.clone(rows[stop:])
+  print("all ",rounds(t.y(),    my.yround)) 
+  print("best",rounds(best.y(), my.yround)) 
+  print("rest",rounds(rest.y(), my.yround)) 
+  print("\nSource : ",my.data)
+  print("Goal   : ",("Optimize" if my.act==1 else (
+                       "Monitor"  if my.act==2 else "Safety")))
+  t.summary()
+  rules = hall.contrast(best,rest,my)
+  ranges=set()
+  for rule in rules:
+    picked = hall.selects(t, rule)
+    effect = rounds( picked.y(), my.yround)
+
+    #print(len(hall.selects(t, rule).rows))
+    print("")
+    print(effect, rule)
+    print(hall.showRule(rule))
+    for x in  hall.parts(rule): ranges.add(x)
+  print(ranges)
+  if  best := hall.bestTreatment(t, rules,stop,my):
+    print("\nRecommended rule:",best)
+  return config
+
+def updateOptions1(simulationResults, config):
+    for idx, item in enumerate(simulationResults):
         if idx == 0:
             lowest = sum(item[-5:])
             lowest_idx = 0
@@ -302,7 +345,7 @@ def updateOptions(suggestions, config):
                 lowest_idx = idx
     
     for i in range(len(config['variables'])):
-        config['variables'][i]['x'+str(i+1)]['min_value'] = suggestions[lowest_idx][i]
+        config['variables'][i]['x'+str(i+1)]['min_value'] = simulationResults[lowest_idx][i]
     
     return config
 
@@ -339,9 +382,6 @@ def useit(config, test):
 
 def showResults(sims_final):
     # pretty print
-    header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
-                  'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
-                   'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
     print("")
     [print(', '.join(x for x in header_row))]
     [print(', '.join([str(x) for x in lst])) for lst in sims_final]

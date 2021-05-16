@@ -57,4 +57,18 @@ products:
 control:
     vehicle_type: taxi
     generations: 5
-    samples: 10
+    samples: 2500
+
+hall:
+  elite:   2
+  act:     1 # 1=optimizer, 2= monitor, 3=safety
+  yround:  2
+  cohen:  .3  # a boring range has a range less than cohen*sd
+  size:   .5  # initial split sizes: len(simualtionResults)**size. a.k.a. square root
+  k:       1  # low frequency on classes (the priors) e1*e2*e3*prior
+  m:       2  # low frequency on evidence (the evidence counts e) 
+  top:    10
+  show:   10
+  minSupport: .4
+
+

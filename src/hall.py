@@ -68,7 +68,7 @@ class Skip(Col):
   def __init__(i, at=0, txt="") : i.txt, i.at, i.n = txt,at,0
   def add1(i,x,_)                 : return x
   def mid(i)                    : return "?"
-  def summary(i,r=1)              : return f"{i.txt:>10} :"
+  def summary(i,r=1)              : return f"{i.txt:>20} :"
 
 
 # -----------------------------------------------------------------------------
@@ -83,7 +83,7 @@ class Num(Col):
   def mid(i)     : return i.mu
   def summary(i,r=1): 
     lo,hi,mu = round(i.lo, r), round(i.hi,r), round(i.mu,r)
-    return  f"{i.txt:>10} : {lo}..{hi} ({mu})"
+    return  f"{i.txt:>20} : {lo}..{hi} ({mu})"
 
   def norm1(i,x) : return max(0, min(1, (x - i.lo)/(i.hi - i.lo + 1E-32)))
   def dist1(i,x,y):
@@ -132,7 +132,7 @@ class Sym(Col):
 
   def mid(i)                : return i.mode
   def summary(i,r=1): 
-    return  f"{i.txt:>10} : {list(i.seen.keys())} ({i.mode})"
+    return  f"{i.txt:>20} : {list(i.seen.keys())} ({i.mode})"
 
   def norm1(i,x)            : return x
   def like(i, x, prior, my) : return (i.seen.get(x,0) + my.m*prior) / (i.n+my.m)
@@ -436,8 +436,10 @@ def contrast(here, there, my):
     prod = math.prod
     prior = (hs[kl] + my.k) / (n + my.k * 2)
     fs = {}
+    # count across the ors
     for txt, pos, span in lst:
       fs[txt] = fs.get(txt, 0) + f.get((kl, (txt, pos, span)), 0)
+    # applying the or count
     like = prior
     for val in fs.values(): 
       like *= (val + my.m*prior) / (hs[kl] + my.m)
@@ -468,6 +470,7 @@ def contrast(here, there, my):
   n = len(here.rows) + len(there.rows)
   hs = {True: len(here.rows), False: len(there.rows)}
   ranges= sorted(solos(),reverse=True)
+  print("")
   for val, (col,_,(lo,hi)) in ranges:
     most,least= ranges[0][0], ranges[-1][0]
     val= int(100*(val-least)/(most-least + 1E-32))
@@ -557,16 +560,18 @@ def tidy(rule):
   return [(k,where[k],d[k])  for k in d]
 
 def bestTreatment(t,rules,min,my):
-  header=[["N+"]+[col.txt for col in t.ys] + ["rule?"]]
+  # missing: size of rule
+  header=[["N+","Size-"]+[col.txt for col in t.ys] + ["rule?"]]
   tmp=Tab(header)
   for rule in rules:
      picks = selects(t,rule)
      n= len(picks.rows)
      if n > my.minSupport*min:
        effect = picks.y()
-       row=[n]+ picks.y()+ [rule]
+       row=[n,len(rule)]+ picks.y()+ [rule]
        tmp.add(row)
   if tmp.rows:
+    #return tmp.dominates()[0].cells[-1]
     return showRule(tmp.dominates()[0].cells[-1])
 
 
