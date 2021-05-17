@@ -56,8 +56,9 @@ products:
 
 control:
     vehicle_type: taxi
-    generations: 5
-    samples: 2500
+    generations: 10
+    samples: 100000
+    seed: 1
 
 hall:
   elite:   2
@@ -70,5 +71,6 @@ hall:
   top:    10
   show:   10
   minSupport: .4
+  
 
 

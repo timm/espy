@@ -3,6 +3,8 @@ import random
 import math
 import sys
 import hall
+import random
+import copy
 
 header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
                   'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
@@ -130,7 +132,7 @@ def goal_cal(sim):
     v4x = sim[3] + sim[7] * math.cos(math.radians(sim[8]))
     v4y = 0
     v4z = 0
-    p4t = (p4x - p3x) * 2 / (v4x + v3x)
+    p4t = (p4x - p3x) * 2 / (v4x + v3x + 1E-32)
     p4long = (p4z - p3z) * 2 / (p4t**2)
     p4lat = ((v4x**2) - (v3x**2)) / (2 * (p4x - p3x))
     p4jerk = math.sqrt(((p4lat-p3lat)/p4t)**2 + ((p4long-p3long)/p4t)**2)
@@ -143,7 +145,7 @@ def goal_cal(sim):
     v5x = v4x/2 + sim[7] * math.cos(math.radians(sim[8]))
     v5y = 0
     v5z = v5x * (p4z - p5z) / (p5x - p4x)
-    p5t = (p5x - p4x) * 2 / (v5x + v4x)
+    p5t = (p5x - p4x) * 2 / (v5x + v4x + 1E-32)
     p5long = (p5z - p4z) * 2 / (p5t**2)
     p5lat = ((v5x**2) - (v4x**2)) / (2 * (p5x - p4x))
     p5jerk = math.sqrt(((p5lat-p4lat)/p5t)**2 + ((p5long-p4long)/p5t)**2)
@@ -155,7 +157,7 @@ def goal_cal(sim):
     p6x = p5x + (p5z - p6z) / math.tan(math.radians(sim[1]))
     v6x = (v5x + 0) / 2
     v6y = 0
-    p6t = (p6x - p5x) * 2 / (v6x + v5x)
+    p6t = (p6x - p5x) * 2 / (v6x + v5x + 1E-32)
     v6z = (p5z - p6z) / p6t
     p6long = (p6z - p5z) * 2 / (p6t**2)
     p6lat = ((v6x**2) - (v5x**2)) / (2 * (p6x - p5x))
@@ -288,12 +290,17 @@ def worker(config, test):
         suggestions = useit(config, test)
         showResults(suggestions)
     else:
-        for _ in range(config["control"]["generations"]):
+        random.seed(config["control"]["seed"])
+        for i in range(config["control"]["generations"]):
             simulationResults = useit(config, test)
-            #print("current configuration")
-            #print(config)
+            print("current configuration")
+            print(config)
             #showResults(simulationResults)
-            config = updateOptions(simulationResults, config)
+            config, effect = updateOptions(simulationResults, config)
+
+            if config is None:
+                return
+
 
 class obj:
   def __init__(i, **d): i.__dict__.update(d)
@@ -320,6 +327,7 @@ def updateOptions(simulationResults, config):
   t.summary()
   rules = hall.contrast(best,rest,my)
   ranges=set()
+  effect = None
   for rule in rules:
     picked = hall.selects(t, rule)
     effect = rounds( picked.y(), my.yround)
@@ -331,8 +339,28 @@ def updateOptions(simulationResults, config):
     for x in  hall.parts(rule): ranges.add(x)
   print(ranges)
   if  best := hall.bestTreatment(t, rules,stop,my):
-    print("\nRecommended rule:",best)
-  return config
+    print("\nRecommended previous", rounds(t.y(), my.yround), "\tRecommended now", effect, "\tRecommended best rule: ",best)
+
+  newConfig = updateConfig(best, config)
+  return newConfig, effect
+
+def updateConfig(best, config):
+    if best is None:
+        print("Best configuration, no more rules to suggest!")
+        return None
+
+    for rule in best:
+        tempIdx = rule[1]
+        tempRange = rule[2]
+        tempConfig = config['variables'][tempIdx]['x'+str(tempIdx+1)]
+
+        if tempRange[0][0] > tempConfig['min_value']:
+            config['variables'][tempIdx]['x'+str(tempIdx+1)]['min_value'] = tempRange[0][0]
+        if tempRange[0][1] < tempConfig['max_value']:
+            config['variables'][tempIdx]['x'+str(tempIdx+1)]['max_value'] = tempRange[0][1]
+    
+    return config
+       
 
 def updateOptions1(simulationResults, config):
     for idx, item in enumerate(simulationResults):
@@ -391,8 +419,14 @@ def main(option = None, test = None):
     # define vehicle type (taxi, package, scout)
     
     # read configuration
-    config = read_config(option)
-    worker(config,test)
+    config0 = read_config(option)
+    for idx, run in enumerate(["optimize", "monitor", "safety"]):
+        config = copy.deepcopy(config0)
+        print("")
+        print("Recommended for ", run)
+        config["hall"]["act"] = idx+1
+        worker(config,test)
+
 
 def cli():
   print("usage:")
