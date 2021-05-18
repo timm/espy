@@ -571,8 +571,8 @@ def bestTreatment(t,rules,min,my):
        row=[n,len(rule)]+ picks.y()+ [rule]
        tmp.add(row)
   if tmp.rows:
-    #return tmp.dominates()[0].cells[-1]
-    return showRule(tmp.dominates()[0].cells[-1])
+    return tmp.dominates()[0].cells[-1]
+    # return showRule(tmp.dominates()[0].cells[-1])
 
 
 def canonical(tab, rule):
