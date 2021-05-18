@@ -44,7 +44,7 @@ products:
           long_accel: 1
           lat_accel: 1
           jerk: 0.3
-          charging: 0.25
+          charging: 0.2
     - y2:
         name: package
         rules:
