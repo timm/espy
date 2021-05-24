@@ -57,20 +57,20 @@ def gen_sim(config, n, test):
                 else:
                     temp_sim.append(random.randint(temp_min_value, temp_max_value))
             
-            sims.append(goal_cal(temp_sim))
+            sims.append(goal_cal(temp_sim, test))
             progress_count += 1
     else:
         test_sims = [[7,10,7,41,6323,607,1166,11,17], [3,28,25,60,26451,720,1009,16,132], [10,30,27,47,27011,599,732,19,20], [26,23,20,72,23183,574,704,10,176], [17,16,13,46,15801,931,548,0,4], 
                     [23,18,15,82,10567,200,465,29,88], [24,23,20,25,24912,504,366,15,158], [3,30,27,41,16294,935,196,29,176], [29,19,16,28,22699,436,1239,23,176], [21,21,18,102,6571,312,1380,29,23]]
         
         for item in test_sims:
-            sims.append(goal_cal(item))
+            sims.append(goal_cal(item, test))
         
         print("")
         print("-----TESTING MODE-----")
 
         print("right outputs:")
-        result_test_sims = [[7,10,7,41,6323,607,1166,11,17,1,0,0,0,0], [3,28,25,60,26451,720,1009,16,132,0,0,0,0,0], [10,30,27,47,27011,599,732,19,20,0,2,1,1,0], [26,23,20,72,23183,574,704,10,176,0,1,2,0,0], 
+        result_test_sims = [[7,10,7,41,6323,607,1166,11,17,1,0,0,0,0], [3,28,25,60,26451,720,1009,16,132,0,0,0,0,1], [10,30,27,47,27011,599,732,19,20,0,2,1,1,0], [26,23,20,72,23183,574,704,10,176,0,1,2,0,0], 
                             [17,16,13,46,15801,931,548,0,4,0,0,0,0,0], [23,18,15,82,10567,200,465,29,88,0,3,3,3,0], [24,23,20,25,24912,504,366,15,158,1,0,0,0,1], [3,30,27,41,16294,935,196,29,176,1,1,0,0,0],
                             [29,19,16,28,22699,436,1239,23,176,1,0,0,0,1], [21,21,18,102,6571,312,1380,29,23,0,3,3,4,0]]
         header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
@@ -85,7 +85,7 @@ def gen_sim(config, n, test):
 ###    - sim: a simulation variables                                     ###
 ### - output:                                                            ###
 ###    - sim_goal: the goals of the input sim                            ###
-def goal_cal(sim): 
+def goal_cal(sim, test): 
     MTOW = 5000
     hover = 58
     cruise = 12.5
@@ -93,6 +93,12 @@ def goal_cal(sim):
     # pre-defined global variables
     p5z = 150
     p6z = 5
+
+    # change mile/h to meter/s
+    if not test:
+        cruise_speed = round(sim[3]*0.44704, 0)
+    else:
+        cruise_speed = sim[3]
 
     # phase 1
     p1t = 3
@@ -110,33 +116,33 @@ def goal_cal(sim):
     p2long = 0
     p2lat = (p2x - p1x) * 2 / (p2t**2)
     p2jerk = math.sqrt(((p2lat-p1lat)/p2t)**2 + ((p2long-p1long)/p2t)**2)
-    p2energy = (MTOW+sim[6]) * cruise / 1000 * p2t / 3600 * (sim[3]/67)
+    p2energy = (MTOW+sim[6]) * cruise / 1000 * p2t / 3600 * (cruise_speed/67)
         
     # phase 3
     p3z = sim[5]
     p3y = 0
     p3x = p2x + (p3z - p2z) / math.tan(math.radians(sim[0]))
-    v3x = sim[3] + sim[7] * math.cos(math.radians(sim[8]))
+    v3x = cruise_speed + sim[7] * math.cos(math.radians(sim[8]))
     v3y = 0
     p3t = (p3x - p2x) * 2 / (v3x + v2x + 1E-32)
     v3z = (p3z - p2z) / p3t
     p3long = (p3z - p2z) * 2 / (p3t**2)
     p3lat = ((v3x**2) - (v2x**2)) / (2 * (p3x - p2x))
     p3jerk = math.sqrt(((p3lat-p2lat)/p3t)**2 + ((p3long-p2long)/p3t)**2)
-    p3energy = (MTOW+sim[6]) * cruise / 1000 * p3t / 3600 * (sim[3]/67)
+    p3energy = (MTOW+sim[6]) * cruise / 1000 * p3t / 3600 * (cruise_speed/67)
         
     # phase 4
     p4z = sim[5]
     p4y = 0
     p4x = sim[4] - (p4z - p5z) / math.tan(math.radians(sim[2])) - (p5z - p6z) / math.tan(math.radians(sim[1]))
-    v4x = sim[3] + sim[7] * math.cos(math.radians(sim[8]))
+    v4x = cruise_speed + sim[7] * math.cos(math.radians(sim[8]))
     v4y = 0
     v4z = 0
     p4t = (p4x - p3x) * 2 / (v4x + v3x + 1E-32)
     p4long = (p4z - p3z) * 2 / (p4t**2)
     p4lat = ((v4x**2) - (v3x**2)) / (2 * (p4x - p3x))
     p4jerk = math.sqrt(((p4lat-p3lat)/p4t)**2 + ((p4long-p3long)/p4t)**2)
-    p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600 * (sim[3]/67)
+    p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600 * (cruise_speed/67)
             
     # phase 5
     p5z = 150
@@ -149,7 +155,7 @@ def goal_cal(sim):
     p5long = (p5z - p4z) * 2 / (p5t**2)
     p5lat = ((v5x**2) - (v4x**2)) / (2 * (p5x - p4x))
     p5jerk = math.sqrt(((p5lat-p4lat)/p5t)**2 + ((p5long-p4long)/p5t)**2)
-    p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600 * (sim[3]/67)
+    p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600 * (cruise_speed/67)
         
     # phase 6
     p6z = 5
@@ -162,7 +168,7 @@ def goal_cal(sim):
     p6long = (p6z - p5z) * 2 / (p6t**2)
     p6lat = ((v6x**2) - (v5x**2)) / (2 * (p6x - p5x))
     p6jerk = math.sqrt(((p6lat-p5lat)/p6t)**2 + ((p6long-p5long)/p6t)**2)
-    p6energy = (MTOW+sim[6]) * cruise / 1000 * p6t / 3600 * (sim[3]/67)
+    p6energy = (MTOW+sim[6]) * cruise / 1000 * p6t / 3600 * (cruise_speed/67)
         
     # phase 7
     p7z = 0
@@ -200,7 +206,7 @@ def violation(sims_goal, threshold, vehicle_type):
         # the second list - t, criteria: > 0
         t_violation = []
         for item in row[1]:
-            if item > temp_threshold['y'+str(vehicle_type)]['rules']['t']:
+            if item > temp_threshold['y'+str(vehicle_type)]['rules'][0]['r1']['value']:
                 t_violation.append(0)
             else:
                 t_violation.append(1)
@@ -209,7 +215,7 @@ def violation(sims_goal, threshold, vehicle_type):
         long_accel_violation = []
         for i, item in enumerate(row[2]):
             if i == 2 or i == 3 or i == 4 or i == 5:
-                if abs(item) >= temp_threshold['y'+str(vehicle_type)]['rules']['long_accel']:
+                if abs(item) > temp_threshold['y'+str(vehicle_type)]['rules'][1]['r2']['value']:
                     long_accel_violation.append(1)
                 else:
                     long_accel_violation.append(0)
@@ -220,7 +226,7 @@ def violation(sims_goal, threshold, vehicle_type):
         lat_accel_violation = []
         for i, item in enumerate(row[3]):
             if i == 2 or i == 3 or i == 4 or i == 5:
-                if abs(item) >= temp_threshold['y'+str(vehicle_type)]['rules']['lat_accel']:
+                if abs(item) > temp_threshold['y'+str(vehicle_type)]['rules'][2]['r3']['value']:
                     lat_accel_violation.append(1)
                 else:
                     lat_accel_violation.append(0)
@@ -231,15 +237,15 @@ def violation(sims_goal, threshold, vehicle_type):
         jerk_violation = []
         for i, item in enumerate(row[4]):
             if i == 2 or i == 3 or i == 4 or i == 5:
-                if item >= temp_threshold['y'+str(vehicle_type)]['rules']['jerk']:
+                if item > temp_threshold['y'+str(vehicle_type)]['rules'][3]['r4']['value']:
                     jerk_violation.append(1)
                 else:
                     jerk_violation.append(0)
             else:
                 jerk_violation.append(0)
         
-        # the sixth list - charging, criteria: < 25%
-        if row[5][0] >= temp_threshold['y'+str(vehicle_type)]['rules']['charging']:
+        # the sixth list - charging, criteria: < 20%
+        if row[5][0] > temp_threshold['y'+str(vehicle_type)]['rules'][4]['r5']['value']:
             charging_violation = [1]
         else:
             charging_violation = [0]
@@ -290,11 +296,11 @@ def worker(config, test):
         suggestions = useit(config, test)
         showResults(suggestions)
     else:
-        random.seed(config["control"]["seed"])
-        for i in range(config["control"]["generations"]):
+        random.seed(config["control"][3]['c4']["value"])
+        for i in range(config["control"][1]["c2"]["value"]):
             simulationResults = useit(config, test)
             print("current configuration")
-            print(config)
+            print(config['variables'])
             #showResults(simulationResults)
             config, effect = updateOptions(simulationResults, config)
 
@@ -317,7 +323,7 @@ def updateOptions(simulationResults, config):
   my.data = "simuations"
   print("my",my)
   stop=len(rows)//my.elite
-  best,rest = t.clone(rows[:stop]), t.clone(rows[stop:])
+  best, rest = t.clone(rows[:stop]), t.clone(rows[stop:])
   print("all ",rounds(t.y(),    my.yround)) 
   print("best",rounds(best.y(), my.yround)) 
   print("rest",rounds(rest.y(), my.yround)) 
@@ -336,17 +342,18 @@ def updateOptions(simulationResults, config):
     print("")
     print(effect, rule)
     print(hall.showRule(rule))
-    for x in  hall.parts(rule): ranges.add(x)
+    for x in hall.parts(rule): ranges.add(x)
   print(ranges)
-  if  best := hall.bestTreatment(t, rules,stop,my):
-    print("\nRecommended previous", rounds(t.y(), my.yround), "\tRecommended now", effect, "\tRecommended best rule: ",best)
+  if best := hall.bestTreatment(t, rules, stop, my):
+    print("BEST", best)
+    print("\nRecommended previous", rounds(t.y(), my.yround), "\tRecommended now", effect, "\tRecommended best rule: ", best)
 
   newConfig = updateConfig(best, config)
   return newConfig, effect
 
 def updateConfig(best, config):
     if best is None:
-        print("Best configuration, no more rules to suggest!")
+        print("Best Recommended configuration, no more rules to suggest!")
         return None
 
     for rule in best:
@@ -362,34 +369,34 @@ def updateConfig(best, config):
     return config
        
 
-def updateOptions1(simulationResults, config):
-    for idx, item in enumerate(simulationResults):
-        if idx == 0:
-            lowest = sum(item[-5:])
-            lowest_idx = 0
-        else:
-            if sum(item[-5:]) < lowest:
-                lowest = sum(item[-5:])
-                lowest_idx = idx
+# def updateOptions1(simulationResults, config):
+#     for idx, item in enumerate(simulationResults):
+#         if idx == 0:
+#             lowest = sum(item[-5:])
+#             lowest_idx = 0
+#         else:
+#             if sum(item[-5:]) < lowest:
+#                 lowest = sum(item[-5:])
+#                 lowest_idx = idx
     
-    for i in range(len(config['variables'])):
-        config['variables'][i]['x'+str(i+1)]['min_value'] = simulationResults[lowest_idx][i]
+#     for i in range(len(config['variables'])):
+#         config['variables'][i]['x'+str(i+1)]['min_value'] = simulationResults[lowest_idx][i]
     
-    return config
+#     return config
 
 
 def useit(config, test):
     variable = config["variables"]
     threshold = config["products"]
-    repeat = config["control"]["samples"]
+    repeat = config["control"][2]['c3']["value"]
     
     # generate n sims
     sims = gen_sim(variable, repeat, test)    
     
     # generate violation
-    if config["control"]["vehicle_type"] == "taxi":
+    if config["control"][0]['c1']["value"] == "taxi":
         vehicle_type = 1
-    elif config["control"]["vehicle_type"] == "package":
+    elif config["control"][0]['c1']["value"] == "package":
         vehicle_type = 2
     else:
         vehicle_type = 3
@@ -423,9 +430,9 @@ def main(option = None, test = None):
     for idx, run in enumerate(["optimize", "monitor", "safety"]):
         config = copy.deepcopy(config0)
         print("")
-        print("Recommended for ", run)
+        print("Recommended for", run)
         config["hall"]["act"] = idx+1
-        worker(config,test)
+        worker(config, test)
 
 
 def cli():
