@@ -29,7 +29,7 @@ def read_config(file):
 ###    - test: whether run tests   ###
 ### - output:                      ###
 ###    - sims: a list of sims      ###
-def gen_sim(config, n, test):
+def gen_sim(config, n, test, vehicle):
     sims = []
     
     if test == False:
@@ -37,8 +37,7 @@ def gen_sim(config, n, test):
         # iterate n sims
         while progress_count < n:
             temp_sim = []
-          
-            
+
             # iterate through dependent variables and generate random number for each of them
             for key, item in enumerate(config):
                 temp_id = "x" + str(key+1)
@@ -57,7 +56,7 @@ def gen_sim(config, n, test):
                 else:
                     temp_sim.append(random.randint(temp_min_value, temp_max_value))
             
-            sims.append(goal_cal(temp_sim, test))
+            sims.append(goal_cal(temp_sim, test, vehicle))
             progress_count += 1
     else:
         test_sims = [[7,10,7,41,6323,607,1166,11,17], [3,28,25,60,26451,720,1009,16,132], [10,30,27,47,27011,599,732,19,20], [26,23,20,72,23183,574,704,10,176], [17,16,13,46,15801,931,548,0,4], 
@@ -85,8 +84,12 @@ def gen_sim(config, n, test):
 ###    - sim: a simulation variables                                     ###
 ### - output:                                                            ###
 ###    - sim_goal: the goals of the input sim                            ###
-def goal_cal(sim, test): 
-    MTOW = 5000
+def goal_cal(sim, test, vehicle):
+    if vehicle == "taxi":
+        MTOW = 5000
+    if vehicle == "delivery":
+        MTOW = 100
+    
     hover = 58
     cruise = 12.5
     
@@ -150,11 +153,11 @@ def goal_cal(sim, test):
     p5x = p4x + (p4z - p5z) / math.tan(math.radians(sim[2]))
     v5x = v4x/2 + sim[7] * math.cos(math.radians(sim[8]))
     v5y = 0
-    v5z = v5x * (p4z - p5z) / (p5x - p4x)
+    v5z = v5x * (p4z - p5z) / (p5x - p4x + 1E-32)
     p5t = (p5x - p4x) * 2 / (v5x + v4x + 1E-32)
-    p5long = (p5z - p4z) * 2 / (p5t**2)
-    p5lat = ((v5x**2) - (v4x**2)) / (2 * (p5x - p4x))
-    p5jerk = math.sqrt(((p5lat-p4lat)/p5t)**2 + ((p5long-p4long)/p5t)**2)
+    p5long = (p5z - p4z) * 2 / (p5t**2 + 1E-32)
+    p5lat = ((v5x**2) - (v4x**2)) / (2 * (p5x - p4x + 1E-32))
+    p5jerk = math.sqrt(((p5lat-p4lat)/(p5t+1E-32))**2 + ((p5long-p4long)/(p5t+1E-32))**2)
     p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600 * (cruise_speed/67)
         
     # phase 6
@@ -249,7 +252,7 @@ def violation(sims_goal, threshold, vehicle_type):
             charging_violation = [1]
         else:
             charging_violation = [0]
-        
+
         sims_violation.append([dependent_v, t_violation, long_accel_violation, lat_accel_violation, jerk_violation, charging_violation])
     
     return sims_violation
@@ -291,18 +294,18 @@ def goal_generate(sims_violation, choice):
     
     return sims_final
 
-def worker(config, test):
+def worker(config, test, vehicle):
     if test:
-        suggestions = useit(config, test)
+        suggestions = useit(config, test, vehicle)
         showResults(suggestions)
     else:
         random.seed(config["control"][3]['c4']["value"])
         for i in range(config["control"][1]["c2"]["value"]):
-            simulationResults = useit(config, test)
+            simulationResults = useit(config, test, vehicle)
             print("current configuration")
             print(config['variables'])
             #showResults(simulationResults)
-            config, effect = updateOptions(simulationResults, config)
+            config, effect = updateOptions(simulationResults, config, vehicle)
 
             if config is None:
                 return
@@ -315,43 +318,51 @@ class obj:
 
 def rounds(lst,r=1): return [round(x,r) for x in lst]
 
-def updateOptions(simulationResults, config):
-  t= hall.Tab([header_row] + simulationResults)
-  print("LEN", len(t.rows))
-  rows=t.dominates()
-  my = obj(**config["hall"])
-  my.data = "simuations"
-  print("my",my)
-  stop=len(rows)//my.elite
-  best, rest = t.clone(rows[:stop]), t.clone(rows[stop:])
-  print("all ",rounds(t.y(),    my.yround)) 
-  print("best",rounds(best.y(), my.yround)) 
-  print("rest",rounds(rest.y(), my.yround)) 
-  print("\nSource : ",my.data)
-  print("Goal   : ",("Optimize" if my.act==1 else (
-                       "Monitor"  if my.act==2 else "Safety")))
-  t.summary()
-  rules = hall.contrast(best,rest,my)
-  ranges=set()
-  effect = None
-  for rule in rules:
-    picked = hall.selects(t, rule)
-    effect = rounds( picked.y(), my.yround)
+def reconstruct(config):
+    updatedConfig = {}
+    for idx, item in enumerate(config["hall"]):
+        updatedConfig.update({item["p"+str(idx+1)]['name']: item["p"+str(idx+1)]['value']})
+    
+    return updatedConfig
 
-    #print(len(hall.selects(t, rule).rows))
-    print("")
-    print(effect, rule)
-    print(hall.showRule(rule))
-    for x in hall.parts(rule): ranges.add(x)
-  print(ranges)
-  if best := hall.bestTreatment(t, rules, stop, my):
-    print("BEST", best)
-    print("\nRecommended previous", rounds(t.y(), my.yround), "\tRecommended now", effect, "\tRecommended best rule: ", best)
+def updateOptions(simulationResults, config, vehicle):
+    t= hall.Tab([header_row] + simulationResults)
+    print("LEN", len(t.rows))
+    rows=t.dominates()
+    #   my = obj(**config["hall"])
+    my = obj(**reconstruct(config))
+    my.data = "simuations"
+    print("my",my)
+    stop=len(rows)//my.elite
+    best, rest = t.clone(rows[:stop]), t.clone(rows[stop:])
+    print("all ",rounds(t.y(),    my.yround)) 
+    print("best",rounds(best.y(), my.yround)) 
+    print("rest",rounds(rest.y(), my.yround)) 
+    print("\nSource : ",my.data)
+    print("Goal   : ",("Optimize" if my.act==1 else (
+                        "Monitor"  if my.act==2 else "Safety")))
+    t.summary()
+    rules = hall.contrast(best,rest,my)
+    ranges=set()
+    effect = None
+    for rule in rules:
+        picked = hall.selects(t, rule)
+        effect = rounds( picked.y(), my.yround)
 
-  newConfig = updateConfig(best, config)
-  return newConfig, effect
+        #print(len(hall.selects(t, rule).rows))
+        print("")
+        print(effect, rule)
+        print(hall.showRule(rule))
+        for x in hall.parts(rule): ranges.add(x)
+    print(ranges)
+    if best := hall.bestTreatment(t, rules, stop, my):
+        print("BEST", best)
+        print("\nRecommended previous", rounds(t.y(), my.yround), "\tRecommended now", effect, "\tRecommended best rule: ", best)
 
-def updateConfig(best, config):
+    newConfig = updateConfig(best, config, vehicle)
+    return newConfig, effect
+
+def updateConfig(best, config, vehicle):
     if best is None:
         print("Best Recommended configuration, no more rules to suggest!")
         return None
@@ -359,13 +370,23 @@ def updateConfig(best, config):
     for rule in best:
         tempIdx = rule[1]
         tempRange = rule[2]
-        tempConfig = config['variables'][tempIdx]['x'+str(tempIdx+1)]
+        
+        if vehicle == "taxi":
+            tempConfig = config['variables'][0]["v1"]["ranges"][tempIdx]['x'+str(tempIdx+1)]
 
-        if tempRange[0][0] > tempConfig['min_value']:
-            config['variables'][tempIdx]['x'+str(tempIdx+1)]['min_value'] = tempRange[0][0]
-        if tempRange[0][1] < tempConfig['max_value']:
-            config['variables'][tempIdx]['x'+str(tempIdx+1)]['max_value'] = tempRange[0][1]
-    
+            if tempRange[0][0] > tempConfig['min_value']:
+                config['variables'][0]["v1"]["ranges"][tempIdx]['x'+str(tempIdx+1)]['min_value'] = tempRange[0][0]
+            if tempRange[0][1] < tempConfig['max_value']:
+                config['variables'][0]["v1"]["ranges"][tempIdx]['x'+str(tempIdx+1)]['max_value'] = tempRange[0][1]
+
+        if vehicle == "delivery":
+            tempConfig = config['variables'][1]["v2"]["ranges"][tempIdx]['x'+str(tempIdx+1)]
+
+            if tempRange[0][0] > tempConfig['min_value']:
+                config['variables'][1]["v2"]["ranges"][tempIdx]['x'+str(tempIdx+1)]['min_value'] = tempRange[0][0]
+            if tempRange[0][1] < tempConfig['max_value']:
+                config['variables'][1]["v2"]["ranges"][tempIdx]['x'+str(tempIdx+1)]['max_value'] = tempRange[0][1]
+        
     return config
        
 
@@ -385,21 +406,23 @@ def updateConfig(best, config):
 #     return config
 
 
-def useit(config, test):
-    variable = config["variables"]
+def useit(config, test, vehicle):
+    if vehicle == "taxi":
+        variable = config["variables"][0]["v1"]['ranges']
+    if vehicle == "delivery":
+        variable = config["variables"][1]['v2']['ranges']
+
     threshold = config["products"]
     repeat = config["control"][2]['c3']["value"]
     
     # generate n sims
-    sims = gen_sim(variable, repeat, test)    
+    sims = gen_sim(variable, repeat, test, vehicle)    
     
     # generate violation
-    if config["control"][0]['c1']["value"] == "taxi":
+    if vehicle == "taxi":
         vehicle_type = 1
-    elif config["control"][0]['c1']["value"] == "package":
+    if vehicle == "delivery":
         vehicle_type = 2
-    else:
-        vehicle_type = 3
         
     sims_vio = violation(sims, threshold, vehicle_type)
     
@@ -422,8 +445,9 @@ def showResults(sims_final):
     [print(', '.join([str(x) for x in lst])) for lst in sims_final]
     print("")
 
-def main(option = None, test = None):
+def main(option = None, test = None, vehicle = None):
     # define vehicle type (taxi, package, scout)
+    print("Recommend: ", vehicle)
     
     # read configuration
     config0 = read_config(option)
@@ -431,34 +455,56 @@ def main(option = None, test = None):
         config = copy.deepcopy(config0)
         print("")
         print("Recommended for", run)
-        config["hall"]["act"] = idx+1
-        worker(config, test)
+        config["hall"][1]["p2"]["value"] = idx+1
+        worker(config, test, vehicle)
 
 
 def cli():
-  print("usage:")
-  print("-c [config file name]: run simulations from specific configuration file")
-  print("-t: run tests")
-  print("")
+    print("usage:")
+    print("-c [config file name]: run simulations from specific configuration file")
+    print("-t: run tests (option)")
+    print("-v [taxi/delivery]: select vehicle (default taxi)")
+    print("")
 
-  option = "config.yaml"
-  test = False
+    # default sys argv
+    option = "config.yaml"
+    test = False
+    vehicle = "taxi"
 
-  if len(sys.argv) == 4 and sys.argv[1] == "-c" and sys.argv[3] == "-t":
-        option = sys.argv[2]
-        test = True
-        main(option, test)
-  elif len(sys.argv) > 1 and sys.argv[1] == "-c":
-        if len(sys.argv) == 2:
-            print("")
-            print("ERROR: please specify the configuration file!")
-        else:
-            option = sys.argv[2]
-            main(option, test)
-  elif len(sys.argv) > 1 and sys.argv[1] == "-t":
-        test = True
-        main(option, test)
+    # if len(sys.argv) == 4 and sys.argv[1] == "-c" and sys.argv[3] == "-t":
+    #     option = sys.argv[2]
+    #     test = True
+    #     main(option, test, vehicle)
+    # elif len(sys.argv) > 1 and sys.argv[1] == "-c":
+    #     if len(sys.argv) == 2:
+    #         print("")
+    #         print("ERROR: please specify the configuration file!")
+    #     else:
+    #         option = sys.argv[2]
+    #         main(option, test, vehicle)
+    # elif len(sys.argv) > 1 and sys.argv[1] == "-t":
+    #     test = True
+    #     main(option, test, vehicle)
+    # elif len(sys.argv) > 1 and (sys.argv[1] == "-v" or sys.argv[3] == "-v" or sys.argv[5] == "-v"):
+    #     if sys.argv[1] == "-v":
+    #         vehicle = sys.argv[2]
+    #     elif sys.argv[3] == "-v":
+    #         vehicle = sys.argv[4]
+    #     elif sys.argv[5] == "-v":
+    #         vehicle = sys.argv[6]
 
+    #     main(option, test, vehicle)
+    
+    # updated sys.argv
+    if len(sys.argv) > 1:
+        if "-c" in sys.argv:
+            option = sys.argv[sys.argv.index("-c")+1]
+        if "-t" in sys.argv:
+            test = True
+        if "-v" in sys.argv:
+            vehicle = sys.argv[sys.argv.index("-v")+1]
+
+    main(option, test, vehicle)
 
 if __name__ == "__main__": cli()
 
