@@ -27,6 +27,7 @@ def read_config(file):
 ###    - config: configuration     ###
 ###    - n: number of sims to gen  ###
 ###    - test: whether run tests   ###
+###    - vehicle: vehicle type     ###
 ### - output:                      ###
 ###    - sims: a list of sims      ###
 def gen_sim(config, n, test, vehicle):
@@ -63,7 +64,7 @@ def gen_sim(config, n, test, vehicle):
                     [23,18,15,82,10567,200,465,29,88], [24,23,20,25,24912,504,366,15,158], [3,30,27,41,16294,935,196,29,176], [29,19,16,28,22699,436,1239,23,176], [21,21,18,102,6571,312,1380,29,23]]
         
         for item in test_sims:
-            sims.append(goal_cal(item, test))
+            sims.append(goal_cal(item, test, vehicle))
         
         print("")
         print("-----TESTING MODE-----")
@@ -82,6 +83,7 @@ def gen_sim(config, n, test, vehicle):
 ### fun: calculate t, longitudnal_accel, lateral_accel, jerk, and energy ###
 ### - input:                                                             ###
 ###    - sim: a simulation variables                                     ###
+###    - vehicle: vehicle type                                           ###
 ### - output:                                                            ###
 ###    - sim_goal: the goals of the input sim                            ###
 def goal_cal(sim, test, vehicle):
