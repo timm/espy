@@ -150,7 +150,7 @@ def goal_cal(sim, test, vehicle):
     p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600 * (cruise_speed/67)
             
     # phase 5
-    p5z = 150
+    p5z = 25
     p5y = 0
     p5x = p4x + (p4z - p5z) / math.tan(math.radians(sim[2]))
     v5x = v4x/2 + sim[7] * math.cos(math.radians(sim[8]))
