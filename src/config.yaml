@@ -111,7 +111,7 @@ variables:
                 Notes: None
                 Usage: None
     - v2:
-        name: organ delivery
+        name: drone
         ranges:
             - x1:
                 name: Ascend_angle
@@ -252,7 +252,7 @@ products:
                 max_value: 0.25
                 value: 0.2
     - y2:
-        name: organ delivery
+        name: drone
         rules:
             - r1:
                 name: t
@@ -284,7 +284,7 @@ control:
     - c1:
         name: vehicle_type
         value_1: taxi
-        value_2: package
+        value_2: drone
         value: taxi
     - c2:
         name: generations
