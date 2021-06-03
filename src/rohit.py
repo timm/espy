@@ -32,6 +32,7 @@ def read_config(file):
 ###    - sims: a list of sims      ###
 def gen_sim(config, n, test, vehicle):
     sims = []
+    sims_table = []
     
     if test == False:
         progress_count = 0
@@ -57,14 +58,18 @@ def gen_sim(config, n, test, vehicle):
                 else:
                     temp_sim.append(random.randint(temp_min_value, temp_max_value))
             
-            sims.append(goal_cal(temp_sim, test, vehicle))
+            result_sim, sim_table = goal_cal(temp_sim, test, vehicle)
+            sims.append(result_sim)
+            sims_table.append(sim_table)
             progress_count += 1
     else:
         test_sims = [[7,10,7,41,6323,607,1166,11,17], [3,28,25,60,26451,720,1009,16,132], [10,30,27,47,27011,599,732,19,20], [26,23,20,72,23183,574,704,10,176], [17,16,13,46,15801,931,548,0,4], 
                     [23,18,15,82,10567,200,465,29,88], [24,23,20,25,24912,504,366,15,158], [3,30,27,41,16294,935,196,29,176], [29,19,16,28,22699,436,1239,23,176], [21,21,18,102,6571,312,1380,29,23]]
         
         for item in test_sims:
-            sims.append(goal_cal(item, test, vehicle))
+            result_sim, sim_table = goal_cal(temp_sim, test, vehicle)
+            sims.append(result_sim)
+            sims_table.append(sim_table)
         
         print("")
         print("-----TESTING MODE-----")
@@ -77,7 +82,7 @@ def gen_sim(config, n, test, vehicle):
         [print(', '.join(x for x in header_row))]
         [print(', '.join([str(x) for x in lst])) for lst in result_test_sims]
 
-    return sims
+    return sims, sims_table
 
 
 ### fun: calculate t, longitudnal_accel, lateral_accel, jerk, and energy ###
@@ -190,8 +195,11 @@ def goal_cal(sim, test, vehicle):
         
     sim_goal = [sim, [p1t, p2t, p3t, p4t, p5t, p6t, p7t], [p1long, p2long, p3long, p4long, p5long, p6long, p7long], [p1lat, p2lat, p3lat, p4lat, p5lat, p6lat, p7lat], 
                 [p1jerk, p2jerk, p3jerk, p4jerk, p5jerk, p6jerk, p7jerk], [(p1energy+p2energy+p3energy+p4energy+p5energy+p6energy+p7energy)/((0.2*MTOW)*200/2200)]]
-        
-    return sim_goal
+    
+    sim_table = [sim, [p1x, p1y, p1z, v1x, v1y, v1z, p1t], [p2x, p2y, p2z, v2x, v2y, v2z, p2t], [p3x, p3y, p3z, v3x, v3y, v3z, p3t],  [p4x, p4y, p4z, v4x, v4y, v4z, p4t], 
+                [p5x, p5y, p5z, v5x, v5y, v5z, p5t], [p6x, p6y, p6z, v6x, v6y, v6z, p6t], [p7x, p7y, p7z, v7x, v7y, v7z, p7t]]
+
+    return sim_goal, sim_table
 
 
 ### fun: generate violation                                          ###
@@ -304,13 +312,18 @@ def worker(config, test, vehicle):
         random.seed(config["control"][3]['c4']["value"])
         for i in range(config["control"][1]["c2"]["value"]):
             simulationResults = useit(config, test, vehicle)
-            print("current configuration")
-            print(config['variables'])
+            # print("current configuration")
+            # print(config['variables'])
             #showResults(simulationResults)
+            if i == 0:
+                recentConfig = config
+            
             config, effect = updateOptions(simulationResults, config, vehicle)
 
             if config is None:
-                return
+                return recentConfig
+
+            recentConfig = config
 
 
 class obj:
@@ -418,7 +431,7 @@ def useit(config, test, vehicle):
     repeat = config["control"][2]['c3']["value"]
     
     # generate n sims
-    sims = gen_sim(variable, repeat, test, vehicle)    
+    sims, _ = gen_sim(variable, repeat, test, vehicle)    
     
     # generate violation
     if vehicle == "taxi":
@@ -458,7 +471,7 @@ def main(option = None, test = None, vehicle = None):
         print("")
         print("Recommended for", run)
         config["hall"][1]["p2"]["value"] = idx+1
-        worker(config, test, vehicle)
+        _ = worker(config, test, vehicle)
 
 
 def cli():
