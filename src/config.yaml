@@ -40,7 +40,7 @@ variables:
                 Usage: Controllable
             - x4:
                 name: Cruise_speed
-                min_value: 50
+                min_value: 25
                 max_value: 300
                 units: m/s
                 handle: v_c
@@ -295,7 +295,7 @@ control:
         name: samples
         min_value: 1000
         max_value: 100000
-        value: 5000
+        value: 10000
     - c4:
         name: seed
         min_value: 1
