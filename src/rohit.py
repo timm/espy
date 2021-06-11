@@ -5,10 +5,11 @@ import sys
 import hall
 import random
 import copy
+import json
 
 header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
                   'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
-                   'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
+                   'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging?']
 
 ### fun: read configuration ###
 ### - input:                ###
@@ -67,7 +68,7 @@ def gen_sim(config, n, test, vehicle):
                     [23,18,15,82,10567,200,465,29,88], [24,23,20,25,24912,504,366,15,158], [3,30,27,41,16294,935,196,29,176], [29,19,16,28,22699,436,1239,23,176], [21,21,18,102,6571,312,1380,29,23]]
         
         for item in test_sims:
-            result_sim, sim_table = goal_cal(temp_sim, test, vehicle)
+            result_sim, sim_table = goal_cal(item, test, vehicle)
             sims.append(result_sim)
             sims_table.append(sim_table)
         
@@ -76,8 +77,8 @@ def gen_sim(config, n, test, vehicle):
 
         print("right outputs:")
         result_test_sims = [[7,10,7,41,6323,607,1166,11,17,1,0,0,0,0], [3,28,25,60,26451,720,1009,16,132,0,0,0,0,1], [10,30,27,47,27011,599,732,19,20,0,2,1,1,0], [26,23,20,72,23183,574,704,10,176,0,1,2,0,0], 
-                            [17,16,13,46,15801,931,548,0,4,0,0,0,0,0], [23,18,15,82,10567,200,465,29,88,0,3,3,3,0], [24,23,20,25,24912,504,366,15,158,1,0,0,0,1], [3,30,27,41,16294,935,196,29,176,1,1,0,0,0],
-                            [29,19,16,28,22699,436,1239,23,176,1,0,0,0,1], [21,21,18,102,6571,312,1380,29,23,0,3,3,4,0]]
+                            [17,16,13,46,15801,931,548,0,4,0,0,0,0,0], [23,18,15,82,10567,200,465,29,88,0,3,3,3,0], [24,23,20,25,24912,504,366,15,158,1,0,0,0,1], [3,30,27,41,16294,935,196,29,176,4,1,0,0,0],
+                            [29,19,16,28,22699,436,1239,23,176,3,0,0,0,1], [21,21,18,102,6571,312,1380,29,23,0,3,3,4,0]]
         header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 'Direction', 'T-', 'Long_accel-', 'Lat_accel-', 'Jerk-', 'Charging-']
         [print(', '.join(x for x in header_row))]
         [print(', '.join([str(x) for x in lst])) for lst in result_test_sims]
@@ -155,7 +156,11 @@ def goal_cal(sim, test, vehicle):
     p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600 * (cruise_speed/67)
             
     # phase 5
-    p5z = 25
+    if vehicle == "taxi":
+        p5z = 150
+    if vehicle == "delivery":
+        p5z = 25
+    
     p5y = 0
     p5x = p4x + (p4z - p5z) / math.tan(math.radians(sim[2]))
     v5x = v4x/2 + sim[7] * math.cos(math.radians(sim[8]))
@@ -164,7 +169,7 @@ def goal_cal(sim, test, vehicle):
     p5t = (p5x - p4x) * 2 / (v5x + v4x + 1E-32)
     p5long = (p5z - p4z) * 2 / (p5t**2 + 1E-32)
     p5lat = ((v5x**2) - (v4x**2)) / (2 * (p5x - p4x + 1E-32))
-    p5jerk = math.sqrt(((p5lat-p4lat)/(p5t+1E-32))**2 + ((p5long-p4long)/(p5t+1E-32))**2)
+    p5jerk = math.sqrt(((p5lat-p4lat)/(p5t + 1E-32))**2 + ((p5long-p4long)/(p5t + 1E-32))**2)
     p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600 * (cruise_speed/67)
         
     # phase 6
@@ -279,7 +284,8 @@ def goal_generate(sims_violation, choice):
     
     if choice == 1:
         for row in sims_violation:
-            output_line = row[0] + [1 if sum(row[1])>0 else 0, sum(row[2]), sum(row[3]), sum(row[4]), sum(row[5])]
+            # output_line = row[0] + [1 if sum(row[1])>0 else 0, sum(row[2]), sum(row[3]), sum(row[4]), sum(row[5])]
+            output_line = row[0] + [sum(row[1]), sum(row[2]), sum(row[3]), sum(row[4]), sum(row[5])]
             sims_final.append(output_line)
     elif choice == 2:
         for row in sims_violation:
@@ -309,6 +315,8 @@ def worker(config, test, vehicle):
         suggestions = useit(config, test, vehicle)
         showResults(suggestions)
     else:
+        result_dict = {}
+
         random.seed(config["control"][3]['c4']["value"])
         for i in range(config["control"][1]["c2"]["value"]):
             simulationResults = useit(config, test, vehicle)
@@ -318,12 +326,16 @@ def worker(config, test, vehicle):
             if i == 0:
                 recentConfig = config
             
-            config, effect = updateOptions(simulationResults, config, vehicle)
+            config, before, effect, best = updateOptions(simulationResults, config, vehicle)
 
             if config is None:
-                return recentConfig
+                return result_dict
 
+            # output record
+            result_dict.update({"r"+str(i+1): {"before": before, "effect": effect, "rule": best}})
             recentConfig = config
+        
+        return result_dict
 
 
 class obj:
@@ -369,13 +381,15 @@ def updateOptions(simulationResults, config, vehicle):
         print(effect, rule)
         print(hall.showRule(rule))
         for x in hall.parts(rule): ranges.add(x)
-    print(ranges)
+    # print(ranges)
+    before = None
     if best := hall.bestTreatment(t, rules, stop, my):
+        before = rounds(t.y(), my.yround)
         print("BEST", best)
-        print("\nRecommended previous", rounds(t.y(), my.yround), "\tRecommended now", effect, "\tRecommended best rule: ", best)
+        print("\nRecommended previous", before, "\tRecommended now", effect, "\tRecommended best rule: ", best)
 
     newConfig = updateConfig(best, config, vehicle)
-    return newConfig, effect
+    return newConfig, before, effect, best
 
 def updateConfig(best, config, vehicle):
     if best is None:
@@ -420,6 +434,18 @@ def updateConfig(best, config, vehicle):
     
 #     return config
 
+def calculatePercentage(sims):
+    sims_vio_t = 0
+    sims_no_vio_accel = 0
+
+    for item in sims:
+        if item[-2] == 0 and item[-3] == 0 and item[-4] == 0:
+            sims_no_vio_accel += 1
+
+            if item[-1] >= 1:
+                sims_vio_t += 1
+    
+    return sims_vio_t / sims_no_vio_accel
 
 def useit(config, test, vehicle):
     if vehicle == "taxi":
@@ -431,7 +457,10 @@ def useit(config, test, vehicle):
     repeat = config["control"][2]['c3']["value"]
     
     # generate n sims
-    sims, _ = gen_sim(variable, repeat, test, vehicle)    
+    sims, _ = gen_sim(variable, repeat, test, vehicle)
+    
+    for item in sims:
+        print(item)
     
     # generate violation
     if vehicle == "taxi":
@@ -451,6 +480,10 @@ def useit(config, test, vehicle):
     choice = 1 
     sims_final = goal_generate(sims_vio, choice)
 
+    # test 6/9 uncomment this
+    # percentage = calculatePercentage(sims_final)
+    # print("Recommended percentage: ", percentage)
+
     return sims_final
 
 def showResults(sims_final):
@@ -466,12 +499,18 @@ def main(option = None, test = None, vehicle = None):
     
     # read configuration
     config0 = read_config(option)
+    output_dict = {}
     for idx, run in enumerate(["optimize", "monitor", "safety"]):
         config = copy.deepcopy(config0)
         print("")
         print("Recommended for", run)
         config["hall"][1]["p2"]["value"] = idx+1
-        _ = worker(config, test, vehicle)
+        result_dict = worker(config, test, vehicle)
+
+        output_dict.update({run: result_dict})
+    
+    return output_dict
+        
 
 
 def cli():
@@ -519,7 +558,10 @@ def cli():
         if "-v" in sys.argv:
             vehicle = sys.argv[sys.argv.index("-v")+1]
 
-    main(option, test, vehicle)
+    output_dict = main(option, test, vehicle)
+
+    with open("sample.json", "w") as outfile:
+        json.dump(output_dict, outfile)
 
 if __name__ == "__main__": cli()
 
