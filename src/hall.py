@@ -346,8 +346,8 @@ def div(xy, epsilon, width):
             out += [now]
     now.up = x
     now.also.add(y)
-  out[0].down = -math.inf
-  out[-1].up = math.inf
+  # out[0].down = -math.inf
+  # out[-1].up = math.inf
   return out
 
 def merge(b4):
@@ -508,7 +508,7 @@ def selects(tab, rule):
       if lo == hi:
         if lo == val:
           return True
-      elif lo <= val < hi:
+      elif lo <= val <= hi:
         return True
     return False
 
