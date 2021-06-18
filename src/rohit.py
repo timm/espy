@@ -331,8 +331,16 @@ def worker(config, test, vehicle):
             if config is None:
                 return result_dict
 
+            temp_parameters = {}
+            if vehicle == "taxi":
+                for idx, item in enumerate(config["variables"][0]["v1"]["ranges"]):
+                    temp_parameters.update({item['x'+str(idx+1)]['name']: (item['x'+str(idx+1)]['min_value'], item['x'+str(idx+1)]["max_value"])})
+            if vehicle == "delivery":
+                for idx, item in enumerate(config["variables"][1]["v2"]["ranges"]):
+                    temp_parameters.update({item['x'+str(idx+1)]['name']: (item['x'+str(idx+1)]['min_value'], item['x'+str(idx+1)]["max_value"])})
+
             # output record
-            result_dict.update({"r"+str(i+1): {"before": before, "effect": effect, "rule": best}})
+            result_dict.update({"r"+str(i+1): {"before": before, "effect": effect, "rule": best, "config": temp_parameters}})
             recentConfig = config
         
         return result_dict
