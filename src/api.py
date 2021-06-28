@@ -3,8 +3,10 @@ from flask import Flask, request, jsonify
 
 
 from rohit import worker
-
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app)
+
 
 @app.route('/bestRules', methods=['POST'])
 def bestRules():
