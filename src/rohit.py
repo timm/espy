@@ -6,6 +6,7 @@ import hall
 import random
 import copy
 import json
+import csv
 
 header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
                   'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
@@ -127,7 +128,10 @@ def goal_cal(sim, test, vehicle):
     p2long = 0
     p2lat = (p2x - p1x) * 2 / (p2t**2)
     p2jerk = math.sqrt(((p2lat-p1lat)/p2t)**2 + ((p2long-p1long)/p2t)**2)
-    p2energy = (MTOW+sim[6]) * cruise / 1000 * p2t / 3600 * (cruise_speed/67)
+    if cruise_speed < 67:
+        p2energy = (MTOW+sim[6]) * cruise / 1000 * p2t / 3600
+    else:
+        p2energy = (MTOW+sim[6]) * cruise / 1000 * p2t / 3600 * (cruise_speed/67)
         
     # phase 3
     p3z = sim[5]
@@ -140,7 +144,10 @@ def goal_cal(sim, test, vehicle):
     p3long = (p3z - p2z) * 2 / (p3t**2)
     p3lat = ((v3x**2) - (v2x**2)) / (2 * (p3x - p2x))
     p3jerk = math.sqrt(((p3lat-p2lat)/p3t)**2 + ((p3long-p2long)/p3t)**2)
-    p3energy = (MTOW+sim[6]) * cruise / 1000 * p3t / 3600 * (cruise_speed/67)
+    if cruise_speed < 67:
+        p3energy = (MTOW+sim[6]) * cruise / 1000 * p3t / 3600
+    else:
+        p3energy = (MTOW+sim[6]) * cruise / 1000 * p3t / 3600 * (cruise_speed/67)
         
     # phase 4
     p4z = sim[5]
@@ -153,7 +160,10 @@ def goal_cal(sim, test, vehicle):
     p4long = (p4z - p3z) * 2 / (p4t**2)
     p4lat = ((v4x**2) - (v3x**2)) / (2 * (p4x - p3x))
     p4jerk = math.sqrt(((p4lat-p3lat)/p4t)**2 + ((p4long-p3long)/p4t)**2)
-    p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600 * (cruise_speed/67)
+    if cruise_speed < 67:
+        p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600
+    else:
+        p4energy = (MTOW+sim[6]) * cruise / 1000 * p4t / 3600 * (cruise_speed/67)
             
     # phase 5
     if vehicle == "taxi":
@@ -170,7 +180,10 @@ def goal_cal(sim, test, vehicle):
     p5long = (p5z - p4z) * 2 / (p5t**2 + 1E-32)
     p5lat = ((v5x**2) - (v4x**2)) / (2 * (p5x - p4x + 1E-32))
     p5jerk = math.sqrt(((p5lat-p4lat)/(p5t + 1E-32))**2 + ((p5long-p4long)/(p5t + 1E-32))**2)
-    p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600 * (cruise_speed/67)
+    if cruise_speed < 67:
+        p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600
+    else:
+        p5energy = (MTOW+sim[6]) * cruise / 1000 * p5t / 3600 * (cruise_speed/67)
         
     # phase 6
     p6z = 5
@@ -183,7 +196,10 @@ def goal_cal(sim, test, vehicle):
     p6long = (p6z - p5z) * 2 / (p6t**2)
     p6lat = ((v6x**2) - (v5x**2)) / (2 * (p6x - p5x))
     p6jerk = math.sqrt(((p6lat-p5lat)/p6t)**2 + ((p6long-p5long)/p6t)**2)
-    p6energy = (MTOW+sim[6]) * cruise / 1000 * p6t / 3600 * (cruise_speed/67)
+    if cruise_speed < 67:
+        p6energy = (MTOW+sim[6]) * cruise / 1000 * p6t / 3600
+    else:
+        p6energy = (MTOW+sim[6]) * cruise / 1000 * p6t / 3600 * (cruise_speed/67)
         
     # phase 7
     p7z = 0
@@ -310,7 +326,367 @@ def goal_generate(sims_violation, choice):
     
     return sims_final
 
-def worker(config, test, vehicle):
+def calculateAttribute(sims, parameter_attribute, count_nonviolation):
+    # count number of nonviolation
+    for item in sims:
+        if sum(item[9:13]) == 0:
+            count_nonviolation += 1
+
+    # count
+    for i in range(len(parameter_attribute.keys())):
+        for j in range(len(sims)):
+            if sum(sims[j][9:13]) == 0:
+                parameter_attribute[list(parameter_attribute.keys())[i]][sims[j][i]] += 1
+            else:
+                parameter_attribute[list(parameter_attribute.keys())[i]][sims[j][i]] += 0
+    
+    return parameter_attribute, count_nonviolation
+
+def calculateAttributePercentage(parameter_attribute, count_nonviolation, run):
+    new_parameter_attribute = {}
+
+    for item in list(parameter_attribute.keys()):
+        temp_dict = {}
+        temp_value = parameter_attribute[item]
+
+        # group
+        if item == "Cruise_speed":
+            current_sum = temp_value[list(temp_value.keys())[0]]
+            temp_i = list(temp_value.keys())[0]
+
+            for i in range(1, len(list(temp_value.keys()))):
+                item1 = list(temp_value.keys())[i]
+                if item1 % 10 != 0:
+                    current_sum += temp_value[item1]
+                else:
+                    current_sum += temp_value[item1]
+                    temp_dict.update({temp_i: current_sum})
+                    current_sum = 0
+                    if i != len(list(temp_value.keys()))-1:
+                        temp_i = list(temp_value.keys())[i+1]
+                    else:
+                        temp_i = list(temp_value.keys())[i]
+        elif item == "Trip_distance":
+            current_sum = temp_value[list(temp_value.keys())[0]]
+            temp_i = list(temp_value.keys())[0]
+
+            for i in range(1, len(list(temp_value.keys()))):
+                item1 = list(temp_value.keys())[i]
+                if item1 % 500 != 0:
+                    current_sum += temp_value[item1]
+                else:
+                    current_sum += temp_value[item1]
+                    temp_dict.update({temp_i: current_sum})
+                    current_sum = 0
+                    if i != len(list(temp_value.keys()))-1:
+                        temp_i = list(temp_value.keys())[i+1]
+                    else:
+                        temp_i = list(temp_value.keys())[i]
+        elif item == "Cruise_altitude":
+            current_sum = temp_value[list(temp_value.keys())[0]]
+            temp_i = list(temp_value.keys())[0]
+
+            for i in range(1, len(list(temp_value.keys()))):
+                item1 = list(temp_value.keys())[i]
+                if item1 % 50 != 0:
+                    current_sum += temp_value[item1]
+                else:
+                    current_sum += temp_value[item1]
+                    temp_dict.update({temp_i: current_sum})
+                    current_sum = 0
+                    if i != len(list(temp_value.keys()))-1:
+                        temp_i = list(temp_value.keys())[i+1]
+                    else:
+                        temp_i = list(temp_value.keys())[i]
+        elif item == "Payload":
+            current_sum = temp_value[list(temp_value.keys())[0]]
+            temp_i = list(temp_value.keys())[0]
+
+            for i in range(1, len(list(temp_value.keys()))):
+                item1 = list(temp_value.keys())[i]
+                if item1 % 100 != 0:
+                    current_sum += temp_value[item1]
+                else:
+                    current_sum += temp_value[item1]
+                    temp_dict.update({temp_i: current_sum})
+                    current_sum = 0
+                    if i != len(list(temp_value.keys()))-1:
+                        temp_i = list(temp_value.keys())[i+1]
+                    else:
+                        temp_i = list(temp_value.keys())[i]
+        elif item == "Direction":
+            current_sum = temp_value[list(temp_value.keys())[0]]
+            temp_i = list(temp_value.keys())[0]
+
+            for i in range(1, len(list(temp_value.keys()))):
+                item1 = list(temp_value.keys())[i]
+                if item1 % 10 != 0:
+                    current_sum += temp_value[item1]
+                else:
+                    current_sum += temp_value[item1]
+                    temp_dict.update({temp_i: current_sum})
+                    current_sum = 0
+                    if i != len(list(temp_value.keys()))-1:
+                        temp_i = list(temp_value.keys())[i+1]
+                    else:
+                        temp_i = list(temp_value.keys())[i]
+        else:
+            temp_dict = temp_value
+
+        new_parameter_attribute.update({item: temp_dict})
+    
+    # calculate percentage
+    for item in list(new_parameter_attribute.keys()):
+        for item1 in list(new_parameter_attribute[item].keys()):
+            new_parameter_attribute[item][item1] = new_parameter_attribute[item][item1] / count_nonviolation
+
+    # sort each part
+    new_parameter_attribute1 = {}
+    for item in list(new_parameter_attribute.keys()):
+        temp_dict = {}
+        for temp_item in sorted(list(new_parameter_attribute[item].keys())):
+            temp_dict.update({temp_item: new_parameter_attribute[item][temp_item]})
+        
+        new_parameter_attribute1.update({item: temp_dict})
+
+    # comment out this if don't want to write to a json file
+    path = "/mnt/e/Research/STTR/output_rohit/" + run + "_single.json"
+    with open(path, "w") as outfile:
+        json.dump(new_parameter_attribute, outfile)
+
+    # comment out this if don't want to write to a csv file
+    path = "/mnt/e/Research/STTR/output_rohit/" + run + "_single.csv"
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        csv_writer = csv.writer(f, delimiter=",")
+        csv_writer.writerow(["ascend angle", "percentage", "descend angle 1", "percentage", "descend angle 2", "percentage", "cruise speed", "percentage",
+                            "trip distance", "percentage", "cruise altitude", "percentage", "payload", "percentage", "wind", "percentage", "direction", "percentage"])
+        
+        max_deep = max([len(list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[i]].keys())) for i in range(len(list(new_parameter_attribute1.keys())))])
+
+        for iterate in range(max_deep):
+            current_row = []
+
+            for current_idx in range(len(list(new_parameter_attribute1.keys()))):
+                if iterate < len(list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]].keys())):
+                    current_key = list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]].keys())[iterate]
+                    current_value = new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]][current_key]
+                    current_row.append(current_key)
+                    current_row.append(current_value)
+                else:
+                    current_row.append("")
+                    current_row.append("")
+            
+            csv_writer.writerow(current_row)
+
+    return new_parameter_attribute
+
+def initJointParameterAttribute(bound):
+    new_bound = {}
+    for item in list(bound.keys()):
+        if item == "Cruise_speed":
+            temp_list = [bound[item][0]]
+            for i in range(bound[item][0]+10, bound[item][1]+1):
+                if i % 10 == 1:
+                    temp_list.append(i)
+        elif item == "Trip_distance":
+            temp_list = [bound[item][0]]
+            for i in range(bound[item][0]+500, bound[item][1]+1):
+                if i % 500 == 1:
+                    temp_list.append(i)
+        elif item == "Cruise_altitude":
+            temp_list = [bound[item][0]]
+            for i in range(bound[item][0]+50, bound[item][1]+1):
+                if i % 50 == 1:
+                    temp_list.append(i)
+        elif item == "Payload":
+            temp_list = [bound[item][0]]
+            for i in range(bound[item][0]+100, bound[item][1]+1):
+                if i % 100 == 1:
+                    temp_list.append(i)
+        elif item == "Direction":
+            temp_list = [bound[item][0]]
+            for i in range(bound[item][0]+10, bound[item][1]+1):
+                if i % 10 == 1:
+                    temp_list.append(i)
+        else:
+            temp_list = [n for n in range(bound[item][0], bound[item][1]+1)]
+        
+        new_bound.update({item: temp_list})
+
+    joint_parameter_attribute = {}
+    for idx1, item1 in enumerate(list(new_bound.keys())):
+        temp_list1 = new_bound[item1]
+        for idx2, item2 in enumerate(list(new_bound.keys())):
+            temp_list2 = new_bound[item2]
+
+            temp_dict = {}
+            for number1 in temp_list1:
+                for number2 in temp_list2:
+                    temp_dict.update({(number1, number2): 0})
+    
+            joint_parameter_attribute.update({(idx1, idx2): temp_dict})
+
+    return joint_parameter_attribute
+
+def calculateJointAttribute(sims, joint_parameter_attribute, bound):
+    # count
+    for item in sims:
+        if sum(item[9:13]) == 0:
+            temp_sim = item[:9]
+
+            for i in range(len(temp_sim)):
+                if i == 3:
+                    if temp_sim[i] == bound[list(bound.keys())[i]][0]:
+                        cur_value1 = bound[list(bound.keys())[i]][0]
+                    else:
+                        cur_value1 = (temp_sim[i] - 1) // 10 * 10 + 1
+                        if cur_value1 - 1 == bound[list(bound.keys())[i]][0]:
+                            cur_value1 = cur_value1 - 1
+                elif i == 4:
+                    if temp_sim[i] == bound[list(bound.keys())[i]][0]:
+                        cur_value1 = bound[list(bound.keys())[i]][0]
+                    else:
+                        cur_value1 = (temp_sim[i] - 1) // 500 * 500 + 1
+                        if cur_value1 - 1 == bound[list(bound.keys())[i]][0]:
+                            cur_value1 = cur_value1 - 1
+                elif i == 5:
+                    if temp_sim[i] == bound[list(bound.keys())[i]][0]:
+                        cur_value1 = bound[list(bound.keys())[i]][0]
+                    else:
+                        cur_value1 = (temp_sim[i] - 1) // 50 * 50 + 1
+                        if cur_value1 - 1 == bound[list(bound.keys())[i]][0]:
+                            cur_value1 = cur_value1 - 1
+                elif i == 6:
+                    if temp_sim[i] == bound[list(bound.keys())[i]][0]:
+                        cur_value1 = bound[list(bound.keys())[i]][0]
+                    else:
+                        cur_value1 = (temp_sim[i] - 1) // 100 * 100 + 1
+                        if cur_value1 - 1 == bound[list(bound.keys())[i]][0]:
+                            cur_value1 = cur_value1 - 1
+                elif i == 8:
+                    if temp_sim[i] == bound[list(bound.keys())[i]][0]:
+                        cur_value1 = bound[list(bound.keys())[i]][0]
+                    else:
+                        cur_value1 = (temp_sim[i] - 1) // 10 * 10 + 1
+                        if cur_value1 - 1 == bound[list(bound.keys())[i]][0]:
+                            cur_value1 = cur_value1 - 1
+                else:
+                    cur_value1 = temp_sim[i]
+
+                for j in range(len(temp_sim)):
+                    if j == 3:
+                        if temp_sim[j] == bound[list(bound.keys())[j]][0]:
+                            cur_value2 = bound[list(bound.keys())[j]][0]
+                        else:
+                            cur_value2 = (temp_sim[j] - 1) // 10 * 10 + 1
+                            if cur_value2 - 1 == bound[list(bound.keys())[j]][0]:
+                                cur_value2 = cur_value2 - 1
+                    elif j == 4:
+                        if temp_sim[j] == bound[list(bound.keys())[j]][0]:
+                            cur_value2 = bound[list(bound.keys())[j]][0]
+                        else:
+                            cur_value2 = (temp_sim[j] - 1) // 500 * 500 + 1
+                            if cur_value2 - 1 == bound[list(bound.keys())[j]][0]:
+                                cur_value2 = cur_value2 - 1
+                    elif j == 5:
+                        if temp_sim[j] == bound[list(bound.keys())[j]][0]:
+                            cur_value2 = bound[list(bound.keys())[j]][0]
+                        else:
+                            cur_value2 = (temp_sim[j] - 1) // 50 * 50 + 1
+                            if cur_value2 - 1 == bound[list(bound.keys())[j]][0]:
+                                cur_value2 = cur_value2 - 1
+                    elif j == 6:
+                        if temp_sim[j] == bound[list(bound.keys())[j]][0]:
+                            cur_value2 = bound[list(bound.keys())[j]][0]
+                        else:
+                            cur_value2 = (temp_sim[j] - 1) // 100 * 100 + 1
+                            if cur_value2 - 1 == bound[list(bound.keys())[j]][0]:
+                                cur_value2 = cur_value2 - 1
+                    elif j == 8:
+                        if temp_sim[j] == bound[list(bound.keys())[j]][0]:
+                            cur_value2 = bound[list(bound.keys())[j]][0]
+                        else:
+                            cur_value2 = (temp_sim[j] - 1) // 10 * 10 + 1
+                            if cur_value2 - 1 == bound[list(bound.keys())[j]][0]:
+                                cur_value2 = cur_value2 - 1
+                    else:
+                        cur_value2 = temp_sim[j]
+
+                    joint_parameter_attribute[(i, j)][(cur_value1, cur_value2)] += 1
+                        
+    return joint_parameter_attribute
+
+def calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run):
+    for item in list(joint_parameter_attribute.keys()):
+        for item1 in list(joint_parameter_attribute[item].keys()):
+            joint_parameter_attribute[item][item1] = joint_parameter_attribute[item][item1] / count_nonviolation
+
+    # convert keys to str due to json dump
+    new_joint_parameter_attribute = {}
+    for item in list(joint_parameter_attribute.keys()):
+        new_item = ""
+        for sub_idx, sub_item in enumerate(list(item)):
+            if sub_idx == 0:
+                if sub_item == 0:
+                    new_item = new_item + "ascend angle, "
+                elif sub_item == 1:
+                    new_item = new_item + "descend angle 1, "
+                elif sub_item == 2:
+                    new_item = new_item + "descend angle 2, "
+                elif sub_item == 3:
+                    new_item = new_item + "cruise speed, "
+                elif sub_item == 4:
+                    new_item = new_item + "trip distance, "
+                elif sub_item == 5:
+                    new_item = new_item + "cruise altitude, "
+                elif sub_item == 6:
+                    new_item = new_item + "payload, "
+                elif sub_item == 7:
+                    new_item = new_item + "wind, "
+                elif sub_item == 8:
+                    new_item = new_item + "direction, "
+            else:
+                if sub_item == 0:
+                    new_item = new_item + "ascend angle"
+                elif sub_item == 1:
+                    new_item = new_item + "descend angle 1"
+                elif sub_item == 2:
+                    new_item = new_item + "descend angle 2"
+                elif sub_item == 3:
+                    new_item = new_item + "cruise speed"
+                elif sub_item == 4:
+                    new_item = new_item + "trip distance"
+                elif sub_item == 5:
+                    new_item = new_item + "cruise altitude"
+                elif sub_item == 6:
+                    new_item = new_item + "payload"
+                elif sub_item == 7:
+                    new_item = new_item + "wind"
+                elif sub_item == 8:
+                    new_item = new_item + "direction"
+
+        temp_new_joint_parameter_attribute = {}
+        for item1 in list(joint_parameter_attribute[item].keys()):
+            new_item1 = ""
+            for sub_idx1, sub_item1 in enumerate(list(item1)):
+                if sub_idx1 == 0:
+                    new_item1 = new_item1 + str(sub_item1) + ", "
+                else:
+                    new_item1 = new_item1 + str(sub_item1)
+            
+            temp_new_joint_parameter_attribute.update({new_item1: joint_parameter_attribute[item][item1]})
+        
+        new_joint_parameter_attribute.update({new_item: temp_new_joint_parameter_attribute})
+
+    
+    # comment out this if don't want to write to a json file
+    path = "/mnt/e/Research/STTR/output_rohit/" + run + "_joint.json"
+    with open(path, "w") as outfile:
+        json.dump(new_joint_parameter_attribute, outfile)
+    
+    return new_joint_parameter_attribute
+
+def worker(config, test, vehicle, run, bound):
     if test:
         suggestions = useit(config, test, vehicle)
         showResults(suggestions)
@@ -318,17 +694,37 @@ def worker(config, test, vehicle):
         result_dict = {}
 
         random.seed(config["control"][3]['c4']["value"])
+    
+        # initilize recording data dictionary for single parameter
+        count_nonviolation = 0
+        parameter_attribute = {}
+        for item in list(bound.keys()):
+            current_dict = {}
+            for i in range(bound[item][0], bound[item][1]+1):
+                current_dict.update({i: 0})
+            
+            parameter_attribute.update({item: current_dict})
+
+        # initilize recording data dictionary for joint parameters
+        joint_parameter_attribute = initJointParameterAttribute(bound)
+
+        # loop over max generation
         for i in range(config["control"][1]["c2"]["value"]):
-            simulationResults = useit(config, test, vehicle)
-            # print("current configuration")
-            # print(config['variables'])
-            #showResults(simulationResults)
+            simulationResults = useit(config, test, vehicle, i)
+            
+            # perform percentage calculation in the initial run
+            if i == 0:
+                parameter_attribute, count_nonviolation = calculateAttribute(simulationResults, parameter_attribute, count_nonviolation)
+                joint_parameter_attribute = calculateJointAttribute(simulationResults, joint_parameter_attribute, bound)
+
             if i == 0:
                 recentConfig = config
             
             config, before, effect, best = updateOptions(simulationResults, config, vehicle)
 
             if config is None:
+                _ = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
+                _ = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
                 return result_dict
 
             temp_parameters = {}
@@ -342,6 +738,10 @@ def worker(config, test, vehicle):
             # output record
             result_dict.update({"r"+str(i+1): {"before": before, "effect": effect, "rule": best, "config": temp_parameters}})
             recentConfig = config
+
+        # group, calculate percentage, and record data
+        _ = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
+        _ = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
         
         return result_dict
 
@@ -455,20 +855,20 @@ def calculatePercentage(sims):
     
     return sims_vio_t / sims_no_vio_accel
 
-def useit(config, test, vehicle):
+def useit(config, test, vehicle, generation):
     if vehicle == "taxi":
         variable = config["variables"][0]["v1"]['ranges']
     if vehicle == "delivery":
         variable = config["variables"][1]['v2']['ranges']
 
     threshold = config["products"]
-    repeat = config["control"][2]['c3']["value"]
+    if generation == 0:
+        repeat = 100000
+    else:
+        repeat = config["control"][2]['c3']["value"]
     
     # generate n sims
     sims, _ = gen_sim(variable, repeat, test, vehicle)
-    
-    for item in sims:
-        print(item)
     
     # generate violation
     if vehicle == "taxi":
@@ -503,17 +903,32 @@ def showResults(sims_final):
 
 def main(option = None, test = None, vehicle = None):
     # define vehicle type (taxi, package, scout)
-    print("Recommend: ", vehicle)
+    print("Recommended: ", vehicle)
     
     # read configuration
     config0 = read_config(option)
     output_dict = {}
+
+    # record original bounding for each attribute
+    if vehicle == "taxi":
+        temp_idx = 0
+    else:
+        temp_idx = 1
+
+    bound = {}
+    for idx, item in enumerate(config0["variables"][temp_idx]["v"+str(temp_idx+1)]["ranges"]):
+        name = item["x"+str(idx+1)]["name"]
+        min_val = item["x"+str(idx+1)]["min_value"]
+        max_val = item["x"+str(idx+1)]["max_value"]
+
+        bound.update({name: (min_val, max_val)})
+
     for idx, run in enumerate(["optimize", "monitor", "safety"]):
         config = copy.deepcopy(config0)
         print("")
         print("Recommended for", run)
         config["hall"][1]["p2"]["value"] = idx+1
-        result_dict = worker(config, test, vehicle)
+        result_dict = worker(config, test, vehicle, run, bound)
 
         output_dict.update({run: result_dict})
     
@@ -565,7 +980,7 @@ def cli():
             test = True
         if "-v" in sys.argv:
             vehicle = sys.argv[sys.argv.index("-v")+1]
-
+    
     output_dict = main(option, test, vehicle)
 
     with open("sample.json", "w") as outfile:
