@@ -827,7 +827,7 @@ def updateOptions(simulationResults, config, vehicle):
     effect = None
     for rule in rules:
         picked = hall.selects(t, rule)
-        effect = rounds( picked.y(), my.yround)
+        effect = rounds(picked.y(), my.yround)
 
         #print(len(hall.selects(t, rule).rows))
         print("")
@@ -1031,7 +1031,7 @@ def cli():
         if "-v" in sys.argv:
             vehicle = sys.argv[sys.argv.index("-v")+1]
     
-    output_dict = main(option, test, vehicle)
+    output_dict, _, _ = main(option, test, vehicle)
 
     with open("sample.json", "w") as outfile:
         json.dump(output_dict, outfile)
