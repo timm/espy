@@ -7,6 +7,7 @@ import random
 import copy
 import json
 import csv
+import numpy as np
 
 header_row = ['Ascend_angle', 'Descend_angle_1', 'Descend_angle_2', 
                   'Cruise_speed', 'Trip_distance', 'Cruise_altitude', 'Payload', 'Wind', 
@@ -686,6 +687,30 @@ def calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolat
     
     return new_joint_parameter_attribute
 
+def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges):
+    print("Performing extra shortlist......")
+
+    update_range = {}
+    for i in range(len(list(parameter_attribute.keys()))):
+        if i not in narrowed_parameter:
+            temp_dict = parameter_attribute[list(parameter_attribute.keys())[i]]
+            temp_value = np.array([temp_dict[j] for j in list(temp_dict.keys())])
+
+            p = np.percentile(temp_value, 30)
+            
+            temp_update_range = []
+            for key in list(temp_dict.keys()):
+                if temp_dict[key] >= p:
+                    temp_update_range.append(key)
+        
+            update_range.update({list(parameter_attribute.keys())[i]: [min(temp_update_range), max(temp_update_range)]})
+        else:
+            for item in narrowed_ranges:
+                if item[1] == i:
+                    update_range.update({item[0]: [item[2][0][0], item[2][0][1]]})
+    
+    return update_range
+
 def worker(config, test, vehicle, run, bound):
     if test:
         suggestions = useit(config, test, vehicle)
@@ -708,6 +733,10 @@ def worker(config, test, vehicle, run, bound):
         # initilize recording data dictionary for joint parameters
         joint_parameter_attribute = initJointParameterAttribute(bound)
 
+        # record which parameter is narrowed by espy.
+        narrowed_parameter = []
+        narrowed_ranges = []
+
         # loop over max generation
         for i in range(config["control"][1]["c2"]["value"]):
             simulationResults = useit(config, test, vehicle, i)
@@ -723,9 +752,21 @@ def worker(config, test, vehicle, run, bound):
             config, before, effect, best = updateOptions(simulationResults, config, vehicle)
 
             if config is None:
-                _ = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
-                _ = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
-                return result_dict
+                attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
+                joint_attribute_percentage = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
+
+                if run == "optimize":
+                    update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges)
+                    result_dict.update({"r_extra": update_range})
+
+                return result_dict, attribute_percentage, joint_attribute_percentage
+
+            for r in best:
+                if r[1] not in narrowed_parameter:
+                    narrowed_parameter.append(r[1])
+                    narrowed_ranges.append(r)
+                else:
+                    narrowed_ranges.append(r)
 
             temp_parameters = {}
             if vehicle == "taxi":
@@ -740,10 +781,14 @@ def worker(config, test, vehicle, run, bound):
             recentConfig = config
 
         # group, calculate percentage, and record data
-        _ = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
-        _ = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
+        attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
+        joint_attribute_percentage = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
+
+        if run == "optimize":
+            update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges)
+            result_dict.update({"r_extra": update_range})
         
-        return result_dict
+        return result_dict, attribute_percentage, joint_attribute_percentage
 
 
 class obj:
@@ -928,14 +973,16 @@ def main(option = None, test = None, vehicle = None):
         print("")
         print("Recommended for", run)
         config["hall"][1]["p2"]["value"] = idx+1
-        result_dict = worker(config, test, vehicle, run, bound)
+
+        if run == "optimize":
+            result_dict, attribute_percentage, joint_attribute_percentage = worker(config, test, vehicle, run, bound)
+        else:
+            result_dict, _, _ = worker(config, test, vehicle, run, bound)
 
         output_dict.update({run: result_dict})
     
-    return output_dict
+    return output_dict, attribute_percentage, joint_attribute_percentage
         
-
-
 def cli():
     print("usage:")
     print("-c [config file name]: run simulations from specific configuration file")
