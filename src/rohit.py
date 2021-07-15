@@ -450,34 +450,34 @@ def calculateAttributePercentage(parameter_attribute, count_nonviolation, run):
         
         new_parameter_attribute1.update({item: temp_dict})
 
-    # comment out this if don't want to write to a json file
-    path = "/mnt/e/Research/STTR/output_rohit/" + run + "_single.json"
-    with open(path, "w") as outfile:
-        json.dump(new_parameter_attribute, outfile)
-
-    # comment out this if don't want to write to a csv file
-    path = "/mnt/e/Research/STTR/output_rohit/" + run + "_single.csv"
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        csv_writer = csv.writer(f, delimiter=",")
-        csv_writer.writerow(["ascend angle", "percentage", "descend angle 1", "percentage", "descend angle 2", "percentage", "cruise speed", "percentage",
-                            "trip distance", "percentage", "cruise altitude", "percentage", "payload", "percentage", "wind", "percentage", "direction", "percentage"])
-        
-        max_deep = max([len(list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[i]].keys())) for i in range(len(list(new_parameter_attribute1.keys())))])
-
-        for iterate in range(max_deep):
-            current_row = []
-
-            for current_idx in range(len(list(new_parameter_attribute1.keys()))):
-                if iterate < len(list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]].keys())):
-                    current_key = list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]].keys())[iterate]
-                    current_value = new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]][current_key]
-                    current_row.append(current_key)
-                    current_row.append(current_value)
-                else:
-                    current_row.append("")
-                    current_row.append("")
-            
-            csv_writer.writerow(current_row)
+    # # comment out this if don't want to write to a json file
+    # path = "/mnt/e/Research/STTR/output_rohit/" + run + "_single.json"
+    # with open(path, "w") as outfile:
+    #     json.dump(new_parameter_attribute, outfile)
+    #
+    # # comment out this if don't want to write to a csv file
+    # path = "/mnt/e/Research/STTR/output_rohit/" + run + "_single.csv"
+    # with open(path, "w", newline="", encoding="utf-8") as f:
+    #     csv_writer = csv.writer(f, delimiter=",")
+    #     csv_writer.writerow(["ascend angle", "percentage", "descend angle 1", "percentage", "descend angle 2", "percentage", "cruise speed", "percentage",
+    #                         "trip distance", "percentage", "cruise altitude", "percentage", "payload", "percentage", "wind", "percentage", "direction", "percentage"])
+    #
+    #     max_deep = max([len(list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[i]].keys())) for i in range(len(list(new_parameter_attribute1.keys())))])
+    #
+    #     for iterate in range(max_deep):
+    #         current_row = []
+    #
+    #         for current_idx in range(len(list(new_parameter_attribute1.keys()))):
+    #             if iterate < len(list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]].keys())):
+    #                 current_key = list(new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]].keys())[iterate]
+    #                 current_value = new_parameter_attribute1[list(new_parameter_attribute1.keys())[current_idx]][current_key]
+    #                 current_row.append(current_key)
+    #                 current_row.append(current_value)
+    #             else:
+    #                 current_row.append("")
+    #                 current_row.append("")
+    #
+    #         csv_writer.writerow(current_row)
 
     return new_parameter_attribute
 
@@ -680,10 +680,10 @@ def calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolat
         new_joint_parameter_attribute.update({new_item: temp_new_joint_parameter_attribute})
 
     
-    # comment out this if don't want to write to a json file
-    path = "/mnt/e/Research/STTR/output_rohit/" + run + "_joint.json"
-    with open(path, "w") as outfile:
-        json.dump(new_joint_parameter_attribute, outfile)
+    # # comment out this if don't want to write to a json file
+    # path = "/mnt/e/Research/STTR/output_rohit/" + run + "_joint.json"
+    # with open(path, "w") as outfile:
+    #     json.dump(new_joint_parameter_attribute, outfile)
     
     return new_joint_parameter_attribute
 
@@ -946,12 +946,15 @@ def showResults(sims_final):
     [print(', '.join([str(x) for x in lst])) for lst in sims_final]
     print("")
 
-def main(option = None, test = None, vehicle = None):
+def main(option = None, test = None, vehicle = None, json=False):
     # define vehicle type (taxi, package, scout)
     print("Recommended: ", vehicle)
     
     # read configuration
-    config0 = read_config(option)
+    if json:
+        config0 = option
+    else:
+        config0 = read_config(option)
     output_dict = {}
 
     # record original bounding for each attribute
