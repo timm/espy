@@ -1,4 +1,6 @@
 import copy
+import os
+
 from flask import Flask, request, jsonify
 
 from rohit import main
@@ -7,9 +9,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-basePath = "/Users/ttnguy35/Desktop/espy/src/api/testfiles/sampleData/"
-
-
+basePath = os.path.join( os.path.dirname(__file__) ,"api/testfiles/sampleData/")
 @app.route('/v2/bestRules', methods=['POST'])
 def bestRules():
     data = request.json
