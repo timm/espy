@@ -47,6 +47,7 @@ def load_example_files():
     safety_single = json.load(open(basePath + 'safety_single.json'))
     bestRules = json.load(open(basePath + 'output-fromZhao.json'))
 
+
     return {"monitor_joint": monitor_joint, "monitor_single": monitor_single, "optimize_joint": optimize_joint,
             "optimize_single": optimize_single, "safety_joint": safety_joint, "safety_single": safety_single,
             "bestRules": bestRules}
