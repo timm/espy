@@ -687,7 +687,7 @@ def calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolat
     
     return new_joint_parameter_attribute
 
-def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges):
+def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run):
     print("Performing extra shortlist......")
 
     update_range = {}
@@ -696,7 +696,12 @@ def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges):
             temp_dict = parameter_attribute[list(parameter_attribute.keys())[i]]
             temp_value = np.array([temp_dict[j] for j in list(temp_dict.keys())])
 
-            p = np.percentile(temp_value, 30)
+            if run == "optimize":
+                p = np.percentile(temp_value, 30)
+            elif run == "monitor":
+                p = np.percentile(temp_value, 50)
+            elif run == "safety":
+                p = np.percentile(temp_value, 70)
             
             temp_update_range = []
             for key in list(temp_dict.keys()):
@@ -755,9 +760,8 @@ def worker(config, test, vehicle, run, bound):
                 attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
                 joint_attribute_percentage = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
 
-                if run == "optimize":
-                    update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges)
-                    result_dict.update({"r_extra": update_range})
+                update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run)
+                result_dict.update({"r_extra": update_range})
 
                 return result_dict, attribute_percentage, joint_attribute_percentage
 
@@ -784,9 +788,8 @@ def worker(config, test, vehicle, run, bound):
         attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
         joint_attribute_percentage = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
 
-        if run == "optimize":
-            update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges)
-            result_dict.update({"r_extra": update_range})
+        update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run)
+        result_dict.update({"r_extra": update_range})
         
         return result_dict, attribute_percentage, joint_attribute_percentage
 
