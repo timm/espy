@@ -716,14 +716,15 @@ def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run):
     
     return update_range
 
-def worker(config, test, vehicle, run, bound):
+def worker(config, test, vehicle, run, bound, debug):
     if test:
         suggestions = useit(config, test, vehicle)
         showResults(suggestions)
     else:
         result_dict = {}
 
-        random.seed(config["control"][3]['c4']["value"])
+        # random.seed(config["control"][3]['c4']["value"])
+        random.seed(random.randint(1, 100014))
     
         # initilize recording data dictionary for single parameter
         count_nonviolation = 0
@@ -744,7 +745,7 @@ def worker(config, test, vehicle, run, bound):
 
         # loop over max generation
         for i in range(config["control"][1]["c2"]["value"]):
-            simulationResults = useit(config, test, vehicle, i)
+            simulationResults = useit(config, test, vehicle, i, debug)
             
             # perform percentage calculation in the initial run
             if i == 0:
@@ -903,7 +904,7 @@ def calculatePercentage(sims):
     
     return sims_vio_t / sims_no_vio_accel
 
-def useit(config, test, vehicle, generation):
+def useit(config, test, vehicle, generation, debug):
     if vehicle == "taxi":
         variable = config["variables"][0]["v1"]['ranges']
     if vehicle == "delivery":
@@ -911,9 +912,15 @@ def useit(config, test, vehicle, generation):
 
     threshold = config["products"]
     if generation == 0:
-        repeat = 100000
+        if debug:
+            repeat = 1000
+        else:
+            repeat = 100000
     else:
-        repeat = config["control"][2]['c3']["value"]
+        if debug:
+            repeat = 1000
+        else:  
+            repeat = config["control"][2]['c3']["value"]
     
     # generate n sims
     sims, _ = gen_sim(variable, repeat, test, vehicle)
@@ -949,7 +956,7 @@ def showResults(sims_final):
     [print(', '.join([str(x) for x in lst])) for lst in sims_final]
     print("")
 
-def main(option = None, test = None, vehicle = None, json=False):
+def main(option = None, test = None, vehicle = None, json=False, debug=False):
     # define vehicle type (taxi, package, scout)
     print("Recommended: ", vehicle)
     
@@ -981,9 +988,9 @@ def main(option = None, test = None, vehicle = None, json=False):
         config["hall"][1]["p2"]["value"] = idx+1
 
         if run == "optimize":
-            result_dict, attribute_percentage, joint_attribute_percentage = worker(config, test, vehicle, run, bound)
+            result_dict, attribute_percentage, joint_attribute_percentage = worker(config, test, vehicle, run, bound, debug)
         else:
-            result_dict, _, _ = worker(config, test, vehicle, run, bound)
+            result_dict, _, _ = worker(config, test, vehicle, run, bound, debug)
 
         output_dict.update({run: result_dict})
     
@@ -1034,7 +1041,7 @@ def cli():
         if "-v" in sys.argv:
             vehicle = sys.argv[sys.argv.index("-v")+1]
     
-    output_dict, _, _ = main(option, test, vehicle)
+    output_dict, _, _ = main(option, test, vehicle, debug=True)
 
     with open("sample.json", "w") as outfile:
         json.dump(output_dict, outfile)
