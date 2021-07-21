@@ -15,7 +15,7 @@ def bestRules():
     data = request.json
 
     output_dict, attribute_percentage, joint_attribute_percentage = main(data['options'], False, data['output'],
-                                                                         json=True)
+                                                                         json=True, debug=False)
     return jsonify({"outputs": output_dict, "attribute_percentage": attribute_percentage,
                     "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)})
 
