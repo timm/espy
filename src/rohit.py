@@ -699,9 +699,9 @@ def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run):
             if run == "optimize":
                 p = np.percentile(temp_value, 30)
             elif run == "monitor":
-                p = np.percentile(temp_value, 50)
+                p = np.percentile(temp_value, 20)
             elif run == "safety":
-                p = np.percentile(temp_value, 70)
+                p = np.percentile(temp_value, 10)
             
             temp_update_range = []
             for key in list(temp_dict.keys()):
