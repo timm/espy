@@ -687,7 +687,7 @@ def calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolat
     
     return new_joint_parameter_attribute
 
-def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run):
+def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run, result_dict):
     print("Performing extra shortlist......")
 
     update_range = {}
@@ -698,17 +698,54 @@ def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run):
 
             if run == "optimize":
                 p = np.percentile(temp_value, 30)
-            elif run == "monitor":
-                p = np.percentile(temp_value, 20)
-            elif run == "safety":
-                p = np.percentile(temp_value, 10)
+
+                temp_update_range = []
+                for key in list(temp_dict.keys()):
+                    if temp_dict[key] >= p:
+                        temp_update_range.append(key)
             
-            temp_update_range = []
-            for key in list(temp_dict.keys()):
-                if temp_dict[key] >= p:
-                    temp_update_range.append(key)
-        
-            update_range.update({list(parameter_attribute.keys())[i]: [min(temp_update_range), max(temp_update_range)]})
+                update_range.update({list(parameter_attribute.keys())[i]: [min(temp_update_range), max(temp_update_range)]})
+            elif run == "monitor":
+                p = np.percentile(temp_value, 10)
+
+                temp_update_range = []
+                count = 0
+                for key in list(temp_dict.keys()):
+                    if temp_dict[key] <= p:
+                        count += 1
+                        temp_update_range.append((key, count))
+                    else:
+                        count = 0
+                       
+                # performing count
+                max_count = max([a[1] for a in temp_update_range])
+                for item in temp_update_range:
+                    if item[1] == 1 and item[1] != max_count:
+                        new_range = [item[0]]
+                    elif item[1] == 1 and item[1] == max_count:
+                        new_range = [item[0]]
+                        break
+                    elif item[1] > 1 and item[1] < max_count:
+                        new_range.append(item[0])
+                    elif item[1] == max_count:
+                        new_range.append(item[0])
+                        break
+                print(list(parameter_attribute.keys())[i])
+                print(new_range)
+                
+                update_range.update({list(parameter_attribute.keys())[i]: [min(new_range), max(new_range)]})
+            elif run == "safety":
+                lower_bound_1 = result_dict["monitor"]["r_extra"][list(parameter_attribute.keys())[i]][1]
+                upper_bound_1 = result_dict["optimize"]["r_extra"][list(parameter_attribute.keys())[i]][0]
+                lower_bound_2 = result_dict["optimize"]["r_extra"][list(parameter_attribute.keys())[i]][1]
+                upper_bound_2 = result_dict["monitor"]["r_extra"][list(parameter_attribute.keys())[i]][0]
+
+                if lower_bound_1 < upper_bound_1:
+                    update_range.update({list(parameter_attribute.keys())[i]: [lower_bound_1, upper_bound_1]})
+                elif lower_bound_2 < upper_bound_2:
+                    update_range.update({list(parameter_attribute.keys())[i]: [lower_bound_2, upper_bound_2]})
+                else:
+                    update_range.update({list(parameter_attribute.keys())[i]: [0, 0]})
         else:
             for item in narrowed_ranges:
                 if item[1] == i:
@@ -716,7 +753,7 @@ def extra_narrow(parameter_attribute, narrowed_parameter, narrowed_ranges, run):
     
     return update_range
 
-def worker(config, test, vehicle, run, bound, debug):
+def worker(config, test, vehicle, run, bound, output_dict, debug):
     if test:
         suggestions = useit(config, test, vehicle)
         showResults(suggestions)
@@ -761,7 +798,7 @@ def worker(config, test, vehicle, run, bound, debug):
                 attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
                 joint_attribute_percentage = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
 
-                update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run)
+                update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run, output_dict)
                 result_dict.update({"r_extra": update_range})
 
                 return result_dict, attribute_percentage, joint_attribute_percentage
@@ -789,7 +826,7 @@ def worker(config, test, vehicle, run, bound, debug):
         attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
         joint_attribute_percentage = calculateJointAttributePercentage(joint_parameter_attribute, count_nonviolation, run)
 
-        update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run)
+        update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run, output_dict)
         result_dict.update({"r_extra": update_range})
         
         return result_dict, attribute_percentage, joint_attribute_percentage
@@ -913,12 +950,12 @@ def useit(config, test, vehicle, generation, debug):
     threshold = config["products"]
     if generation == 0:
         if debug:
-            repeat = 1000
+            repeat = 20000
         else:
             repeat = 100000
     else:
         if debug:
-            repeat = 1000
+            repeat = 10000
         else:  
             repeat = config["control"][2]['c3']["value"]
     
@@ -988,9 +1025,9 @@ def main(option = None, test = None, vehicle = None, json=False, debug=False):
         config["hall"][1]["p2"]["value"] = idx+1
 
         if run == "optimize":
-            result_dict, attribute_percentage, joint_attribute_percentage = worker(config, test, vehicle, run, bound, debug)
+            result_dict, attribute_percentage, joint_attribute_percentage = worker(config, test, vehicle, run, bound, output_dict, debug)
         else:
-            result_dict, _, _ = worker(config, test, vehicle, run, bound, debug)
+            result_dict, _, _ = worker(config, test, vehicle, run, bound, output_dict, debug)
 
         output_dict.update({run: result_dict})
     
@@ -1041,7 +1078,7 @@ def cli():
         if "-v" in sys.argv:
             vehicle = sys.argv[sys.argv.index("-v")+1]
     
-    output_dict, _, _ = main(option, test, vehicle, debug=True)
+    output_dict, _, _ = main(option, test, vehicle, debug=False)
 
     with open("sample.json", "w") as outfile:
         json.dump(output_dict, outfile)
