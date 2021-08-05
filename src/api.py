@@ -9,7 +9,68 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-basePath = os.path.join( os.path.dirname(__file__) ,"api/testfiles/sampleData/")
+basePath = os.path.join(os.path.dirname(__file__), "api/testfiles/sampleData/")
+
+import collections
+
+
+def fix_keys(d, level=1):
+    # if not type(d) is dict:
+    #     return d
+    ret = {k.lower().replace(" ", "_"): v for k, v in d.items()}
+    for k, v in d.items():
+        if type(v) is dict:
+            print(level, k)
+            ret[k.lower().replace(" ", "_")] = fix_keys(v, level + 1)
+        if type(v) is list:
+            r = []
+            for i in v:
+                if type(i) is dict:
+
+                    r += [fix_keys(i)]
+                else:
+                    r += [i]
+            ret[k.lower().replace(" ", "_")] = r
+    return ret
+
+# import collections.abc
+
+
+
+
+
+
+
+@app.route('/v3/bestRules-sample', methods=['POST'])
+def bestRules_sample_3():
+    data = request.json
+    sample = json.load(open(basePath + 'sample-output.json'))
+
+
+    sample = fix_keys(sample)
+    return jsonify(sample)
+@app.route('/v3/bestRules', methods=['POST'])
+def bestRules_3():
+    data = request.json
+
+    output_dict, attribute_percentage, joint_attribute_percentage = main(data['options'], False, data['output'],
+                                                                         json=True, debug=False)
+    ret = {"outputs": output_dict, "attribute_percentage": attribute_percentage,
+                    "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)}
+    return jsonify(fix_keys(ret))
+
+
+@app.route('/v3/bestRules-debug', methods=['POST'])
+def bestRules_debug_3():
+    data = request.json
+
+    output_dict, attribute_percentage, joint_attribute_percentage = main(data['options'], False, data['output'],
+                                                                         json=True, debug=True)
+
+    ret = {"outputs": output_dict, "attribute_percentage": attribute_percentage,
+                    "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)}
+    return jsonify(fix_keys(ret))
+
 @app.route('/v2/bestRules', methods=['POST'])
 def bestRules():
     data = request.json
@@ -19,6 +80,7 @@ def bestRules():
     return jsonify({"outputs": output_dict, "attribute_percentage": attribute_percentage,
                     "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)})
 
+
 @app.route('/v2/bestRules-debug', methods=['POST'])
 def bestRules_debug():
     data = request.json
@@ -27,6 +89,7 @@ def bestRules_debug():
                                                                          json=True, debug=True)
     return jsonify({"outputs": output_dict, "attribute_percentage": attribute_percentage,
                     "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)})
+
 
 @app.route('/v2/bestRules-sample', methods=['POST'])
 def bestRules_sample():
@@ -54,7 +117,6 @@ def load_example_files():
     safety_joint = json.load(open(basePath + 'safety_joint.json'))
     safety_single = json.load(open(basePath + 'safety_single.json'))
     bestRules = json.load(open(basePath + 'output-fromZhao.json'))
-
 
     return {"monitor_joint": monitor_joint, "monitor_single": monitor_single, "optimize_joint": optimize_joint,
             "optimize_single": optimize_single, "safety_joint": safety_joint, "safety_single": safety_single,
