@@ -19,6 +19,14 @@ def bestRules():
     return jsonify({"outputs": output_dict, "attribute_percentage": attribute_percentage,
                     "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)})
 
+@app.route('/v2/bestRules-debug', methods=['POST'])
+def bestRules_debug():
+    data = request.json
+
+    output_dict, attribute_percentage, joint_attribute_percentage = main(data['options'], False, data['output'],
+                                                                         json=True, debug=True)
+    return jsonify({"outputs": output_dict, "attribute_percentage": attribute_percentage,
+                    "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)})
 
 @app.route('/v2/bestRules-sample', methods=['POST'])
 def bestRules_sample():
