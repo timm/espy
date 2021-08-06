@@ -17,7 +17,13 @@ import collections
 def fix_keys(d, level=1):
     # if not type(d) is dict:
     #     return d
-    ret = {k.lower().replace(" ", "_"): v for k, v in d.items()}
+    ret = {}
+    for k, v in d.items():
+        if type(k) is str:
+            ret[k.lower().replace(" ", "_")] = v
+        else:
+            ret[k]= v
+    # ret = {k.lower().replace(" ", "_"): v for k, v in d.items() if }
     for k, v in d.items():
         if type(v) is dict:
             print(level, k)
@@ -27,7 +33,7 @@ def fix_keys(d, level=1):
             for i in v:
                 if type(i) is dict:
 
-                    r += [fix_keys(i)]
+                    r += [fix_keys(i, level+1)]
                 else:
                     r += [i]
             ret[k.lower().replace(" ", "_")] = r
