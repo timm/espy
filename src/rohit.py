@@ -759,6 +759,7 @@ def worker(config, test, vehicle, run, bound, output_dict, debug):
         showResults(suggestions)
     else:
         result_dict = {}
+        all_rules_dict = {}
 
         # random.seed(config["control"][3]['c4']["value"])
         random.seed(random.randint(1, 100014))
@@ -792,7 +793,7 @@ def worker(config, test, vehicle, run, bound, output_dict, debug):
             if i == 0:
                 recentConfig = config
             
-            config, before, effect, best = updateOptions(simulationResults, config, vehicle)
+            config, before, effect, best, all_rules = updateOptions(simulationResults, config, vehicle)
 
             if config is None:
                 attribute_percentage = calculateAttributePercentage(parameter_attribute, count_nonviolation, run)
@@ -801,7 +802,7 @@ def worker(config, test, vehicle, run, bound, output_dict, debug):
                 update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run, output_dict)
                 result_dict.update({"r_extra": update_range})
 
-                return result_dict, attribute_percentage, joint_attribute_percentage
+                return result_dict, attribute_percentage, joint_attribute_percentage, all_rules_dict
 
             for r in best:
                 if r[1] not in narrowed_parameter:
@@ -820,6 +821,7 @@ def worker(config, test, vehicle, run, bound, output_dict, debug):
 
             # output record
             result_dict.update({"r"+str(i+1): {"before": before, "effect": effect, "rule": best, "config": temp_parameters}})
+            all_rules_dict.update({"r"+str(i+1): all_rules})
             recentConfig = config
 
         # group, calculate percentage, and record data
@@ -829,7 +831,7 @@ def worker(config, test, vehicle, run, bound, output_dict, debug):
         update_range = extra_narrow(attribute_percentage, narrowed_parameter, narrowed_ranges, run, output_dict)
         result_dict.update({"r_extra": update_range})
         
-        return result_dict, attribute_percentage, joint_attribute_percentage
+        return result_dict, attribute_percentage, joint_attribute_percentage, all_rules_dict
 
 
 class obj:
@@ -863,7 +865,14 @@ def updateOptions(simulationResults, config, vehicle):
     print("Goal   : ",("Optimize" if my.act==1 else (
                         "Monitor"  if my.act==2 else "Safety")))
     t.summary()
-    rules = hall.contrast(best,rest,my)
+    b_treatment, rules = hall.contrast(best,rest,my)
+
+    multi_rules = []
+    for val, (col,_,(lo,hi)) in b_treatment:
+        most,least= b_treatment[0][0], b_treatment[-1][0]
+        val= int(100*(val-least)/(most-least + 1E-32))
+        multi_rules.append((val, (col, (lo, hi))))
+
     ranges=set()
     effect = None
     for rule in rules:
@@ -883,7 +892,7 @@ def updateOptions(simulationResults, config, vehicle):
         print("\nRecommended previous", before, "\tRecommended now", effect, "\tRecommended best rule: ", best)
 
     newConfig = updateConfig(best, config, vehicle)
-    return newConfig, before, effect, best
+    return newConfig, before, effect, best, multi_rules
 
 def updateConfig(best, config, vehicle):
     if best is None:
@@ -1003,6 +1012,7 @@ def main(option = None, test = None, vehicle = None, json=False, debug=False):
     else:
         config0 = read_config(option)
     output_dict = {}
+    all_rules_output_dict = {}
 
     # record original bounding for each attribute
     if vehicle == "taxi":
@@ -1025,13 +1035,14 @@ def main(option = None, test = None, vehicle = None, json=False, debug=False):
         config["hall"][1]["p2"]["value"] = idx+1
 
         if run == "optimize":
-            result_dict, attribute_percentage, joint_attribute_percentage = worker(config, test, vehicle, run, bound, output_dict, debug)
+            result_dict, attribute_percentage, joint_attribute_percentage, all_rules_dict = worker(config, test, vehicle, run, bound, output_dict, debug)
         else:
-            result_dict, _, _ = worker(config, test, vehicle, run, bound, output_dict, debug)
+            result_dict, _, _, all_rules_dict = worker(config, test, vehicle, run, bound, output_dict, debug)
 
         output_dict.update({run: result_dict})
+        all_rules_output_dict.update({run: all_rules_dict})
     
-    return output_dict, attribute_percentage, joint_attribute_percentage
+    return output_dict, attribute_percentage, joint_attribute_percentage, all_rules_output_dict
         
 def cli():
     print("usage:")
@@ -1078,10 +1089,13 @@ def cli():
         if "-v" in sys.argv:
             vehicle = sys.argv[sys.argv.index("-v")+1]
     
-    output_dict, _, _ = main(option, test, vehicle, debug=False)
+    output_dict, _, _, all_rules_output_dict = main(option, test, vehicle, debug=False)
 
     with open("sample.json", "w") as outfile:
         json.dump(output_dict, outfile)
+    
+    with open("all_rules_sample.json", "w") as of:
+        json.dump(all_rules_output_dict, of)
 
 if __name__ == "__main__": cli()
 
