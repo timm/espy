@@ -489,7 +489,7 @@ def contrast(here, there, my):
   # with pruned ranges removed, now we must prune repeated rules.
   uniques    = {str(rule): rule for rule in tidied}
   # from the dictionary of uniques, return the unique rules
-  return list(uniques.values())
+  return ranges, list(uniques.values())
 
 def subsets(l):
   out = [[]]
