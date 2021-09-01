@@ -50,7 +50,7 @@ def fix_keys(d, level=1):
 @app.route('/v3/bestRules-sample', methods=['POST'])
 def bestRules_sample_3():
     data = request.json
-    sample = json.load(open(basePath + 'sample-output.json'))
+    sample = json.load(open(basePath + 'all_rules_sample.json'))
 
 
     sample = fix_keys(sample)
