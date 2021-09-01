@@ -22,7 +22,7 @@ def fix_keys(d, level=1):
         if type(k) is str:
             ret[k.lower().replace(" ", "_")] = v
         else:
-            ret[k]= v
+            ret[k] = v
     # ret = {k.lower().replace(" ", "_"): v for k, v in d.items() if }
     for k, v in d.items():
         if type(v) is dict:
@@ -33,36 +33,34 @@ def fix_keys(d, level=1):
             for i in v:
                 if type(i) is dict:
 
-                    r += [fix_keys(i, level+1)]
+                    r += [fix_keys(i, level + 1)]
                 else:
                     r += [i]
             ret[k.lower().replace(" ", "_")] = r
     return ret
 
+
 # import collections.abc
-
-
-
-
-
 
 
 @app.route('/v3/bestRules-sample', methods=['POST'])
 def bestRules_sample_3():
     data = request.json
-    sample = json.load(open(basePath + 'all_rules_sample.json'))
-
+    sample = json.load(open(basePath + 'v3.json'))
 
     sample = fix_keys(sample)
     return jsonify(sample)
+
+
 @app.route('/v3/bestRules', methods=['POST'])
 def bestRules_3():
     data = request.json
 
-    output_dict, attribute_percentage, joint_attribute_percentage = main(data['options'], False, data['output'],
-                                                                         json=True, debug=False)
+    output_dict, attribute_percentage, joint_attribute_percentage, all_rules_dict = main(data['options'], False,
+                                                                                         data['output'],
+                                                                                         json=True, debug=False)
     ret = {"outputs": output_dict, "attribute_percentage": attribute_percentage,
-                    "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)}
+           "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage), "all_rules": all_rules_dict}
     return jsonify(fix_keys(ret))
 
 
@@ -70,12 +68,14 @@ def bestRules_3():
 def bestRules_debug_3():
     data = request.json
 
-    output_dict, attribute_percentage, joint_attribute_percentage = main(data['options'], False, data['output'],
-                                                                         json=True, debug=True)
+    output_dict, attribute_percentage, joint_attribute_percentage, all_rules_dict = main(data['options'], False,
+                                                                                         data['output'],
+                                                                                         json=True, debug=True)
 
     ret = {"outputs": output_dict, "attribute_percentage": attribute_percentage,
-                    "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage)}
+           "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage), "all_rules": all_rules_dict}
     return jsonify(fix_keys(ret))
+
 
 @app.route('/v2/bestRules', methods=['POST'])
 def bestRules():
