@@ -1,0 +1,21 @@
+p-radioButton {
+    display:block;
+    margin: .7em;
+}
+
+.center {
+    display: block;
+    margin: auto;
+    margin-right: auto;
+}
+
+.panel {
+    height: 380px;
+    width: 100%;
+    vertical-align: middle;
+}
+
+img {
+    width: 100%;
+    height: auto;
+}

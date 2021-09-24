@@ -1,0 +1,215 @@
+<div class="ui-g">
+    <!-- Left Panel items -->
+    <div class="ui-g-3" >
+        <form [formGroup]="dashboardForm" (ngSubmit)="onSubmit()">
+            <!--Input Parameters-->
+            <p-panel header="Parameters" class="ui-g-12">
+                <div class="ui-g">
+                    <label class="ui-g-2">Mode: </label>
+                    <p-dropdown class="ui-g-10" [options]="names" formControlName="name" optionLabel="name"></p-dropdown>
+                </div>
+                <br/>
+
+                <p-panel header="Test Parameters">
+                    <div class="ui-g">
+                        <label class="ui-g-4">Ascent Angle</label>
+                        <input class="ui-g-4" type="text" id="ascentAngleMin" formControlName="ascentAngleMin"  pInputText />
+                        <input class="ui-g-4" type="text" id="ascentAngleMax" formControlName="ascentAngleMax"  pInputText />
+                    </div>
+
+                    <div class="ui-g">
+                        <label class="ui-g-4">Descent Angle Fast</label>
+                        <input class="ui-g-4" type="text" id="descendAngle1Min" formControlName="descendAngle1Min" pInputText />
+                        <input class="ui-g-4" type="text" id="descendAngle1Max" formControlName="descendAngle1Max" pInputText />
+                    </div>
+
+                    <div class="ui-g">
+                        <label class="ui-g-4">Descent Angle Slow</label>
+                        <input class="ui-g-4" type="text" id="descendAngle2Min" formControlName="descendAngle2Min" pInputText />
+                        <input class="ui-g-4" type="text" id="descendAngle2Max" formControlName="descendAngle2Max" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Cruise Speed (mph)</label>
+                        <input class="ui-g-4" type="text" id="cruiseSpeedMin" formControlName="cruiseSpeedMin" pInputText />
+                        <input class="ui-g-4" type="text" id="cruiseSpeedMax" formControlName="cruiseSpeedMax" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Trip Distance (meters) </label>
+                        <input class="ui-g-4" type="text" id="tripDistanceMin" formControlName="tripDistanceMin" pInputText />
+                        <input class="ui-g-4" type="text" id="tripDistanceMax" formControlName="tripDistanceMax" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Cruise Altitude (ft)</label>
+                        <input class="ui-g-4" type="text" id="cruiseAltitudeMin" formControlName="cruiseAltitudeMin" pInputText />
+                        <input class="ui-g-4" type="text" id="cruiseAltitudeMax" formControlName="cruiseAltitudeMax" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Payload (lb)</label>
+                        <input class="ui-g-4" type="text" id="payloadMin" formControlName="payloadMin" pInputText />
+                        <input class="ui-g-4" type="text" id="payloadMax" formControlName="payloadMax" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Wind (m/s)</label>
+                        <input class="ui-g-4" type="text" id="windMin" formControlName="windMin" pInputText />
+                        <input class="ui-g-4" type="text" id="windMax" formControlName="windMax" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Direction</label>
+                        <input class="ui-g-4" type="text" id="directionMin" formControlName="directionMin" pInputText />
+                        <input class="ui-g-4" type="text" id="directionMax" formControlName="directionMax" pInputText />
+                    </div>
+                </p-panel>
+                <br/>
+
+                <p-panel header="Violation Thresholds">
+                    <div class="ui-g">
+                        <label class="ui-g-4">Long. Acceleration</label>
+                        <input class="ui-g-8" type="text" id="longitudnalAcceleration" formControlName="longitudnalAcceleration" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Lat. Acceleration</label>
+                        <input class="ui-g-8" type="text" id="lateralAcceleration" formControlName="lateralAcceleration" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Jerk</label>
+                        <input class="ui-g-8" type="text" id="jerk" formControlName="jerk" pInputText />
+                    </div>
+        
+                    <div class="ui-g">
+                        <label class="ui-g-4">Charging</label>
+                        <input class="ui-g-8" type="text" id="charging" formControlName="charging" pInputText />
+                    </div>
+                </p-panel>
+                <br/>
+
+                <p-panel header="Backend Configuration">
+                    <div class="ui-g">
+                        <label class="ui-g-2">URL</label>
+                        <input class="ui-g-10" type="text" id="backendUrl" formControlName="backendUrl"  pInputText />
+                    </div>
+                </p-panel>
+                <br/>
+
+                <div class="ui-g">
+                    <button pButton type="button" label="Run" (click)="onRun()"></button>
+                </div>
+                 
+                <br/>
+                <br/>
+                <!-- <button pButton type="button" label="Debug Input" (click)="onDebug()"></button> -->
+            </p-panel>
+            
+            <!--Graph Display Options-->
+            <p-panel header="Graph Display Options" class="ui-g-12">
+                <div class="ui-g">
+                    <!--Graphs data type-->
+                    <p-fieldset legend="Graphs Data Type" class="ui-g-12" [toggleable]="true" [collapsed]="false">
+                        <div class="ui-g"><p-radioButton  class="ui-g-6" name="graphMode" label="Warning Mode" value="M" formControlName="graphMode" (click)="onGraphModeChange()" pTooltip="Parameter ranges to avoid" tooltipPosition="right"></p-radioButton></div>
+                        <div class="ui-g"><p-radioButton  class="ui-g-6" name="graphMode" label="Optimize Mode" value="O" formControlName="graphMode" (click)="onGraphModeChange()" pTooltip="Optimal parameter ranges" tooltipPosition="right"></p-radioButton></div>
+                        <div class="ui-g"><p-radioButton  class="ui-g-6" name="graphMode" label="Suggestion Mode" value="S" formControlName="graphMode" (click)="onGraphModeChange()" pTooltip="Issues not yet explored" tooltipPosition="right"></p-radioButton> </div>                                    
+                    </p-fieldset>
+
+                    <!--Heatmap-->
+                    <p-fieldset legend="Heatmap" class="ui-g-12" [toggleable]="true" [collapsed]="false">
+                        <div class="ui-g">
+                            <label class="ui-g-1">X: </label>
+                            <p-dropdown class="ui-g-11" [options]="attributes"  formControlName="heatmapX" (onChange)="onHeatmapChange()"></p-dropdown>
+                        </div>
+                        <div class="ui-g">
+                            <label class="ui-g-1">Y: </label>
+                            <p-dropdown class="ui-g-11" [options]="attributes"  formControlName="heatmapY" (onChange)="onHeatmapChange()"></p-dropdown>
+                        </div> 
+                    </p-fieldset>
+
+                    <!--<button pButton type="button" label="On Debug Heatmap" (click)="onDebugHeatmap()"></button>--> 
+
+                </div>
+            </p-panel>              
+        </form> 
+    </div>
+
+    <!-- Right Panel Items -->
+    <div class="ui-g-9">
+        <!-- Phase chart & Heat map -->
+        <div class="ui-g">
+            <p-panel header="Flight Chart" class="ui-g-6" >
+                <div class="panel">
+                    <img src="/assets/img/phase-diagram.png" width="650" class="center"/>
+                </div>
+            </p-panel>
+
+            <p-panel header="Heatmap" class="ui-g-6">
+                <div class="panel">
+                    <apx-chart #heatmap
+                        [series]="heatmapOptions.series"
+                        [chart]="heatmapOptions.chart"
+                        [dataLabels]="heatmapOptions.dataLabels"
+                        [title]="heatmapOptions.title"
+                        [colors]="heatmapOptions.colors"
+                        [yaxis]="heatmapOptions.yaxis"
+                        [xaxis]="heatmapOptions.xaxis"   
+                        [plotOptions]="heatmapOptions.plotOptions"  
+                    ></apx-chart>
+                </div>
+            </p-panel>
+        </div>
+
+        <!-- Graphs go here -->
+        <div class="ui-g">
+            <p-panel header="Ascent Angle {{graphAscentAngleTitle}}" class="ui-g-4">
+                <p-chart #ascendAngleChart type="scatter" [data]="ascendAngleData" [options]="ascendAngleOptions"></p-chart>
+            </p-panel> 
+        
+            <p-panel header="Descent Angle Fast {{graphDescentAngle1Title}}" class="ui-g-4">
+                <p-chart #descendAngle1Chart type="scatter" [data]="descendAngle1Data" [options]="descendAngle1Options"></p-chart>
+            </p-panel> 
+
+            <p-panel header="Descent Angle Slow {{graphDescentAngle2Title}}" class="ui-g-4">
+                <p-chart #descendAngle2Chart type="scatter" [data]="descendAngle2Data" [options]="descendAngle2Options"></p-chart>
+            </p-panel>     
+        </div>
+        
+        <div class="ui-g">
+            <p-panel header="Cruise Speed (m/s) {{graphCruiseSpeedTitle}}" class="ui-g-4">
+                <p-chart #cruiseSpeedChart type="scatter" [data]="cruiseSpeedData" [options]="cruiseSpeedOptions"></p-chart>
+            </p-panel>   
+
+            <p-panel header="Wind (m/s) {{graphWindTitle}}" class="ui-g-4">
+                <p-chart #windChart type="scatter" [data]="windData" [options]="windOptions"></p-chart>
+            </p-panel> 
+        
+            <p-panel header="Trip Distance (m) {{graphTripDistanceTitle}}" class="ui-g-4">
+                <p-chart #tripDistanceChart type="scatter" [data]="tripDistanceData" [options]="tripDistanceOptions"></p-chart>
+            </p-panel>        
+        </div>
+        
+        <div class="ui-g">
+            <p-panel header="Payload (lb) {{graphPayloadTitle}}" class="ui-g-4">
+                <p-chart #payloadChart type="scatter" [data]="payloadData" [options]="payloadOptions"></p-chart>
+            </p-panel> 
+
+            <p-panel header="Cruise Altitude (m) {{graphCruiseAltitudeTitle}}" class="ui-g-4">
+                <p-chart #cruiseAltitudeChart type="scatter" [data]="cruiseAltitudeData" [options]="cruiseAltitudeOptions"></p-chart>
+            </p-panel> 
+        
+            <p-panel header="Wind Direction {{graphWindDirectionTitle}}" class="ui-g-4">
+                <p-chart #windDirectionChart type="scatter" [data]="windDirectionData" [options]="windDirectionOptions"></p-chart>
+            </p-panel> 
+        </div>    
+
+        <!-- Extra Stuff -->
+        <div class="ui-g">
+            <p-panel header="Signficant Attributes: {{sigAttributeHeaderModeText}}" class="ui-g-4">
+                <textarea [(ngModel)]="sigAttributeText" rows="5" cols="40" pInputTextarea autoResize=false></textarea>
+            </p-panel> 
+        </div>
+    </div>
+</div>

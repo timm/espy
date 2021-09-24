@@ -60,7 +60,8 @@ def bestRules_3():
                                                                                          data['output'],
                                                                                          json=True, debug=False)
     ret = {"outputs": output_dict, "attribute_percentage": attribute_percentage,
-           "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage), "all_rules": all_rules_dict}
+           "joint_attribute_percentage": process_optimize_join(joint_attribute_percentage),
+           "all_rules": all_rules_dict}
     return jsonify(fix_keys(ret))
 
 
